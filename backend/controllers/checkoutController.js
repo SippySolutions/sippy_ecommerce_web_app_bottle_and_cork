@@ -80,7 +80,8 @@ exports.processPayment = async (req, res) => {
     console.log('User ID:', req.user?.id);
     console.log('Request body:', JSON.stringify(req.body, null, 2));
     
-    const {
+    // Helper function to round monetary values to 2 decimal places
+    const roundToTwo = (num) => Math.round((num + Number.EPSILON) * 100) / 100;const {
       dataDescriptor,
       dataValue,
       amount,
@@ -90,7 +91,10 @@ exports.processPayment = async (req, res) => {
       orderType = 'delivery',
       tip = 0,
       bagFee = 0,
-      saveCard = false
+      deliveryFee = 0,
+      saveCard = false,
+      ageVerified = false,
+      ageVerifiedAt = null
     } = req.body;
 
     console.log('Extracted data:');
@@ -152,14 +156,13 @@ exports.processPayment = async (req, res) => {
             message: `Product not found: ${productId}` 
           });
         }
-      
-      const itemTotal = (product.saleprice || product.price) * item.quantity;
+        const itemTotal = roundToTwo((product.saleprice || product.price) * item.quantity);
       subtotal += itemTotal;
       
       validatedItems.push({
         product: product._id,
         name: product.name,
-        price: product.saleprice || product.price,
+        price: roundToTwo(product.saleprice || product.price),
         quantity: item.quantity,
         image: product.productimg      });
     }
@@ -172,8 +175,9 @@ exports.processPayment = async (req, res) => {
       });
     }
 
-    const tax = subtotal * 0.08; // 8% tax rate
-    const total = subtotal + tax + tip + bagFee;
+    subtotal = roundToTwo(subtotal);
+    const tax = roundToTwo(subtotal * 0.08); // 8% tax rate
+    const total = roundToTwo(subtotal + tax + roundToTwo(tip) + roundToTwo(bagFee) + roundToTwo(deliveryFee));
 
     if (Math.abs(total - amount) > 0.01) {
       return res.status(400).json({ 
@@ -299,27 +303,28 @@ exports.processPayment = async (req, res) => {
           reject(new Error(`API Error: ${error.getCode()} - ${error.getText()}`));
         }
       });
-    });
-
-    console.log('Payment processing completed successfully');
+    });    console.log('Payment processing completed successfully');
 
     // Create order after successful payment
     const order = new Order({
       customer: user._id,
       items: validatedItems,
-      subtotal: subtotal,
-      tax: tax,
-      total: total,
+      subtotal: roundToTwo(subtotal),
+      tax: roundToTwo(tax),
+      total: roundToTwo(total),
       shippingAddress: orderType === 'delivery' ? shippingAddress : null,
       billingAddress: billingAddress,
       paymentInfo: {
         transactionId: paymentResult.transactionId,
         method: 'card',
-        amount: total
+        amount: roundToTwo(total)
       },
       orderType: orderType,
-      tip: tip,
-      bagFee: bagFee,
+      tip: roundToTwo(tip),
+      bagFee: roundToTwo(bagFee),
+      deliveryFee: roundToTwo(deliveryFee),
+      ageVerified: ageVerified,
+      ageVerifiedAt: ageVerifiedAt,
       status: 'pending'
     });
 
@@ -365,6 +370,9 @@ exports.processPayment = async (req, res) => {
 // Process payment with saved card - simplified version
 exports.processPaymentWithSavedCard = async (req, res) => {
   try {
+    // Helper function to round monetary values to 2 decimal places
+    const roundToTwo = (num) => Math.round((num + Number.EPSILON) * 100) / 100;
+    
     const {
       paymentMethodId,
       amount,
@@ -373,7 +381,10 @@ exports.processPaymentWithSavedCard = async (req, res) => {
       billingAddress,
       orderType = 'delivery',
       tip = 0,
-      bagFee = 0
+      bagFee = 0,
+      deliveryFee = 0,
+      ageVerified = false,
+      ageVerifiedAt = null
     } = req.body;
 
     const user = await User.findById(req.user.id);
@@ -396,21 +407,20 @@ exports.processPaymentWithSavedCard = async (req, res) => {
           message: `Product not found: ${item.product}` 
         });
       }
-      
-      const itemTotal = (product.saleprice || product.price) * item.quantity;
+        const itemTotal = roundToTwo((product.saleprice || product.price) * item.quantity);
       subtotal += itemTotal;
       
       validatedItems.push({
         product: product._id,
         name: product.name,
-        price: product.saleprice || product.price,
+        price: roundToTwo(product.saleprice || product.price),
         quantity: item.quantity,
         image: product.productimg
-      });
-    }
+      });    }
 
-    const tax = subtotal * 0.08;
-    const total = subtotal + tax + tip + bagFee;
+    subtotal = roundToTwo(subtotal);
+    const tax = roundToTwo(subtotal * 0.08);
+    const total = roundToTwo(subtotal + tax + roundToTwo(tip) + roundToTwo(bagFee) + roundToTwo(deliveryFee));
 
     if (Math.abs(total - amount) > 0.01) {
       return res.status(400).json({ 
@@ -538,26 +548,28 @@ exports.processPaymentWithSavedCard = async (req, res) => {
           const error = response.getMessages().getMessage()[0];
           reject(new Error(`API Error: ${error.getCode()} - ${error.getText()}`));
         }
-      });
-    });
+      });    });
 
     // Create order
     const order = new Order({
       customer: user._id,
       items: validatedItems,
-      subtotal: subtotal,
-      tax: tax,
-      total: total,
+      subtotal: roundToTwo(subtotal),
+      tax: roundToTwo(tax),
+      total: roundToTwo(total),
       shippingAddress: orderType === 'delivery' ? shippingAddress : null,
       billingAddress: billingAddress,
       paymentInfo: {
         transactionId: paymentResult.transactionId,
         method: 'saved_card',
-        amount: total
+        amount: roundToTwo(total)
       },
       orderType: orderType,
-      tip: tip,
-      bagFee: bagFee,
+      tip: roundToTwo(tip),
+      bagFee: roundToTwo(bagFee),
+      deliveryFee: roundToTwo(deliveryFee),
+      ageVerified: ageVerified,
+      ageVerifiedAt: ageVerifiedAt,
       status: 'pending'
     });
 

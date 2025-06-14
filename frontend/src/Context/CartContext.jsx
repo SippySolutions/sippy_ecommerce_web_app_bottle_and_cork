@@ -41,12 +41,12 @@ export const CartProvider = ({ children }) => {
   const clearCart = () => {
     setCartItems([]);
   };
-
   const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => {
+    const total = cartItems.reduce((total, item) => {
       const price = item.saleprice || item.price || 0;
       return total + (price * item.quantity);
     }, 0);
+    return Math.round((total + Number.EPSILON) * 100) / 100;
   };
 
   return (

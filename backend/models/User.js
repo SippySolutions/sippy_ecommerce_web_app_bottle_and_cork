@@ -52,10 +52,10 @@ const userSchema = new mongoose.Schema(
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email address'] },
     password:  { type: String, required: [true, 'Password is required'], minlength: [6, 'Password must be at least 6 characters long'] },
     phone:     { type: String },
-    dob:       { type: Date },
-    addresses: [addressSchema], // <-- Added for delivery support
+    dob:       { type: Date },    addresses: [addressSchema], // <-- Added for delivery support
     orders:    [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }],
     billing:   [billingSchema],
+    wishlist:  [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }], // Added wishlist
     authorizeNetCustomerProfileId: { type: String }, // For Authorize.Net saved cards
   },
   { timestamps: true }

@@ -5,15 +5,16 @@ import { toast } from 'react-toastify';
 import { CartContext } from '../Context/CartContext';
 import { AuthContext } from '../components/AuthContext';
 import { useCMS } from '../Context/CMSContext';
+import { useAgeVerification } from '../Context/AgeVerificationContext';
 import AcceptJSForm from '../components/Payment/AcceptJSForm';
 import axios from 'axios';
 import { processCheckout, processSavedCardCheckout } from '../services/api';
 
 const Checkout = () => {
-  const navigate = useNavigate();
-  const { cartItems, getTotalPrice, clearCart } = useContext(CartContext);
+  const navigate = useNavigate();  const { cartItems, getTotalPrice, clearCart } = useContext(CartContext);
   const { user, isAuthenticated } = useContext(AuthContext);
   const { cmsData } = useCMS();
+  const { getAgeVerificationStatus } = useAgeVerification();
 
   const [loading, setLoading] = useState(false);
   const [orderType, setOrderType] = useState('delivery');
@@ -87,14 +88,18 @@ const Checkout = () => {
   useEffect(() => {
     if (sameAsShipping) {
       setBillingAddress({ ...shippingAddress });
-    }
-  }, [shippingAddress, sameAsShipping]);  const subtotal = getTotalPrice();
-  const tax = subtotal * 0.08; // 8% tax
+    }  }, [shippingAddress, sameAsShipping]);
+
+  // Helper function to round to 2 decimal places
+  const roundToTwo = (num) => Math.round((num + Number.EPSILON) * 100) / 100;
+
+  const subtotal = roundToTwo(getTotalPrice());
+  const tax = roundToTwo(subtotal * 0.08); // 8% tax
   
   // Calculate conditional delivery fee
-  const deliveryFee = (orderType === 'delivery' && subtotal < deliveryMinimum) ? deliveryFeeAmount : 0;
+  const deliveryFee = (orderType === 'delivery' && subtotal < deliveryMinimum) ? roundToTwo(deliveryFeeAmount) : 0;
   
-  const total = subtotal + tax + tip + (orderType === 'delivery' ? bagFee + deliveryFee : 0);
+  const total = roundToTwo(subtotal + tax + tip + (orderType === 'delivery' ? roundToTwo(bagFee) + deliveryFee : 0));
 
   const handleAddressChange = (type, field, value) => {
     if (type === 'shipping') {
@@ -128,13 +133,19 @@ const Checkout = () => {
     setStep(prev => prev - 1);
   };  const handleAcceptJSToken = async (tokenData) => {
     setLoading(true);
-    try {
-      // Check if user wants to save card but has reached limit
+    try {      // Check if user wants to save card but has reached limit
       const shouldSaveCard = saveCard && user?.billing?.length < 3;
       
       if (saveCard && user?.billing?.length >= 3) {
         toast.warning('Card limit reached. Processing payment without saving card.');
-      }      const orderData = {
+      }
+
+      // Get age verification data
+      const ageVerificationData = getAgeVerificationStatus();
+      const ageVerified = Boolean(ageVerificationData);
+      const ageVerifiedAt = ageVerified ? new Date(ageVerificationData) : null;
+
+      const orderData = {
         dataDescriptor: tokenData.dataDescriptor,
         dataValue: tokenData.dataValue,
         amount: total,
@@ -148,7 +159,9 @@ const Checkout = () => {
         tip: tip,
         bagFee: orderType === 'delivery' ? bagFee : 0,
         deliveryFee: orderType === 'delivery' ? deliveryFee : 0,
-        saveCard: shouldSaveCard
+        saveCard: shouldSaveCard,
+        ageVerified: ageVerified,
+        ageVerifiedAt: ageVerifiedAt
       };
 
       const response = await processCheckout(orderData);
@@ -172,10 +185,14 @@ const Checkout = () => {
     if (!selectedCard) {
       toast.error('Please select a payment method');
       return;
-    }
+    }    setLoading(true);
+    try {
+      // Get age verification data
+      const ageVerificationData = getAgeVerificationStatus();
+      const ageVerified = Boolean(ageVerificationData);
+      const ageVerifiedAt = ageVerified ? new Date(ageVerificationData) : null;
 
-    setLoading(true);
-    try {      const orderData = {
+      const orderData = {
         paymentMethodId: selectedCard.id,
         amount: total,
         cartItems: cartItems.map(item => ({
@@ -187,7 +204,9 @@ const Checkout = () => {
         orderType: orderType,
         tip: tip,
         bagFee: orderType === 'delivery' ? bagFee : 0,
-        deliveryFee: orderType === 'delivery' ? deliveryFee : 0
+        deliveryFee: orderType === 'delivery' ? deliveryFee : 0,
+        ageVerified: ageVerified,
+        ageVerifiedAt: ageVerifiedAt
       };const response = await processSavedCardCheckout(orderData);
 
       if (response.success) {

@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from './AuthContext'; // Import AuthContext
 import { useCart } from '../Context/CartContext'; // Import CartContext
+import { useWishlist } from '../Context/WishlistContext'; // Import WishlistContext
 import { useCMS } from '../Context/CMSContext'; // Import CMS Context
 import SearchBar from './SearchBar'; // Import SearchBar component
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -15,9 +16,9 @@ import ListIcon from '@mui/icons-material/List';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import { fetchDepartments } from '../services/api'; // Import your API function
 
-function Navbar() {
-  const { user, logout } = useContext(AuthContext); // Use user and logout from AuthContext
+function Navbar() {  const { user, logout } = useContext(AuthContext); // Use user and logout from AuthContext
   const { cartItems } = useCart(); // Access cartItems from CartContext
+  const { getWishlistCount } = useWishlist(); // Access wishlist count from WishlistContext
   const { 
     cmsData, 
     loading: cmsLoading, 
@@ -26,7 +27,7 @@ function Navbar() {
     getCurrentStoreStatus 
   } = useCMS(); // Use CMS context
   
-  const [wishlistCount, setWishlistCount] = useState(); // Example wishlist count
+  const wishlistCount = getWishlistCount(); // Get dynamic wishlist count
   const [departments, setDepartments] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false); // State to toggle dropdown
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // State for mobile menu
@@ -164,10 +165,9 @@ function Navbar() {
             <Link to="/account/myDetails" className="text-gray-600 hover:text-[var(--color-accent)] flex items-center">
               <AccountCircleIcon className="mr-2" />
               Account
-            </Link>
-            <Link to="/wishlist" className="text-gray-600 hover:text-[var(--color-accent)] flex items-center">
+            </Link>            <Link to="/wishlist" className="text-gray-600 hover:text-[var(--color-accent)] flex items-center">
               <FavoriteIcon className="mr-2" />
-              Wishlist
+              Wishlist ({wishlistCount})
             </Link>
             <Link to="/cart" className="text-gray-600 hover:text-[var(--color-accent)] flex items-center">
               <ShoppingCartIcon className="mr-2" />

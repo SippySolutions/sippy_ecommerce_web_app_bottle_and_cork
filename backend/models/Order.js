@@ -42,11 +42,13 @@ const orderSchema = new mongoose.Schema({
     lastFour: String,
     cardType: String,
     amount: { type: Number, required: true }
-  },
-  orderNumber: { type: String, unique: true },
+  },  orderNumber: { type: String, unique: true },
   orderType: { type: String, enum: ['pickup', 'delivery'], default: 'delivery' },
   tip: { type: Number, default: 0 },
-  bagFee: { type: Number, default: 0 }
+  bagFee: { type: Number, default: 0 },
+  deliveryFee: { type: Number, default: 0 },
+  ageVerified: { type: Boolean, default: false },
+  ageVerifiedAt: { type: Date }
 }, { timestamps: true });
 
 // Generate order number before validation

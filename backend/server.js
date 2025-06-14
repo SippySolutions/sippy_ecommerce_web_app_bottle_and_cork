@@ -13,6 +13,7 @@ const similarProductRoutes = require('./routes/similarProductRoutes');
 const userRoutes = require('./routes/userRoutes'); // Import user routes
 const orderRoutes = require('./routes/orderRoutes'); // Import order routes
 const checkoutRoutes = require('./routes/checkoutRoutes'); // Import checkout routes
+const wishlistRoutes = require('./routes/wishlistRoutes'); // Import wishlist routes
 
 dotenv.config();
 connectDB();
@@ -38,6 +39,7 @@ app.use('/api', authRoutes);
 app.use('/api/users', userRoutes); // Register user routes
 app.use('/api/orders', orderRoutes); // Register order routes
 app.use('/api/checkout', checkoutRoutes); // Register checkout routes
+app.use('/api/wishlist', wishlistRoutes); // Register wishlist routes
 const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {

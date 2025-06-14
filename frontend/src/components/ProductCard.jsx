@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../Context/CartContext';
 import { useCMS } from '../Context/CMSContext';
 import { toast } from 'react-toastify';
+import WishlistIcon from './WishlistIcon';
 
 // Minimal icon components
 const StarIcon = ({ className }) => (
@@ -107,10 +108,14 @@ function ProductCard({ product }) {
     <div
       className="group relative bg-white rounded-lg border border-gray-200 hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden w-full h-[400px] flex flex-col"
       onClick={handleCardClick}
-    >
-      {/* Top Right Badges */}
+    >      {/* Top Right Badges */}
       <div className="absolute top-2 right-2 z-10">
         <div className="flex flex-col gap-1">
+          {/* Wishlist Icon */}
+          <div className="self-end">
+            <WishlistIcon product={product} size="sm" />
+          </div>
+          
           {product.bestseller && (
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-accent/10 text-accent border border-accent/20">
               <StarIcon className="w-3 h-3" />
@@ -128,7 +133,8 @@ function ProductCard({ product }) {
               <UserGroupIcon className="w-3 h-3" />
               Staff Pick
             </span>
-          )}          {getDiscountPercentage() > 0 && (
+          )}
+          {getDiscountPercentage() > 0 && (
             <div 
               className="text-white px-2 py-1 rounded-md text-xs font-bold shadow-lg"
               style={{ backgroundColor: theme.accent }}
@@ -137,7 +143,7 @@ function ProductCard({ product }) {
             </div>
           )}
         </div>
-      </div>      {/* Left Floating Icons for Extra Info */}
+      </div>{/* Left Floating Icons for Extra Info */}
       <div className="absolute top-2 left-2 z-10">
         <div className="flex flex-col gap-1">
           {/* Vintage Icon */}

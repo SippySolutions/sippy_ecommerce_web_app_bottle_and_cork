@@ -346,8 +346,7 @@ export const getSearchSuggestions = async (query, type = 'all') => {
     const response = await axios.get(`${API_BASE_URL}/products/search/suggestions?${params}`);
     return response.data;
   } catch (error) {
-    console.error('Error getting search suggestions:', error.response || error);
-    
+    console.error('Error getting search suggestions:', error.response || error);    
     const errorMessage = error.response?.data?.message || 
                         error.response?.data?.error || 
                         error.message || 
@@ -359,3 +358,85 @@ export const getSearchSuggestions = async (query, type = 'all') => {
     throw errorObj;
   }
 };
+
+// Wishlist API functions
+export const getWishlist = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/wishlist`, {
+      headers: getAuthHeaders()
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Get wishlist error:', error);
+    throw error;
+  }
+};
+
+export const addToWishlist = async (productId) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/wishlist`, 
+      { productId }, 
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Add to wishlist error:', error);
+    throw error;
+  }
+};
+
+export const removeFromWishlist = async (productId) => {
+  try {
+    const response = await axios.delete(`${API_BASE_URL}/wishlist/${productId}`, {
+      headers: getAuthHeaders()
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Remove from wishlist error:', error);
+    throw error;
+  }
+};
+
+export const clearWishlist = async () => {
+  try {
+    const response = await axios.delete(`${API_BASE_URL}/wishlist`, {
+      headers: getAuthHeaders()
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Clear wishlist error:', error);
+    throw error;
+  }
+};
+
+export const isInWishlist = async (productId) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/wishlist/check/${productId}`, {
+      headers: getAuthHeaders()
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Check wishlist error:', error);
+    throw error;
+  }
+};
+
+// Create axios instance as default export
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Add interceptor to include auth headers automatically
+api.interceptors.request.use((config) => {
+  const authHeaders = getAuthHeaders();
+  config.headers = {
+    ...config.headers,
+    ...authHeaders
+  };
+  return config;
+});
+
+export default api;
