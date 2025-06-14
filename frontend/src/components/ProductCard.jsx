@@ -103,15 +103,13 @@ function ProductCard({ product }) {
       currency: 'USD',
       minimumFractionDigits: 2
     }).format(price);
-  };
-
-  return (
+  };  return (
     <div
-      className="group relative bg-white rounded-lg border border-gray-200 hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden w-full h-[420px] flex flex-col"
+      className="group relative bg-white rounded-lg border border-gray-200 hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden w-full h-[400px] flex flex-col"
       onClick={handleCardClick}
     >
-      {/* Status Badges */}
-      <div className="absolute top-2 left-2 right-2 flex justify-between items-start z-10">
+      {/* Top Right Badges */}
+      <div className="absolute top-2 right-2 z-10">
         <div className="flex flex-col gap-1">
           {product.bestseller && (
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-accent/10 text-accent border border-accent/20">
@@ -131,17 +129,57 @@ function ProductCard({ product }) {
               Staff Pick
             </span>
           )}
+          {getDiscountPercentage() > 0 && (
+            <div className="bg-accent text-white px-2 py-1 rounded-md text-xs font-bold">
+              -{getDiscountPercentage()}%
+            </div>
+          )}
         </div>
-
-        {getDiscountPercentage() > 0 && (
-          <div className="bg-accent text-white px-2 py-1 rounded-md text-xs font-bold">
-            -{getDiscountPercentage()}%
-          </div>
-        )}
-      </div>
-
-      {/* Product Image */}
-      <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+      </div>      {/* Left Floating Icons for Extra Info */}
+      <div className="absolute top-2 left-2 z-10">
+        <div className="flex flex-col gap-1">
+          {/* Vintage Icon */}
+          {product.vintage && product.vintage !== "No Vintage" && (
+            <div 
+              className="w-6 h-6 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-sm border border-white/20 hover:scale-110 transition-all duration-200"
+              style={{ backgroundColor: `${theme.primary}CC` }}
+              title={`Vintage: ${product.vintage}`}
+            >
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zM4 7h12v9H4V7z" />
+                <path d="M10 8a1 1 0 011 1v2a1 1 0 11-2 0V9a1 1 0 011-1z" />
+              </svg>
+            </div>
+          )}
+          
+          {/* ABV Icon */}
+          {product.abv && (
+            <div 
+              className="w-6 h-6 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-sm border border-white/20 hover:scale-110 transition-all duration-200"
+              style={{ backgroundColor: `${theme.accent}CC` }}
+              title={`ABV: ${product.abv}%`}
+            >
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+              </svg>
+            </div>
+          )}
+          
+          {/* Country/Origin Icon */}
+          {product.country && product.country !== "NAN" && (
+            <div 
+              className="w-6 h-6 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-sm border border-white/20 hover:scale-110 transition-all duration-200"
+              style={{ backgroundColor: `${theme.secondary}CC` }}
+              title={`Origin: ${product.country}`}
+            >
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clipRule="evenodd" />
+              </svg>
+            </div>
+          )}
+        </div>
+      </div>      {/* Product Image */}
+      <div className="relative h-40 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-3">
         <img
           src={product.productimg || '/placeholder-image.png'}
           alt={product.name}
@@ -153,108 +191,113 @@ function ProductCard({ product }) {
         />
         {!imageLoaded && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-pulse bg-gray-300 rounded w-16 h-20"></div>
+            <div className="animate-pulse bg-gray-300 rounded w-12 h-16"></div>
           </div>
         )}
-      </div>
-
-      {/* Product Information */}
-      <div className="p-3 flex-1 flex flex-col">
-        {/* Category & Brand */}
-        <div className="flex items-center justify-between gap-2 mb-2">
-          {(product.category || product.department) && (
-            <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md truncate">
-              {product.category || product.department}
-            </span>
-          )}
-          {product.brand && (
-            <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-md truncate">
-              {product.brand}
-            </span>
-          )}
-        </div>
-
+      </div>      {/* Product Information */}
+      <div className="p-3 flex-1 flex flex-col min-h-0">
         {/* Product Name */}
-        <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 mb-2 group-hover:text-primary transition-colors flex-shrink-0">
+        <h3 className="font-semibold text-base text-gray-900 line-clamp-2 mb-2 group-hover:text-primary transition-colors flex-shrink-0">
           {product.name}
         </h3>
 
-        {/* Product Details - Only show most important ones */}
-        <div className="text-xs text-gray-600 space-y-1 mb-3 flex-1">
-          {product.vintage && product.vintage !== "No Vintage" && (
-            <div className="truncate">Vintage: {product.vintage}</div>
-          )}
-          {product.abv && (
-            <div>ABV: {product.abv}%</div>
-          )}
-          {product.size && (
-            <div className="truncate">Size: {product.size}</div>
-          )}
-          {product.country && product.country !== "NAN" && (
-            <div className="truncate">Origin: {product.country}</div>
-          )}
-        </div>
-
-        {/* Stock Status */}
-        <div className="mb-3">
-          {getStockLevel() === 'out-of-stock' ? (
-            <div className="flex items-center gap-1 text-xs text-red-600">
-              <XIcon className="w-3 h-3 flex-shrink-0" />
-              Out of Stock
-            </div>
-          ) : getStockLevel() === 'low-stock' ? (
-            <div className="flex items-center gap-1 text-xs text-orange-600">
-              <ExclamationIcon className="w-3 h-3 flex-shrink-0" />
-              {product.totalqty} left
-            </div>
-          ) : (
-            <div className="flex items-center gap-1 text-xs text-green-600">
-              <CheckIcon className="w-3 h-3 flex-shrink-0" />
-              In Stock
-            </div>
-          )}
-        </div>
-
-        {/* Price Section */}
-        <div className="mb-3">
-          {product.saleprice > 0 ? (
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-accent">
-                {formatPrice(product.saleprice)}
-              </span>
-              <span className="text-sm text-gray-500 line-through">
-                {formatPrice(product.price)}
-              </span>
-            </div>
-          ) : (
-            <span className="text-lg font-bold text-gray-900">
-              {formatPrice(product.price)}
+        {/* Brand */}
+        {product.brand && (
+          <div className="mb-2 flex-shrink-0">
+            <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+              {product.brand}
             </span>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Add to Cart Button */}
-        <button
-          onClick={handleAddToCart}
-          disabled={product.totalqty <= 0}
-          className={`w-full py-2.5 px-4 rounded-md font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
-            product.totalqty > 0
-              ? 'bg-primary hover:bg-primary/90 text-white shadow-sm hover:shadow-md'
-              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          {product.totalqty > 0 ? (
-            <>
-              <ShoppingCartIcon className="w-4 h-4" />
-              Add to Cart
-            </>
-          ) : (
-            <>
-              <XIcon className="w-4 h-4" />
-              Out of Stock
-            </>
-          )}
-        </button>
+        {/* Flexible space */}
+        <div className="flex-1 min-h-0"></div>
+
+        {/* Bottom Section - Categorization, Pricing, Size Details */}
+        <div className="space-y-2 flex-shrink-0">
+          {/* Category and Size Row */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Category */}
+            <div className="flex items-center gap-2">
+              {(product.category || product.department) && (
+                <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">
+                  {product.category || product.department}
+                </span>
+              )}
+            </div>
+            
+            {/* Size */}
+            {product.size && (
+              <span className="text-xs text-gray-700 font-medium">
+                {product.size}
+              </span>
+            )}
+          </div>
+
+          {/* Stock Status */}
+          <div className="flex justify-between items-center">
+            {getStockLevel() === 'out-of-stock' ? (
+              <div className="flex items-center gap-1 text-xs text-red-600">
+                <XIcon className="w-3 h-3 flex-shrink-0" />
+                Out of Stock
+              </div>
+            ) : getStockLevel() === 'low-stock' ? (
+              <div className="flex items-center gap-1 text-xs text-orange-600">
+                <ExclamationIcon className="w-3 h-3 flex-shrink-0" />
+                {product.totalqty} left
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-xs text-green-600">
+                <CheckIcon className="w-3 h-3 flex-shrink-0" />
+                In Stock
+              </div>
+            )}
+          </div>
+
+          {/* Price Section */}
+          <div className="text-center">
+            {product.saleprice > 0 ? (
+              <div className="space-y-1">
+                <div className="text-xl font-bold text-accent">
+                  {formatPrice(product.saleprice)}
+                </div>
+                <div className="text-sm text-gray-500 line-through">
+                  {formatPrice(product.price)}
+                </div>
+              </div>
+            ) : (
+              <div className="text-xl font-bold text-gray-900">
+                {formatPrice(product.price)}
+              </div>
+            )}
+          </div>
+
+          {/* Add to Cart Button */}
+          <button
+            onClick={handleAddToCart}
+            disabled={product.totalqty <= 0}
+            className={`w-full py-2.5 px-4 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg ${
+              product.totalqty > 0
+                ? 'text-white hover:opacity-90 transform hover:scale-105'
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            }`}
+            style={{
+              backgroundColor: product.totalqty > 0 ? theme.accent : undefined
+            }}
+          >
+            {product.totalqty > 0 ? (
+              <>
+                <ShoppingCartIcon className="w-4 h-4" />
+                Add to Cart
+              </>
+            ) : (
+              <>
+                <XIcon className="w-4 h-4" />
+                Out of Stock
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
