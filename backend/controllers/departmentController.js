@@ -3,11 +3,16 @@ const Product = require('../models/Product');
 // Controller to get departments with categories and subcategories
 const getDepartmentsWithCategories = async (req, res) => {
   try {
-    const departments = await Product.aggregate([
-      // Match only documents with valid department and exclude "MISC"
+    const departments = await Product.aggregate([      // Match only documents with valid department and exclude "MISC" and "TOBACCO"
       {
         $match: {
-          department: { $exists: true, $ne: null, $ne: '', $ne: 'MISC' }, // Exclude "MISC"
+          department: { 
+            $exists: true, 
+            $ne: null, 
+            $ne: '', 
+            $ne: 'MISC',
+            $not: { $regex: /^tobacco$/i } // Exclude tobacco (case-insensitive)
+          },
         },
       },
       // Group by department, category, and subcategory

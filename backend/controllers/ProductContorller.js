@@ -2,7 +2,8 @@ const Product = require('../models/Product');
 
 const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find();
+    // Exclude products where department is 'TOBACCO' (case-insensitive, any case)
+    const products = await Product.find({ department: { $not: { $regex: /^tobacco$/i } } });
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch products' });
@@ -30,8 +31,11 @@ const getFeaturedProducts = async (req, res) => {
       return res.status(400).json({ error: 'Invalid type. Allowed values are bestseller, exclusive, staffPick.' });
     }
 
-    // Build the query dynamically based on the type
-    const query = { bestseller: true };
+    // Build the query dynamically based on the type and exclude tobacco
+    const query = { 
+      bestseller: true,
+      department: { $not: { $regex: /^tobacco$/i } }  // Exclude tobacco department
+    };
 
     console.log('Fetching products with query:', query); // Debug log
 
@@ -62,10 +66,11 @@ const searchProducts = async (req, res) => {
         success: false, 
         message: 'Search query or filter parameters required' 
       });
-    }
-
-    // Build search criteria
-    let searchCriteria = {};
+    }    // Build search criteria
+    let searchCriteria = {
+      // Always exclude tobacco department
+      department: { $not: { $regex: /^tobacco$/i } }
+    };
     
     // Text search across multiple fields
     if (q) {
@@ -82,7 +87,23 @@ const searchProducts = async (req, res) => {
 
     // Additional filters
     if (department) {
-      searchCriteria.department = new RegExp(department, 'i');
+      // If filtering by department, still exclude tobacco but allow other departments
+      if (department.toLowerCase() !== 'tobacco') {
+        searchCriteria.department = { 
+          $regex: new RegExp(department, 'i'), 
+          $not: { $regex: /^tobacco$/i } 
+        };
+      } else {
+        // If someone tries to search for tobacco specifically, return empty results
+        return res.json({
+          success: true,
+          products: [],
+          pagination: { page: 1, limit: parseInt(limit), total: 0, totalPages: 0 },
+          searchQuery: q,
+          filters: { department, category, subcategory },
+          suggestions: { departments: [], categories: [], subcategories: [], brands: [] }
+        });
+      }
     }
     if (category) {
       searchCriteria.category = new RegExp(category, 'i');
@@ -103,11 +124,14 @@ const searchProducts = async (req, res) => {
         .limit(parseInt(limit))
         .sort({ name: 1 }), // Sort by name ascending
       Product.countDocuments(searchCriteria)
-    ]);
-
-    // Get search suggestions (departments, categories, subcategories)
+    ]);    // Get search suggestions (departments, categories, subcategories) - exclude tobacco
     const suggestions = await Product.aggregate([
-      { $match: searchCriteria },
+      { 
+        $match: { 
+          ...searchCriteria,
+          department: { $not: { $regex: /^tobacco$/i } } // Ensure tobacco is excluded from suggestions too
+        } 
+      },
       {
         $group: {
           _id: null,
@@ -150,37 +174,62 @@ const getSearchSuggestions = async (req, res) => {
     
     if (!q || q.length < 2) {
       return res.json({ success: true, suggestions: [] });
-    }
-
-    const searchRegex = new RegExp(q, 'i');
+    }    const searchRegex = new RegExp(q, 'i');
     let suggestions = [];
+
+    // Base filter to exclude tobacco department
+    const baseFilter = { department: { $not: { $regex: /^tobacco$/i } } };
 
     switch (type) {
       case 'products':
         suggestions = await Product.find(
-          { name: searchRegex },
+          { 
+            name: searchRegex,
+            ...baseFilter
+          },
           { name: 1, sku: 1, brand: 1 }
         ).limit(10);
         break;
       
       case 'departments':
-        suggestions = await Product.distinct('department', { department: searchRegex });
+        suggestions = await Product.distinct('department', { 
+          department: searchRegex,
+          ...baseFilter
+        });
         break;
       
       case 'categories':
-        suggestions = await Product.distinct('category', { category: searchRegex });
+        suggestions = await Product.distinct('category', { 
+          category: searchRegex,
+          ...baseFilter
+        });
         break;
       
       case 'subcategories':
-        suggestions = await Product.distinct('subcategory', { subcategory: searchRegex });
+        suggestions = await Product.distinct('subcategory', { 
+          subcategory: searchRegex,
+          ...baseFilter
+        });
         break;
       
       default: // 'all'
         const [products, departments, categories, subcategories] = await Promise.all([
-          Product.find({ name: searchRegex }, { name: 1, sku: 1 }).limit(5),
-          Product.distinct('department', { department: searchRegex }),
-          Product.distinct('category', { category: searchRegex }),
-          Product.distinct('subcategory', { subcategory: searchRegex })
+          Product.find({ 
+            name: searchRegex,
+            ...baseFilter
+          }, { name: 1, sku: 1 }).limit(5),
+          Product.distinct('department', { 
+            department: searchRegex,
+            ...baseFilter
+          }),
+          Product.distinct('category', { 
+            category: searchRegex,
+            ...baseFilter
+          }),
+          Product.distinct('subcategory', { 
+            subcategory: searchRegex,
+            ...baseFilter
+          })
         ]);
         
         suggestions = {
