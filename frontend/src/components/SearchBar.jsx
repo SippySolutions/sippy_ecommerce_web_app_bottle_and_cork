@@ -62,11 +62,10 @@ const SearchBar = ({ className = '', placeholder = "Search products, brands, cat
   const handleInputChange = (e) => {
     setSearchTerm(e.target.value);
   };
-
   const handleSearch = (query = searchTerm) => {
     if (query.trim()) {
       setShowSuggestions(false);
-      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+      navigate(`/products?q=${encodeURIComponent(query.trim())}`);
     }
   };
 
@@ -77,25 +76,31 @@ const SearchBar = ({ className = '', placeholder = "Search products, brands, cat
       setShowSuggestions(false);
     }
   };
-
   const handleSuggestionClick = (suggestion, type) => {
-    let searchQuery = '';
+    setShowSuggestions(false);
     
     switch (type) {
       case 'product':
-        searchQuery = suggestion.name;
+        // Navigate directly to the product page
+        navigate(`/products/${suggestion._id}`);
         break;
       case 'department':
+        // Navigate to products filtered by department
+        navigate(`/products?department=${encodeURIComponent(suggestion)}`);
+        break;
       case 'category':
+        // Navigate to products filtered by category
+        navigate(`/products?category=${encodeURIComponent(suggestion)}`);
+        break;
       case 'subcategory':
-        searchQuery = suggestion;
+        // Navigate to products filtered by subcategory
+        navigate(`/products?subcategory=${encodeURIComponent(suggestion)}`);
         break;
       default:
-        searchQuery = suggestion;
+        // Fallback: search for the suggestion
+        setSearchTerm(suggestion);
+        navigate(`/products?q=${encodeURIComponent(suggestion)}`);
     }
-    
-    setSearchTerm(searchQuery);
-    handleSearch(searchQuery);
   };
 
   const clearSearch = () => {
@@ -146,15 +151,12 @@ const SearchBar = ({ className = '', placeholder = "Search products, brands, cat
             <SearchIcon />
           )}
         </button>
-      </div>
-
-      {/* Search Suggestions Dropdown */}
+      </div>      {/* Search Suggestions Dropdown */}
       {showSuggestions && suggestions && (
         <div
           ref={suggestionsRef}
-          className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 mt-1 max-h-96 overflow-y-auto"
-        >
-          {/* Products */}
+          className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 mt-1 max-h-80 overflow-y-auto"
+        >{/* Products */}
           {suggestions.products && suggestions.products.length > 0 && (
             <div className="p-2">
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -164,15 +166,58 @@ const SearchBar = ({ className = '', placeholder = "Search products, brands, cat
                 <button
                   key={product._id}
                   onClick={() => handleSuggestionClick(product, 'product')}
-                  className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md flex items-center space-x-3"
+                  className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md flex items-center space-x-3 group"
                 >
-                  <SearchIcon className="text-gray-400" fontSize="small" />
-                  <div>
-                    <div className="font-medium text-sm">{product.name}</div>
-                    {product.sku && (
-                      <div className="text-xs text-gray-500">SKU: {product.sku}</div>
+                  {/* Product Image */}
+                  <div className="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-md overflow-hidden">
+                    {product.productimg ? (
+                      <img
+                        src={product.productimg}
+                        alt={product.name}
+                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                        <SearchIcon className="text-gray-400" fontSize="small" />
+                      </div>
                     )}
                   </div>
+                  
+                  {/* Product Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm text-gray-900 truncate">{product.name}</div>
+                    <div className="flex items-center space-x-3 text-xs text-gray-500 mt-1">
+                      {product.sku && (
+                        <span className="bg-gray-100 px-2 py-0.5 rounded">SKU: {product.sku}</span>
+                      )}
+                      {product.size && (
+                        <span>Size: {product.size}</span>
+                      )}
+                      {product.packsize && product.packsize !== product.size && (
+                        <span>Pack: {product.packsize}</span>
+                      )}
+                    </div>
+                    {product.brand && (
+                      <div className="text-xs text-gray-600 mt-0.5 truncate">
+                        Brand: {product.brand}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Price (if available) */}
+                  {product.price && (
+                    <div className="flex-shrink-0 text-right">
+                      <div className="text-sm font-semibold text-gray-900">
+                        ${product.price}
+                      </div>
+                      {product.saleprice > 0 && product.saleprice < product.price && (
+                        <div className="text-xs text-red-600">
+                          Sale: ${product.saleprice}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </button>
               ))}
             </div>

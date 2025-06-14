@@ -180,14 +180,22 @@ const getSearchSuggestions = async (req, res) => {
     // Base filter to exclude tobacco department
     const baseFilter = { department: { $not: { $regex: /^tobacco$/i } } };
 
-    switch (type) {
-      case 'products':
+    switch (type) {      case 'products':
         suggestions = await Product.find(
           { 
             name: searchRegex,
             ...baseFilter
           },
-          { name: 1, sku: 1, brand: 1 }
+          { 
+            name: 1, 
+            sku: 1, 
+            brand: 1, 
+            productimg: 1, 
+            size: 1, 
+            packsize: 1, 
+            price: 1, 
+            saleprice: 1 
+          }
         ).limit(10);
         break;
       
@@ -211,13 +219,21 @@ const getSearchSuggestions = async (req, res) => {
           ...baseFilter
         });
         break;
-      
-      default: // 'all'
+        default: // 'all'
         const [products, departments, categories, subcategories] = await Promise.all([
           Product.find({ 
             name: searchRegex,
             ...baseFilter
-          }, { name: 1, sku: 1 }).limit(5),
+          }, { 
+            name: 1, 
+            sku: 1, 
+            brand: 1, 
+            productimg: 1, 
+            size: 1, 
+            packsize: 1, 
+            price: 1, 
+            saleprice: 1 
+          }).limit(5),
           Product.distinct('department', { 
             department: searchRegex,
             ...baseFilter
