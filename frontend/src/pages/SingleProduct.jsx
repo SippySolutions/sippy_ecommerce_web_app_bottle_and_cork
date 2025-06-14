@@ -1,221 +1,579 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { fetchProductById } from '../services/api';
-import SimilarProducts from '../components/SimilarProducts'; // Import SimilarProducts component
+import { useCart } from '../Context/CartContext';
+import { useCMS } from '../Context/CMSContext';
+import SimilarProducts from '../components/SimilarProducts';
+import { toast } from 'react-toastify';
 
 function SingleProduct() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
+  const { getTheme } = useCMS();
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
-
+  const [loading, setLoading] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState('description');
+  
+  const theme = getTheme();
   useEffect(() => {
     async function fetchData() {
-      const productData = await fetchProductById(id);
-      setProduct(productData);
+      try {
+        setLoading(true);
+        const productData = await fetchProductById(id);
+        setProduct(productData);
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        toast.error('Failed to load product details');
+      } finally {
+        setLoading(false);
+      }
     }
     fetchData();
   }, [id]);
 
-  if (!product) {
-    return <div>Loading...</div>;
+  const handleAddToCart = () => {
+    if (product && product.totalqty > 0) {
+      addToCart(
+        {
+          ...product,
+          salePrice: typeof product.saleprice === 'number' && product.saleprice > 0
+            ? product.saleprice
+            : product.price,
+        },
+        quantity
+      );
+      toast.success(`${quantity} ${product.name} added to cart!`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: product.name,
+          text: `Check out ${product.name}`,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Product link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+    }).format(price);
+  };
+
+  const getDiscountPercentage = () => {
+    if (product?.saleprice > 0 && product?.price > product?.saleprice) {
+      return Math.round(((product.price - product.saleprice) / product.price) * 100);
+    }
+    return 0;
+  };
+
+  const getStockStatus = () => {
+    if (!product) return { status: 'unknown', color: 'gray', text: 'Unknown' };
+    if (product.totalqty === 0) return { status: 'out-of-stock', color: 'red', text: 'Out of Stock' };
+    if (product.totalqty <= 5) return { status: 'low-stock', color: 'orange', text: `Low Stock (${product.totalqty} left)` };
+    return { status: 'in-stock', color: 'green', text: `In Stock (${product.totalqty} available)` };
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: theme.primary }}></div>
+          <p className="text-gray-600">Loading product details...</p>
+        </div>
+      </div>
+    );
   }
 
-  return (
-    <div className=" py-8 w-full bg-white">
-      <div className='container mx-auto px-4'>
-
-      {/* Breadcrumbs */}
-      <div className="mb-6 text-sm">
-        <span className="text-[var(--color-muted-foreground)]">Home</span>
-        <span className="mx-2 text-[var(--color-muted-foreground)]">→</span>
-        <span className="text-[var(--color-muted-foreground)]">Shop</span>
-        <span className="mx-2 text-[var(--color-muted-foreground)]">→</span>
-        <span className="text-[var(--color-muted-foreground)]">{product.category || 'Product'}</span>
-        <span className="mx-2 text-[var(--color-muted-foreground)]">→</span>
-        <span className="text-[var(--color-foreground)] font-semibold">{product.name}</span>
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Product Image */}
-        <div className="flex-1 flex flex-col items-center">
-          <img
-            src={product.productimg || '/placeholder-image.png'}
-            alt={product.name}
-            className="h-[420px] w-auto object-contain rounded bg-[var(--color-input-background)] "
-          />
-        
+  if (!product) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2>
+          <p className="text-gray-600 mb-6">The product you're looking for doesn't exist or has been removed.</p>
+          <button
+            onClick={() => navigate('/products')}
+            className="px-6 py-3 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: theme.primary }}
+          >
+            Browse All Products
+          </button>
         </div>
+      </div>
+    );
+  }
 
-        {/* Product Details Card */}
-        <div className="flex-1 max-w-xl bg-[var(--color-muted)] rounded-lg shadow p-8">
-          {/* SKU and Share */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-xs text-[var(--color-muted-foreground)]">
-              SKU: <span className="font-mono">{product.sku}</span>
-              <button
-                className="ml-1 text-[var(--color-accent)] hover:underline"
-                title="Copy SKU"
-                onClick={() => navigator.clipboard.writeText(product.sku)}
-              >
-                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <rect x="9" y="9" width="13" height="13" rx="2" />
-                  <rect x="1" y="1" width="13" height="13" rx="2" />
-                </svg>
-              </button>
-            </div>
-            <button className="flex items-center text-[var(--color-muted-foreground)] hover:text-[var(--color-accent)]">
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <circle cx="18" cy="5" r="3" />
-                <circle cx="6" cy="12" r="3" />
-                <circle cx="18" cy="19" r="3" />
-                <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
-              </svg>
-              <span className="ml-1 text-sm">Share</span>
+  const stockStatus = getStockStatus();
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white py-8">
+      <div className="container mx-auto px-4 max-w-7xl">
+        {/* Breadcrumbs */}
+        <nav className="mb-8" aria-label="Breadcrumb">
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <button
+              onClick={() => navigate('/')}
+              className="hover:text-gray-900 transition-colors"
+            >
+              Home
             </button>
-          </div>
-
-          {/* Product Name */}
-          <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-foreground)] mb-2">{product.name}</h1>
-
-          {/* Price */}
-          <div className="text-3xl font-bold text-[var(--color-foreground)] mb-4">
-            {product.saleprice > 0 ? (
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+            </svg>
+            <button
+              onClick={() => navigate('/products')}
+              className="hover:text-gray-900 transition-colors"
+            >
+              Products
+            </button>
+            {product.department && (
               <>
-                <span className="text-[var(--color-danger)]">${product.saleprice.toFixed(2)}</span>
-                <span className="ml-2 line-through text-[var(--color-muted-foreground)] text-xl">${product.price.toFixed(2)}</span>
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+                <span className="text-gray-900 font-medium">{product.department}</span>
               </>
-            ) : (
-              <>${product.price.toFixed(2)}</>
             )}
           </div>
+        </nav>
 
-          {/* Quantity Selector & Stock */}
-          <div className="flex items-center mb-4">
-            <span className="text-[var(--color-muted-foreground)] mr-4">Quantity:</span>
-            <div className="flex border border-[var(--color-border)] rounded overflow-hidden">
-              <button
-                className="px-3 py-1 text-lg text-[var(--color-foreground)]  hover:bg-[var(--color-muted)]"
-                onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                disabled={quantity <= 1}
-                type="button"
-              >-</button>
-              <input
-                type="number"
-                min="1"
-                value={quantity}
-                onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-12 text-center text-[var(--color-foreground)] outline-none"
-                style={{ WebkitAppearance: 'none', MozAppearance: 'textfield' }}
-              />
-              <button
-                className="px-3 py-1 text-lg text-[var(--color-foreground)]  hover:bg-[var(--color-muted)]"
-                onClick={() => setQuantity(q => q + 1)}
-                type="button"
-              >+</button>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+          {/* Product Image Section */}
+          <div className="space-y-4">
+            <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden">
+              <div className="aspect-square flex items-center justify-center p-8 bg-gradient-to-br from-gray-50 to-gray-100">
+                <img
+                  src={product.productimg || '/placeholder-image.png'}
+                  alt={product.name}
+                  className={`max-h-full max-w-full object-contain transition-all duration-500 ${
+                    imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+                  }`}
+                  onLoad={() => setImageLoaded(true)}
+                />
+                {!imageLoaded && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="animate-pulse bg-gray-300 rounded-lg w-48 h-64"></div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Floating badges */}
+              <div className="absolute top-4 right-4 flex flex-col gap-2">
+                {product.bestseller && (
+                  <div className="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                    Best Seller
+                  </div>
+                )}
+                {product.exclusive && (
+                  <div 
+                    className="text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg"
+                    style={{ backgroundColor: theme.primary }}
+                  >
+                    Exclusive
+                  </div>
+                )}
+                {product.staffpick && (
+                  <div 
+                    className="text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg"
+                    style={{ backgroundColor: theme.secondary }}
+                  >
+                    Staff Pick
+                  </div>
+                )}
+                {getDiscountPercentage() > 0 && (
+                  <div 
+                    className="text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg"
+                    style={{ backgroundColor: theme.accent }}
+                  >
+                    -{getDiscountPercentage()}% OFF
+                  </div>
+                )}
+              </div>
             </div>
-            <span className={`ml-4 text-sm font-semibold ${product.totalqty > 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
-              {product.totalqty > 0 ? `In stock (${product.totalqty})` : 'Out of stock'}
-            </span>
           </div>
 
-          {/* Add to Cart & Wishlist */}
-          <div className="flex items-center mb-6">
-            <button
-              className={`h-12 px-10 rounded font-bold text-base transition-colors mr-4 ${
-                product.totalqty > 0
-                  ? 'bg-[var(--color-accent)] text-[var(--color-headingText)] hover:bg-[var(--color-background)]'
-                  : 'bg-[var(--color-muted)] text-[var(--color-muted)] cursor-not-allowed'
-              }`}
-              disabled={product.totalqty <= 0}
-            >
-              ADD TO CART
-            </button>
-            <button
-              className="h-12 w-12 flex items-center justify-center rounded   text-[var(--color-linkText)] hover:text-[var(--color-accent)]"
-              title="Add to Wishlist"
-            >
-              <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M12 21C12 21 4 13.5 4 8.5C4 5.42 6.42 3 9.5 3C11.24 3 12.91 3.81 14 5.08C15.09 3.81 16.76 3 18.5 3C21.58 3 24 5.42 24 8.5C24 13.5 16 21 16 21H12Z" />
-              </svg>
-            </button>
+          {/* Product Details Section */}
+          <div className="space-y-6">
+            {/* Header Section */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              {/* SKU and Share */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span>SKU:</span>
+                  <code className="bg-gray-100 px-2 py-1 rounded font-mono text-xs">{product.sku}</code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(product.sku);
+                      toast.success('SKU copied to clipboard!');
+                    }}
+                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                    title="Copy SKU"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <rect x="9" y="9" width="13" height="13" rx="2" />
+                      <rect x="1" y="1" width="13" height="13" rx="2" />
+                    </svg>
+                  </button>
+                </div>
+                <button
+                  onClick={handleShare}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
+                  </svg>
+                  <span className="text-sm">Share</span>
+                </button>
+              </div>
+
+              {/* Product Name & Brand */}
+              <div className="mb-6">
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 leading-tight">
+                  {product.name}
+                </h1>
+                {product.brand && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Brand:</span>
+                    <span 
+                      className="px-3 py-1 rounded-full text-sm font-medium text-white"
+                      style={{ backgroundColor: theme.primary }}
+                    >
+                      {product.brand}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Price Section */}
+              <div className="mb-6">
+                {product.saleprice > 0 ? (
+                  <div className="flex items-baseline gap-3">
+                    <span 
+                      className="text-4xl font-bold"
+                      style={{ color: theme.accent }}
+                    >
+                      {formatPrice(product.saleprice)}
+                    </span>
+                    <span className="text-xl text-gray-500 line-through">
+                      {formatPrice(product.price)}
+                    </span>
+                    <span 
+                      className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-semibold"
+                    >
+                      Save {formatPrice(product.price - product.saleprice)}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-4xl font-bold text-gray-900">
+                    {formatPrice(product.price)}
+                  </span>
+                )}
+              </div>
+
+              {/* Product Info Grid */}
+              <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-xl">
+                {product.size && (
+                  <div className="text-center">
+                    <div className="text-sm text-gray-600 mb-1">Size</div>
+                    <div className="font-semibold text-gray-900">{product.size}</div>
+                  </div>
+                )}
+                {product.vintage && product.vintage !== "No Vintage" && (
+                  <div className="text-center">
+                    <div className="text-sm text-gray-600 mb-1">Vintage</div>
+                    <div className="font-semibold text-gray-900">{product.vintage}</div>
+                  </div>
+                )}
+                {product.abv && (
+                  <div className="text-center">
+                    <div className="text-sm text-gray-600 mb-1">ABV</div>
+                    <div className="font-semibold text-gray-900">{product.abv}%</div>
+                  </div>
+                )}
+                {product.country && product.country !== "NAN" && (
+                  <div className="text-center">
+                    <div className="text-sm text-gray-600 mb-1">Origin</div>
+                    <div className="font-semibold text-gray-900">{product.country}</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Stock Status */}
+              <div className={`p-4 rounded-xl mb-6 border-l-4 ${
+                stockStatus.color === 'green' ? 'bg-green-50 border-green-500' :
+                stockStatus.color === 'orange' ? 'bg-orange-50 border-orange-500' :
+                'bg-red-50 border-red-500'
+              }`}>
+                <div className={`flex items-center gap-2 ${
+                  stockStatus.color === 'green' ? 'text-green-800' :
+                  stockStatus.color === 'orange' ? 'text-orange-800' :
+                  'text-red-800'
+                }`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    {stockStatus.status === 'in-stock' ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    ) : stockStatus.status === 'low-stock' ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    )}
+                  </svg>
+                  <span className="font-semibold">{stockStatus.text}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quantity & Add to Cart Section */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              {/* Quantity Selector */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Quantity
+                </label>
+                <div className="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden w-fit">
+                  <button
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                    className="px-4 py-3 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                    </svg>
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    max={product.totalqty}
+                    value={quantity}
+                    onChange={e => setQuantity(Math.max(1, Math.min(product.totalqty, parseInt(e.target.value) || 1)))}
+                    className="w-16 text-center py-3 border-0 outline-none text-lg font-semibold"
+                  />
+                  <button
+                    onClick={() => setQuantity(q => Math.min(product.totalqty, q + 1))}
+                    disabled={quantity >= product.totalqty}
+                    className="px-4 py-3 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-4">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={product.totalqty <= 0}
+                  className={`flex-1 py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 flex items-center justify-center gap-3 ${
+                    product.totalqty > 0
+                      ? 'text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  }`}
+                  style={{
+                    backgroundColor: product.totalqty > 0 ? theme.accent : undefined
+                  }}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5-5M7 13l-2.5 5M17 17a2 2 0 11-4 0 2 2 0 014 0zM9 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  {product.totalqty > 0 ? 'Add to Cart' : 'Out of Stock'}
+                </button>
+                
+                <button
+                  className="p-4 border-2 border-gray-200 rounded-xl hover:border-red-300 hover:bg-red-50 transition-colors group"
+                  title="Add to Wishlist"
+                >
+                  <svg className="w-6 h-6 text-gray-600 group-hover:text-red-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Delivery Info */}
+              <div className="mt-6 p-4 bg-blue-50 rounded-xl">
+                <div className="flex items-center gap-3 text-blue-800">
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                  <div>
+                    <div className="font-semibold">Free Delivery</div>
+                    <div className="text-sm">Estimated delivery: 1-7 working days</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>        {/* Product Details Tabs */}
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200">
+            <nav className="flex">
+              {[
+                { id: 'description', name: 'Description', icon: '📝' },
+                { id: 'specifications', name: 'Specifications', icon: '📋' },
+                { id: 'delivery', name: 'Delivery Info', icon: '🚚' },
+                { id: 'reviews', name: 'Reviews', icon: '⭐' }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-current text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                  style={{
+                    borderBottomColor: activeTab === tab.id ? theme.primary : 'transparent',
+                    color: activeTab === tab.id ? theme.primary : undefined
+                  }}
+                >
+                  <span>{tab.icon}</span>
+                  {tab.name}
+                </button>
+              ))}
+            </nav>
           </div>
 
-          {/* Delivery & Category */}
-          <div className="flex items-center mb-2">
-            <span className="mr-2">
-              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <rect x="1" y="3" width="15" height="13" rx="2" />
-                <path d="M16 8h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2" />
-                <circle cx="5.5" cy="18.5" r="1.5" />
-                <circle cx="18.5" cy="18.5" r="1.5" />
-              </svg>
-            </span>
-            <span className="text-[var(--color-muted-foreground)] text-sm">
-              Delivers in: 1-7 Working Days&nbsp;
-              <a href="#" className="underline text-[var(--color-accent)]">Shipping Policy</a>
-            </span>
-          </div>
-          <div className="text-[var(--color-muted-foreground)] text-sm">
-            Category: <span className="font-bold text-[var(--color-foreground)]">{product.category || '-'}</span>
+          {/* Tab Content */}
+          <div className="p-8">
+            {activeTab === 'description' && (
+              <div className="prose max-w-none">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Description</h3>
+                <div className="text-gray-700 leading-relaxed">
+                  {product.description || 'No description available for this product.'}
+                </div>
+                {product.brand && (
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <h4 className="font-semibold text-gray-900 mb-2">About {product.brand}</h4>
+                    <p className="text-gray-600 text-sm">
+                      {product.brand} is known for quality products and exceptional craftsmanship.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'specifications' && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Product Specifications</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { label: 'SKU', value: product.sku },
+                    { label: 'Brand', value: product.brand },
+                    { label: 'Category', value: product.category },
+                    { label: 'Department', value: product.department },
+                    { label: 'Subcategory', value: product.subcategory },
+                    { label: 'Size', value: product.size },
+                    { label: 'Vintage', value: product.vintage && product.vintage !== "No Vintage" ? product.vintage : null },
+                    { label: 'ABV', value: product.abv ? `${product.abv}%` : null },
+                    { label: 'Country of Origin', value: product.country && product.country !== "NAN" ? product.country : null },
+                    { label: 'Pack Size', value: product.packsize },
+                    { label: 'Stock Level', value: `${product.totalqty} units` }
+                  ].filter(spec => spec.value).map((spec, index) => (
+                    <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm text-gray-600 mb-1">{spec.label}</div>
+                      <div className="font-semibold text-gray-900">{spec.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'delivery' && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Delivery Information</h3>
+                <div className="space-y-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-1">Free Standard Delivery</h4>
+                      <p className="text-gray-600">Delivered within 1-7 working days to your doorstep.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-1">Express Delivery</h4>
+                      <p className="text-gray-600">Next day delivery available for urgent orders (additional charges apply).</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-1">Secure Packaging</h4>
+                      <p className="text-gray-600">All products are carefully packaged to ensure safe delivery.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'reviews' && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Customer Reviews</h3>
+                <div className="text-center py-12">
+                  <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+                  <h4 className="text-xl font-semibold text-gray-900 mb-2">No Reviews Yet</h4>
+                  <p className="text-gray-600 mb-6">Be the first to review this product and help other customers make informed decisions.</p>
+                  <button 
+                    className="px-6 py-3 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: theme.primary }}
+                  >
+                    Write a Review
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Accordion Sections */}
-      <div className="max-w-4xl mx-auto mt-12">
-        <details className="border-b border-[var(--color-border)] py-4 group" open>
-          <summary className="text-lg font-bold text-[var(--color-foreground)] cursor-pointer flex items-center justify-between">
-            DESCRIPTION
-            <span className="transition-transform group-open:rotate-180">
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </span>
-          </summary>
-          <div className="mt-2 text-[var(--color-muted-foreground)]">
-            {product.description || 'No description available.'}
-          </div>
-        </details>
-        <details className="border-b border-[var(--color-border)] py-4 group">
-          <summary className="text-lg font-bold text-[var(--color-foreground)] cursor-pointer flex items-center justify-between">
-            DELIVERY INFORMATION
-            <span className="transition-transform group-open:rotate-180">
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </span>
-          </summary>
-          <div className="mt-2 text-[var(--color-muted-foreground)]">
-            Standard delivery in 1-7 working days. For more info, see our <a href="#" className="underline text-[var(--color-accent)]">Shipping Policy</a>.
-          </div>
-        </details>
-        <details className="border-b border-[var(--color-border)] py-4 group">
-          <summary className="text-lg font-bold text-[var(--color-foreground)] cursor-pointer flex items-center justify-between">
-            REVIEWS (0)
-            <span className="transition-transform group-open:rotate-180">
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </span>
-          </summary>
-          <div className="mt-2 text-[var(--color-muted-foreground)]">
-            No reviews yet.
-          </div>
-        </details>
+        {/* Similar Products Section */}
+        <div className="mt-16">
+          <SimilarProducts
+            department={product.department}
+            category={product.category || undefined}
+            subcategory={product.subcategory || undefined}
+            priceRange={`${Math.max(0, (product.price || 0) - 50)}-${(product.price || 0) + 50}`}
+          />
+        </div>
       </div>
-    
-      {/* Similar Products Section */}
-      <div className="max-w-4xl mx-auto mt-12">
-        <SimilarProducts
-          department={product.department}
-          category={product.category || undefined} // Pass undefined if category is missing
-          subcategory={product.subcategory || undefined} // Pass undefined if subcategory is missing
-          priceRange={`${(product.price || 0) - 50}-${(product.price || 0) + 50}`} // Example price range
-        />
-      </div>
-    
-      </div>
-      </div>
+    </div>
   );
 }
 
