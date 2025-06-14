@@ -1,4 +1,42 @@
 @import "tailwindcss";
+
+/* CSS Custom Properties for Theme Colors */
+:root {
+  --color-primary: #1E1E1E;
+  --color-secondary: #373737;
+  --color-accent: #FF5722;
+  --color-muted: #F2F2F2;
+  --color-background: #121212;
+  --color-heading-text: #FFFFFF;
+  --color-body-text: #CCCCCC;
+  --color-link-text: #FF5722;
+}
+
+/* Line clamp utilities */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
 /* Hide scrollbar */
 .scrollbar-hide {
   -ms-overflow-style: none; /* Internet Explorer 10+ */

@@ -5,10 +5,12 @@
   "type": "module",  "scripts": {
     "dev": "vite --port 3003",
     "dev:https": "vite --port 3003 --https",
-    "dev:http": "vite --config vite.config.http.js",
+    "dev:http": "vite --port 3003",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup:certs": "node -e \"console.log('Certificates are already set up! Run: npm run dev:https')\"",
+    "check:certs": "node -e \"const fs=require('fs'); const exists = fs.existsSync('./certs/localhost.pem') && fs.existsSync('./certs/localhost-key.pem'); console.log(exists ? '✅ SSL certificates found' : '❌ SSL certificates not found');\""
   },"dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",

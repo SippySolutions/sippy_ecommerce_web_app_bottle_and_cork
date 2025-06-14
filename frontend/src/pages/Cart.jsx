@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../Context/CartContext';
 import SimilarProducts from '../components/SimilarProducts';
 import { useNavigate } from 'react-router-dom';
 import { fetchCMSData } from '../services/api';

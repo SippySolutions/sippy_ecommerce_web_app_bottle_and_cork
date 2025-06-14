@@ -40,6 +40,7 @@ const billingSchema = new mongoose.Schema(
     customerProfileId: { type: String },
     customerPaymentProfileId: { type: String },
     id: { type: String, required: true }, // Unique per billing method
+    createdAt: { type: Date, default: Date.now }
   },
   { _id: false }
 );

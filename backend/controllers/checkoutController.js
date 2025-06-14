@@ -14,6 +14,592 @@ function getAuthorizeNetConfig() {
   };
 }
 
+// Helper function to retrieve card details from Authorize.Net
+async function getCardDetailsFromAuthorizeNet(customerProfileId, customerPaymentProfileId) {
+  try {
+    const { apiLoginId, transactionKey, endpoint } = getAuthorizeNetConfig();
+    const merchantAuthenticationType = new APIContracts.MerchantAuthenticationType();
+    merchantAuthenticationType.setName(apiLoginId);
+    merchantAuthenticationType.setTransactionKey(transactionKey);
+
+    const getRequest = new APIContracts.GetCustomerPaymentProfileRequest();
+    getRequest.setMerchantAuthentication(merchantAuthenticationType);
+    getRequest.setCustomerProfileId(customerProfileId);
+    getRequest.setCustomerPaymentProfileId(customerPaymentProfileId);
+    getRequest.setUnmaskExpirationDate(true); // Get unmasked expiration date
+
+    const ctrl = new APIControllers.GetCustomerPaymentProfileController(getRequest.getJSON());
+    ctrl.setEnvironment(endpoint);
+
+    return new Promise((resolve, reject) => {
+      ctrl.execute(() => {
+        const apiResponse = ctrl.getResponse();
+        const response = new APIContracts.GetCustomerPaymentProfileResponse(apiResponse);
+        
+        if (response.getMessages().getResultCode() === APIContracts.MessageTypeEnum.OK) {
+          const paymentProfile = response.getPaymentProfile();
+          const payment = paymentProfile.getPayment();
+          const creditCard = payment.getCreditCard();
+          const billTo = paymentProfile.getBillTo();
+          
+          resolve({
+            cardType: creditCard.getCardType() || 'Unknown',
+            lastFour: creditCard.getCardNumber().slice(-4) || '****',
+            expiryMonth: creditCard.getExpirationDate().substring(5, 7) || '',
+            expiryYear: creditCard.getExpirationDate().substring(0, 4) || '',
+            cardholderName: `${billTo.getFirstName()} ${billTo.getLastName()}`.trim() || 'Cardholder'
+          });
+        } else {
+          console.warn('Failed to retrieve card details from Authorize.Net');
+          resolve({
+            cardType: 'Unknown',
+            lastFour: '****',
+            expiryMonth: '',
+            expiryYear: '',
+            cardholderName: 'Cardholder'
+          });
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error retrieving card details:', error);
+    return {
+      cardType: 'Unknown',
+      lastFour: '****',
+      expiryMonth: '',
+      expiryYear: '',
+      cardholderName: 'Cardholder'
+    };
+  }
+}
+
+// Process payment with new card
+exports.processPayment = async (req, res) => {
+  try {
+    console.log('=== CHECKOUT PROCESS START ===');
+    console.log('User ID:', req.user?.id);
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
+    const {
+      dataDescriptor,
+      dataValue,
+      amount,
+      cartItems,
+      shippingAddress,
+      billingAddress,
+      orderType = 'delivery',
+      tip = 0,
+      bagFee = 0,
+      saveCard = false
+    } = req.body;
+
+    console.log('Extracted data:');
+    console.log('- dataDescriptor:', dataDescriptor);
+    console.log('- dataValue:', dataValue ? dataValue.substring(0, 50) + '...' : 'undefined');
+    console.log('- amount:', amount);
+    console.log('- cartItems:', cartItems);
+    console.log('- orderType:', orderType);
+
+    // Validate required fields
+    if (!dataDescriptor || !dataValue) {
+      console.log('❌ Missing payment token data');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing payment token data' 
+      });
+    }
+
+    if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+      console.log('❌ Invalid cart items');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Cart is empty or invalid' 
+      });
+    }
+
+    console.log('Cart items received:', cartItems);
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      console.log('❌ User not found');
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    console.log('✅ User found:', user.email);    // Validate cart items and calculate totals
+    const productIds = cartItems.map(item => {
+      console.log('Processing cart item for ID extraction:', item);
+      return item.product || item._id;
+    });
+    console.log('Product IDs to find:', productIds);
+    
+    // Initialize variables outside try block
+    let subtotal = 0;
+    let validatedItems = [];
+    
+    try {
+      const products = await Product.find({ _id: { $in: productIds } });
+      console.log('Products found:', products.length);
+      console.log('Product details:', products.map(p => ({ id: p._id, name: p.name })));
+
+      for (const item of cartItems) {
+        console.log('Processing cart item:', item);
+        const productId = item.product || item._id;
+        const product = products.find(p => p._id.toString() === productId.toString());
+        if (!product) {
+          console.log('❌ Product not found for ID:', productId);
+          return res.status(400).json({ 
+            success: false, 
+            message: `Product not found: ${productId}` 
+          });
+        }
+      
+      const itemTotal = (product.saleprice || product.price) * item.quantity;
+      subtotal += itemTotal;
+      
+      validatedItems.push({
+        product: product._id,
+        name: product.name,
+        price: product.saleprice || product.price,
+        quantity: item.quantity,
+        image: product.productimg      });
+    }
+
+    } catch (productError) {
+      console.log('❌ Error during product validation:', productError);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Error validating products' 
+      });
+    }
+
+    const tax = subtotal * 0.08; // 8% tax rate
+    const total = subtotal + tax + tip + bagFee;
+
+    if (Math.abs(total - amount) > 0.01) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Amount mismatch' 
+      });    }
+
+    // Process payment with Authorize.Net
+    const { apiLoginId, transactionKey, endpoint } = getAuthorizeNetConfig();
+    console.log('Authorize.Net config:', { 
+      apiLoginId: apiLoginId ? 'SET' : 'MISSING', 
+      transactionKey: transactionKey ? 'SET' : 'MISSING',
+      endpoint 
+    });
+
+    if (!apiLoginId || !transactionKey) {
+      return res.status(500).json({
+        success: false,
+        message: 'Payment gateway configuration error'
+      });
+    }
+
+    const merchantAuthenticationType = new APIContracts.MerchantAuthenticationType();
+    merchantAuthenticationType.setName(apiLoginId);
+    merchantAuthenticationType.setTransactionKey(transactionKey);
+
+    // Create payment using opaqueData from Accept.js
+    const opaqueData = new APIContracts.OpaqueDataType();
+    opaqueData.setDataDescriptor(dataDescriptor);
+    opaqueData.setDataValue(dataValue);
+
+    const paymentType = new APIContracts.PaymentType();
+    paymentType.setOpaqueData(opaqueData);
+
+    // Set billing address
+    const billTo = new APIContracts.CustomerAddressType();
+    billTo.setFirstName(billingAddress.firstName || 'Customer');
+    billTo.setLastName(billingAddress.lastName || 'Name');
+    billTo.setAddress(billingAddress.address || billingAddress.street || '');
+    billTo.setCity(billingAddress.city || '');
+    billTo.setState(billingAddress.state || '');
+    billTo.setZip(billingAddress.zip || '');
+    billTo.setCountry(billingAddress.country || 'US');
+
+    // Set shipping address if delivery
+    let shipTo = null;
+    if (orderType === 'delivery' && shippingAddress) {
+      shipTo = new APIContracts.CustomerAddressType();
+      shipTo.setFirstName(shippingAddress.firstName || 'Customer');
+      shipTo.setLastName(shippingAddress.lastName || 'Name');
+      shipTo.setAddress(shippingAddress.address || shippingAddress.street || '');
+      shipTo.setCity(shippingAddress.city || '');
+      shipTo.setState(shippingAddress.state || '');
+      shipTo.setZip(shippingAddress.zip || '');
+      shipTo.setCountry(shippingAddress.country || 'US');
+    }
+
+    const transactionRequest = new APIContracts.TransactionRequestType();
+    transactionRequest.setTransactionType(APIContracts.TransactionTypeEnum.AUTHCAPTURETRANSACTION);
+    transactionRequest.setPayment(paymentType);
+    transactionRequest.setAmount(total.toFixed(2));
+    transactionRequest.setBillTo(billTo);
+    if (shipTo) transactionRequest.setShipTo(shipTo);    // Add line items for better reporting in Authorize.Net
+    const lineItems = new APIContracts.ArrayOfLineItem();
+    const lineItemList = []; // Create array to collect line items
+    
+    validatedItems.forEach((item, index) => {
+      const lineItem = new APIContracts.LineItemType();
+      lineItem.setItemId(item.product.toString().slice(-31)); // Max 31 chars
+      lineItem.setName(item.name.slice(0, 31)); // Max 31 chars
+      lineItem.setQuantity(item.quantity);
+      lineItem.setUnitPrice(item.price.toFixed(2));
+      lineItemList.push(lineItem); // Add to our array
+    });
+    
+    // Set the line items array to the ArrayOfLineItem object
+    lineItems.setLineItem(lineItemList);
+    transactionRequest.setLineItems(lineItems);
+
+    // Add order details for tracking (following official SDK pattern)
+    const orderDetails = new APIContracts.OrderType();
+    orderDetails.setInvoiceNumber(`ORDER-${Date.now()}`);
+    orderDetails.setDescription(`Order for ${user.email}`);
+    transactionRequest.setOrder(orderDetails);
+
+    const createRequest = new APIContracts.CreateTransactionRequest();
+    createRequest.setMerchantAuthentication(merchantAuthenticationType);
+    createRequest.setTransactionRequest(transactionRequest);
+
+    const ctrl = new APIControllers.CreateTransactionController(createRequest.getJSON());
+    ctrl.setEnvironment(endpoint);
+
+    console.log('Processing payment with Authorize.Net...');
+
+    const paymentResult = await new Promise((resolve, reject) => {
+      ctrl.execute(() => {
+        const apiResponse = ctrl.getResponse();
+        const response = new APIContracts.CreateTransactionResponse(apiResponse);
+        
+        console.log('Authorize.Net response result code:', response.getMessages().getResultCode());
+        
+        if (response.getMessages().getResultCode() === APIContracts.MessageTypeEnum.OK) {
+          const transactionResponse = response.getTransactionResponse();
+          
+          if (transactionResponse.getMessages() && transactionResponse.getMessages().getMessage().length > 0) {
+            console.log('Transaction successful:', transactionResponse.getTransId());
+            resolve({
+              transactionId: transactionResponse.getTransId(),
+              success: true,
+              message: transactionResponse.getMessages().getMessage()[0].getDescription(),
+              authCode: transactionResponse.getAuthCode(),
+              responseCode: transactionResponse.getResponseCode()
+            });
+          } else {
+            console.log('Transaction failed with errors');
+            const errors = transactionResponse.getErrors().getError();
+            const error = errors[0];
+            reject(new Error(`Transaction Error: ${error.getErrorCode()} - ${error.getErrorText()}`));
+          }
+        } else {
+          console.log('API call failed');
+          const error = response.getMessages().getMessage()[0];
+          reject(new Error(`API Error: ${error.getCode()} - ${error.getText()}`));
+        }
+      });
+    });
+
+    console.log('Payment processing completed successfully');
+
+    // Create order after successful payment
+    const order = new Order({
+      customer: user._id,
+      items: validatedItems,
+      subtotal: subtotal,
+      tax: tax,
+      total: total,
+      shippingAddress: orderType === 'delivery' ? shippingAddress : null,
+      billingAddress: billingAddress,
+      paymentInfo: {
+        transactionId: paymentResult.transactionId,
+        method: 'card',
+        amount: total
+      },
+      orderType: orderType,
+      tip: tip,
+      bagFee: bagFee,
+      status: 'pending'
+    });
+
+    await order.save();
+
+    // Update user's orders (ensure orders array exists)
+    if (!user.orders) {
+      user.orders = [];
+    }    user.orders.push(order._id);
+    await user.save();
+
+    console.log('Order created successfully:', order._id);
+
+    // If user wants to save card for future use, create customer profile
+    if (saveCard) {
+      try {
+        const customerProfileId = await getOrCreateCustomerProfile(user);
+        user.authorizeNetCustomerProfileId = customerProfileId;
+        await user.save();
+        console.log('Customer profile created/retrieved:', customerProfileId);
+      } catch (error) {
+        console.error('Error creating customer profile:', error);
+        // Don't fail the order if profile creation fails
+      }
+    }
+
+    res.json({
+      success: true,
+      order: order,
+      payment: paymentResult,
+      message: 'Payment processed successfully'
+    });
+
+  } catch (error) {
+    console.error('Payment processing error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Payment processing failed'
+    });
+  }
+};
+
+// Process payment with saved card - simplified version
+exports.processPaymentWithSavedCard = async (req, res) => {
+  try {
+    const {
+      paymentMethodId,
+      amount,
+      cartItems,
+      shippingAddress,
+      billingAddress,
+      orderType = 'delivery',
+      tip = 0,
+      bagFee = 0
+    } = req.body;
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Validate cart items and calculate totals (same as above)
+    const productIds = cartItems.map(item => item.product);
+    const products = await Product.find({ _id: { $in: productIds } });
+    
+    let subtotal = 0;
+    const validatedItems = [];
+
+    for (const item of cartItems) {
+      const product = products.find(p => p._id.toString() === item.product);
+      if (!product) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `Product not found: ${item.product}` 
+        });
+      }
+      
+      const itemTotal = (product.saleprice || product.price) * item.quantity;
+      subtotal += itemTotal;
+      
+      validatedItems.push({
+        product: product._id,
+        name: product.name,
+        price: product.saleprice || product.price,
+        quantity: item.quantity,
+        image: product.productimg
+      });
+    }
+
+    const tax = subtotal * 0.08;
+    const total = subtotal + tax + tip + bagFee;
+
+    if (Math.abs(total - amount) > 0.01) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Amount mismatch' 
+      });    }
+
+    // Process payment with saved card using Authorize.Net
+    const { apiLoginId, transactionKey, endpoint } = getAuthorizeNetConfig();
+    
+    if (!apiLoginId || !transactionKey) {
+      return res.status(500).json({
+        success: false,
+        message: 'Payment gateway configuration error'
+      });
+    }
+
+    // Find the saved payment method
+    const savedCard = user.billing.find(card => card.id === paymentMethodId);
+    if (!savedCard) {
+      return res.status(400).json({
+        success: false,
+        message: 'Saved payment method not found'
+      });
+    }
+
+    if (!savedCard.customerProfileId || !savedCard.customerPaymentProfileId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid saved payment method - missing profile IDs'
+      });
+    }
+
+    const merchantAuthenticationType = new APIContracts.MerchantAuthenticationType();
+    merchantAuthenticationType.setName(apiLoginId);
+    merchantAuthenticationType.setTransactionKey(transactionKey);
+
+    // Create payment profile for saved card
+    const profileToCharge = new APIContracts.CustomerProfilePaymentType();
+    profileToCharge.setCustomerProfileId(savedCard.customerProfileId);
+    
+    const paymentProfile = new APIContracts.PaymentProfile();
+    paymentProfile.setPaymentProfileId(savedCard.customerPaymentProfileId);
+    profileToCharge.setPaymentProfile(paymentProfile);
+
+    // Set billing address
+    const billTo = new APIContracts.CustomerAddressType();
+    billTo.setFirstName(billingAddress.firstName || 'Customer');
+    billTo.setLastName(billingAddress.lastName || 'Name');
+    billTo.setAddress(billingAddress.address || billingAddress.street || '');
+    billTo.setCity(billingAddress.city || '');
+    billTo.setState(billingAddress.state || '');
+    billTo.setZip(billingAddress.zip || '');
+    billTo.setCountry(billingAddress.country || 'US');
+
+    // Set shipping address if delivery
+    let shipTo = null;
+    if (orderType === 'delivery' && shippingAddress) {
+      shipTo = new APIContracts.CustomerAddressType();
+      shipTo.setFirstName(shippingAddress.firstName || 'Customer');
+      shipTo.setLastName(shippingAddress.lastName || 'Name');
+      shipTo.setAddress(shippingAddress.address || shippingAddress.street || '');
+      shipTo.setCity(shippingAddress.city || '');
+      shipTo.setState(shippingAddress.state || '');
+      shipTo.setZip(shippingAddress.zip || '');
+      shipTo.setCountry(shippingAddress.country || 'US');
+    }    const transactionRequest = new APIContracts.TransactionRequestType();
+    transactionRequest.setTransactionType(APIContracts.TransactionTypeEnum.AUTHCAPTURETRANSACTION);
+    transactionRequest.setProfile(profileToCharge);
+    transactionRequest.setAmount(total.toFixed(2));
+    // Note: Don't set billing address when using saved payment profile - it's already in the profile
+    if (shipTo) transactionRequest.setShipTo(shipTo);    // Add line items for better reporting in Authorize.Net
+    const lineItems = new APIContracts.ArrayOfLineItem();
+    const lineItemList = []; // Create array to collect line items
+    
+    validatedItems.forEach((item, index) => {
+      const lineItem = new APIContracts.LineItemType();
+      lineItem.setItemId(item.product.toString().slice(-31)); // Max 31 chars
+      lineItem.setName(item.name.slice(0, 31)); // Max 31 chars
+      lineItem.setQuantity(item.quantity);
+      lineItem.setUnitPrice(item.price.toFixed(2));
+      lineItemList.push(lineItem); // Add to our array
+    });
+      // Set the line items array to the ArrayOfLineItem object
+    lineItems.setLineItem(lineItemList);
+    transactionRequest.setLineItems(lineItems);
+
+    // Add order details for tracking (following official SDK pattern)
+    const orderDetails = new APIContracts.OrderType();
+    orderDetails.setInvoiceNumber(`ORDER-${Date.now()}`);
+    orderDetails.setDescription(`Saved card order for ${user.email}`);
+    transactionRequest.setOrder(orderDetails);
+
+    const createRequest = new APIContracts.CreateTransactionRequest();
+    createRequest.setMerchantAuthentication(merchantAuthenticationType);
+    createRequest.setTransactionRequest(transactionRequest);
+
+    const ctrl = new APIControllers.CreateTransactionController(createRequest.getJSON());
+    ctrl.setEnvironment(endpoint);
+
+    console.log('Processing saved card payment with Authorize.Net...');
+
+    const paymentResult = await new Promise((resolve, reject) => {
+      ctrl.execute(() => {
+        const apiResponse = ctrl.getResponse();
+        const response = new APIContracts.CreateTransactionResponse(apiResponse);
+        
+        if (response.getMessages().getResultCode() === APIContracts.MessageTypeEnum.OK) {
+          const transactionResponse = response.getTransactionResponse();
+          
+          if (transactionResponse.getMessages() && transactionResponse.getMessages().getMessage().length > 0) {
+            resolve({
+              transactionId: transactionResponse.getTransId(),
+              success: true,
+              message: transactionResponse.getMessages().getMessage()[0].getDescription(),
+              authCode: transactionResponse.getAuthCode(),
+              responseCode: transactionResponse.getResponseCode()
+            });
+          } else {
+            const errors = transactionResponse.getErrors().getError();
+            const error = errors[0];
+            reject(new Error(`Transaction Error: ${error.getErrorCode()} - ${error.getErrorText()}`));
+          }
+        } else {
+          const error = response.getMessages().getMessage()[0];
+          reject(new Error(`API Error: ${error.getCode()} - ${error.getText()}`));
+        }
+      });
+    });
+
+    // Create order
+    const order = new Order({
+      customer: user._id,
+      items: validatedItems,
+      subtotal: subtotal,
+      tax: tax,
+      total: total,
+      shippingAddress: orderType === 'delivery' ? shippingAddress : null,
+      billingAddress: billingAddress,
+      paymentInfo: {
+        transactionId: paymentResult.transactionId,
+        method: 'saved_card',
+        amount: total
+      },
+      orderType: orderType,
+      tip: tip,
+      bagFee: bagFee,
+      status: 'pending'
+    });
+
+    await order.save();
+
+    // Update user's orders
+    if (!user.orders) {
+      user.orders = [];
+    }
+    user.orders.push(order._id);
+    await user.save();
+
+    // Retrieve and attach card details to user billing methods
+    try {
+      const cardDetails = await getCardDetailsFromAuthorizeNet(savedCard.customerProfileId, savedCard.customerPaymentProfileId);
+      savedCard.cardType = cardDetails.cardType;
+      savedCard.lastFour = cardDetails.lastFour;
+      savedCard.expiryMonth = cardDetails.expiryMonth;
+      savedCard.expiryYear = cardDetails.expiryYear;
+      savedCard.cardholderName = cardDetails.cardholderName;
+      await user.save();
+    } catch (error) {
+      console.error('Error retrieving card details:', error);
+      // Continue without card details
+    }
+
+    res.json({
+      success: true,
+      order: order,
+      payment: paymentResult,
+      message: 'Payment processed successfully'
+    });
+
+  } catch (error) {
+    console.error('Saved card payment error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Payment processing failed'
+    });
+  }
+};
+
 // Create or get Authorize.Net customer profile for a user
 async function getOrCreateCustomerProfile(user) {
   if (user.authorizeNetCustomerProfileId) {
@@ -53,210 +639,7 @@ async function getOrCreateCustomerProfile(user) {
   });
 }
 
-// Process payment using Accept.js token (PCI compliant)
-exports.processPayment = async (req, res) => {
-  try {
-    const {
-      dataDescriptor,
-      dataValue,
-      amount,
-      cartItems,
-      shippingAddress,
-      billingAddress,
-      orderType = 'delivery',
-      tip = 0,
-      bagFee = 0,
-      saveCard = false
-    } = req.body;
-
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    // Validate cart items and calculate totals
-    const productIds = cartItems.map(item => item.product);
-    const products = await Product.find({ _id: { $in: productIds } });
-    
-    let subtotal = 0;
-    const validatedItems = [];
-
-    for (const item of cartItems) {
-      const product = products.find(p => p._id.toString() === item.product);
-      if (!product) {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Product not found: ${item.product}` 
-        });
-      }
-      
-      const itemTotal = (product.saleprice || product.price) * item.quantity;
-      subtotal += itemTotal;
-      
-      validatedItems.push({
-        product: product._id,
-        name: product.name,
-        price: product.saleprice || product.price,
-        quantity: item.quantity,
-        image: product.productimg
-      });
-    }
-
-    const tax = subtotal * 0.08; // 8% tax rate (adjust as needed)
-    const total = subtotal + tax + tip + bagFee;
-
-    if (Math.abs(total - amount) > 0.01) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Amount mismatch' 
-      });
-    }
-
-    const { apiLoginId, transactionKey, endpoint } = getAuthorizeNetConfig();
-    const merchantAuthenticationType = new APIContracts.MerchantAuthenticationType();
-    merchantAuthenticationType.setName(apiLoginId);
-    merchantAuthenticationType.setTransactionKey(transactionKey);
-
-    // Create payment using opaqueData from Accept.js
-    const opaqueData = new APIContracts.OpaqueDataType();
-    opaqueData.setDataDescriptor(dataDescriptor);
-    opaqueData.setDataValue(dataValue);
-
-    const paymentType = new APIContracts.PaymentType();
-    paymentType.setOpaqueData(opaqueData);
-
-    // Set billing address
-    const billTo = new APIContracts.CustomerAddressType();
-    billTo.setFirstName(billingAddress.firstName);
-    billTo.setLastName(billingAddress.lastName);
-    billTo.setAddress(billingAddress.address);
-    billTo.setCity(billingAddress.city);
-    billTo.setState(billingAddress.state);
-    billTo.setZip(billingAddress.zip);
-    billTo.setCountry(billingAddress.country || 'US');
-
-    // Set shipping address if delivery
-    let shipTo = null;
-    if (orderType === 'delivery' && shippingAddress) {
-      shipTo = new APIContracts.CustomerAddressType();
-      shipTo.setFirstName(shippingAddress.firstName);
-      shipTo.setLastName(shippingAddress.lastName);
-      shipTo.setAddress(shippingAddress.address);
-      shipTo.setCity(shippingAddress.city);
-      shipTo.setState(shippingAddress.state);
-      shipTo.setZip(shippingAddress.zip);
-      shipTo.setCountry(shippingAddress.country || 'US');
-    }
-
-    // Create transaction request
-    const transactionRequest = new APIContracts.TransactionRequestType();
-    transactionRequest.setTransactionType(APIContracts.TransactionTypeEnum.AUTHCAPTURETRANSACTION);
-    transactionRequest.setPayment(paymentType);
-    transactionRequest.setAmount(total.toFixed(2));
-    transactionRequest.setBillTo(billTo);
-    if (shipTo) transactionRequest.setShipTo(shipTo);
-
-    // Add line items for better reporting
-    const lineItems = new APIContracts.ArrayOfLineItem();
-    validatedItems.forEach((item, index) => {
-      const lineItem = new APIContracts.LineItemType();
-      lineItem.setItemId(item.product.toString().slice(-31)); // Max 31 chars
-      lineItem.setName(item.name.slice(0, 31)); // Max 31 chars
-      lineItem.setQuantity(item.quantity);
-      lineItem.setUnitPrice(item.price.toFixed(2));
-      lineItems.getLineItem().push(lineItem);
-    });
-    transactionRequest.setLineItems(lineItems);
-
-    const createRequest = new APIContracts.CreateTransactionRequest();
-    createRequest.setMerchantAuthentication(merchantAuthenticationType);
-    createRequest.setTransactionRequest(transactionRequest);
-
-    const ctrl = new APIControllers.CreateTransactionController(createRequest.getJSON());
-    ctrl.setEnvironment(endpoint);
-
-    const paymentResult = await new Promise((resolve, reject) => {
-      ctrl.execute(() => {
-        const apiResponse = ctrl.getResponse();
-        const response = new APIContracts.CreateTransactionResponse(apiResponse);
-        
-        if (response.getMessages().getResultCode() === APIContracts.MessageTypeEnum.OK) {
-          const transactionResponse = response.getTransactionResponse();
-          if (transactionResponse.getMessages().getMessage().length > 0) {
-            resolve({
-              success: true,
-              transactionId: transactionResponse.getTransId(),
-              authCode: transactionResponse.getAuthCode(),
-              responseCode: transactionResponse.getResponseCode(),
-              messageCode: transactionResponse.getMessages().getMessage()[0].getCode(),
-              description: transactionResponse.getMessages().getMessage()[0].getDescription()
-            });
-          } else {
-            const errors = transactionResponse.getErrors().getError();
-            reject(new Error(errors[0].getErrorText()));
-          }
-        } else {
-          const error = response.getMessages().getMessage()[0];
-          reject(new Error(`Error: ${error.getCode()} - ${error.getText()}`));
-        }
-      });
-    });
-
-    // Create order after successful payment
-    const order = new Order({
-      customer: user._id,
-      items: validatedItems,
-      subtotal: subtotal,
-      tax: tax,
-      total: total,
-      shippingAddress: orderType === 'delivery' ? shippingAddress : null,
-      billingAddress: billingAddress,
-      paymentInfo: {
-        transactionId: paymentResult.transactionId,
-        method: 'card',
-        amount: total
-      },
-      orderType: orderType,
-      tip: tip,
-      bagFee: bagFee,
-      status: 'pending'
-    });
-
-    await order.save();
-
-    // Update user's orders
-    user.orders.push(order._id);
-    await user.save();
-
-    // If user wants to save card for future use, create customer profile
-    if (saveCard) {
-      try {
-        const customerProfileId = await getOrCreateCustomerProfile(user);
-        user.authorizeNetCustomerProfileId = customerProfileId;
-        await user.save();
-      } catch (error) {
-        console.error('Error creating customer profile:', error);
-        // Don't fail the order if profile creation fails
-      }
-    }
-
-    res.json({
-      success: true,
-      order: order,
-      payment: paymentResult,
-      message: 'Payment processed successfully'
-    });
-
-  } catch (error) {
-    console.error('Payment processing error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Payment processing failed'
-    });
-  }
-};
-
-// Create customer profile in Authorize.Net
+// Customer Profile Management
 exports.createCustomerProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -281,7 +664,6 @@ exports.createCustomerProfile = async (req, res) => {
       customerProfileId: customerProfileId,
       message: 'Customer profile created successfully'
     });
-
   } catch (error) {
     console.error('Error creating customer profile:', error);
     res.status(500).json({
@@ -291,17 +673,28 @@ exports.createCustomerProfile = async (req, res) => {
   }
 };
 
-// Add payment method using Accept.js token
+// Add Payment Method (Create Customer Payment Profile)
 exports.addPaymentMethod = async (req, res) => {
   try {
-    const { dataDescriptor, dataValue, billingAddress, isDefault = false } = req.body;
+    const { dataDescriptor, dataValue, billingAddress, setAsDefault = false } = req.body;
     
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Ensure user has customer profile
+    // Check 3-card limit
+    const currentCardCount = user.billing ? user.billing.length : 0;
+    if (currentCardCount >= 3) {
+      return res.status(400).json({
+        success: false,
+        message: 'Maximum of 3 saved cards allowed. Please delete a card first to add a new one.',
+        cardCount: currentCardCount,
+        maxCards: 3
+      });
+    }
+
+    // Ensure customer profile exists
     let customerProfileId = user.authorizeNetCustomerProfileId;
     if (!customerProfileId) {
       customerProfileId = await getOrCreateCustomerProfile(user);
@@ -314,7 +707,7 @@ exports.addPaymentMethod = async (req, res) => {
     merchantAuthenticationType.setName(apiLoginId);
     merchantAuthenticationType.setTransactionKey(transactionKey);
 
-    // Create payment using opaqueData
+    // Create payment using opaqueData from Accept.js
     const opaqueData = new APIContracts.OpaqueDataType();
     opaqueData.setDataDescriptor(dataDescriptor);
     opaqueData.setDataValue(dataValue);
@@ -324,97 +717,89 @@ exports.addPaymentMethod = async (req, res) => {
 
     // Set billing address
     const billTo = new APIContracts.CustomerAddressType();
-    billTo.setFirstName(billingAddress.firstName);
-    billTo.setLastName(billingAddress.lastName);
-    billTo.setAddress(billingAddress.address);
-    billTo.setCity(billingAddress.city);
-    billTo.setState(billingAddress.state);
-    billTo.setZip(billingAddress.zip);
+    billTo.setFirstName(billingAddress.firstName || 'Customer');
+    billTo.setLastName(billingAddress.lastName || 'Name');
+    billTo.setAddress(billingAddress.address || '');
+    billTo.setCity(billingAddress.city || '');
+    billTo.setState(billingAddress.state || '');
+    billTo.setZip(billingAddress.zip || '');
     billTo.setCountry(billingAddress.country || 'US');
 
-    const paymentProfile = new APIContracts.CustomerPaymentProfileType();
-    paymentProfile.setCustomerType(APIContracts.CustomerTypeEnum.INDIVIDUAL);
-    paymentProfile.setPayment(paymentType);
-    paymentProfile.setBillTo(billTo);
+    const customerPaymentProfileType = new APIContracts.CustomerPaymentProfileType();
+    customerPaymentProfileType.setPayment(paymentType);
+    customerPaymentProfileType.setBillTo(billTo);
 
     const createRequest = new APIContracts.CreateCustomerPaymentProfileRequest();
     createRequest.setMerchantAuthentication(merchantAuthenticationType);
     createRequest.setCustomerProfileId(customerProfileId);
-    createRequest.setPaymentProfile(paymentProfile);
-    createRequest.setValidationMode(
-      endpoint === Constants.endpoint.production 
-        ? APIContracts.ValidationModeEnum.LIVE 
-        : APIContracts.ValidationModeEnum.TESTMODE
-    );
+    createRequest.setPaymentProfile(customerPaymentProfileType);
 
     const ctrl = new APIControllers.CreateCustomerPaymentProfileController(createRequest.getJSON());
-    ctrl.setEnvironment(endpoint);
-
-    const paymentProfileId = await new Promise((resolve, reject) => {
+    ctrl.setEnvironment(endpoint);    const paymentProfileResult = await new Promise((resolve, reject) => {
       ctrl.execute(() => {
         const apiResponse = ctrl.getResponse();
         const response = new APIContracts.CreateCustomerPaymentProfileResponse(apiResponse);
         
         if (response.getMessages().getResultCode() === APIContracts.MessageTypeEnum.OK) {
-          resolve(response.getCustomerPaymentProfileId());
-        } else {
-          const error = response.getMessages().getMessage()[0];
-          reject(new Error(error.getText()));
-        }
-      });
-    });
-
-    // Get payment profile details for storing locally
-    const getRequest = new APIContracts.GetCustomerPaymentProfileRequest();
-    getRequest.setMerchantAuthentication(merchantAuthenticationType);
-    getRequest.setCustomerProfileId(customerProfileId);
-    getRequest.setCustomerPaymentProfileId(paymentProfileId);
-
-    const getCtrl = new APIControllers.GetCustomerPaymentProfileController(getRequest.getJSON());
-    getCtrl.setEnvironment(endpoint);
-
-    const paymentDetails = await new Promise((resolve, reject) => {
-      getCtrl.execute(() => {
-        const apiResponse = getCtrl.getResponse();
-        const response = new APIContracts.GetCustomerPaymentProfileResponse(apiResponse);
-        
-        if (response.getMessages().getResultCode() === APIContracts.MessageTypeEnum.OK) {
-          const profile = response.getPaymentProfile();
-          const payment = profile.getPayment();
-          const card = payment.getCreditCard();
-          
           resolve({
-            lastFour: card.getCardNumber().slice(-4),
-            cardType: card.getCardType ? card.getCardType() : 'Unknown',
-            expiryMonth: card.getExpirationDate().split('-')[1],
-            expiryYear: card.getExpirationDate().split('-')[0]
+            customerPaymentProfileId: response.getCustomerPaymentProfileId(),
+            success: true
           });
         } else {
-          reject(new Error('Failed to get payment profile details'));
+          const error = response.getMessages().getMessage()[0];
+          const errorCode = error.getCode();
+          const errorText = error.getText();
+          
+          // Handle duplicate payment profile error
+          if (errorCode === 'E00039') {
+            reject(new Error(`This payment method is already saved to your account. Please use a different card or select from your existing payment methods.`));
+          } else {
+            reject(new Error(`Payment Profile Error: ${errorCode} - ${errorText}`));
+          }
         }
-      });
-    });
+      });    });
 
-    // If this is the default card, unset other defaults
-    if (isDefault) {
-      user.billing.forEach(card => card.isDefault = false);
-    }
+    // Retrieve actual card details from Authorize.Net
+    const cardDetails = await getCardDetailsFromAuthorizeNet(
+      customerProfileId, 
+      paymentProfileResult.customerPaymentProfileId
+    );
 
-    // Add to user's billing methods
+    // Add to user's billing methods with real card details
     const newBillingMethod = {
-      id: Date.now().toString(),
+      id: `card_${Date.now()}`,
       customerProfileId: customerProfileId,
-      customerPaymentProfileId: paymentProfileId,
-      cardType: paymentDetails.cardType,
-      lastFour: paymentDetails.lastFour,
-      expiryMonth: paymentDetails.expiryMonth,
-      expiryYear: paymentDetails.expiryYear,
-      cardholderName: `${billingAddress.firstName} ${billingAddress.lastName}`,
-      isDefault: isDefault || user.billing.length === 0
+      customerPaymentProfileId: paymentProfileResult.customerPaymentProfileId,
+      cardType: cardDetails.cardType,
+      lastFour: cardDetails.lastFour,
+      expiryMonth: cardDetails.expiryMonth,
+      expiryYear: cardDetails.expiryYear,
+      cardholderName: cardDetails.cardholderName,
+      isDefault: setAsDefault || user.billing.length === 0,
+      createdAt: new Date()
     };
+
+    // If setting as default, unset other defaults
+    if (newBillingMethod.isDefault) {
+      user.billing.forEach(method => method.isDefault = false);
+    }
 
     user.billing.push(newBillingMethod);
     await user.save();
+
+    // Retrieve and attach card details to new billing method
+    try {
+      const cardDetails = await getCardDetailsFromAuthorizeNet(customerProfileId, paymentProfileResult.customerPaymentProfileId);
+      newBillingMethod.cardType = cardDetails.cardType;
+      newBillingMethod.lastFour = cardDetails.lastFour;
+      newBillingMethod.expiryMonth = cardDetails.expiryMonth;
+      newBillingMethod.expiryYear = cardDetails.expiryYear;
+      newBillingMethod.cardholderName = cardDetails.cardholderName;
+      await user.save();
+    } catch (error) {
+      console.error('Error retrieving card details:', error);
+      // Continue without card details
+    }
 
     res.json({
       success: true,
@@ -431,54 +816,67 @@ exports.addPaymentMethod = async (req, res) => {
   }
 };
 
-// Delete payment method
+// Delete Payment Method
 exports.deletePaymentMethod = async (req, res) => {
   try {
-    const { paymentMethodId } = req.body;
+    const { paymentMethodId } = req.params;
     
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const paymentMethod = user.billing.find(method => method.id === paymentMethodId);
-    if (!paymentMethod) {
+    const paymentMethodIndex = user.billing.findIndex(method => method.id === paymentMethodId);
+    if (paymentMethodIndex === -1) {
       return res.status(404).json({ success: false, message: 'Payment method not found' });
     }
 
-    // Delete from Authorize.Net
-    if (paymentMethod.customerPaymentProfileId) {
-      const { apiLoginId, transactionKey, endpoint } = getAuthorizeNetConfig();
-      const merchantAuthenticationType = new APIContracts.MerchantAuthenticationType();
-      merchantAuthenticationType.setName(apiLoginId);
-      merchantAuthenticationType.setTransactionKey(transactionKey);
+    const paymentMethod = user.billing[paymentMethodIndex];
 
-      const deleteRequest = new APIContracts.DeleteCustomerPaymentProfileRequest();
-      deleteRequest.setMerchantAuthentication(merchantAuthenticationType);
-      deleteRequest.setCustomerProfileId(user.authorizeNetCustomerProfileId);
-      deleteRequest.setCustomerPaymentProfileId(paymentMethod.customerPaymentProfileId);
+    // Delete from Authorize.Net if it has profile IDs
+    if (paymentMethod.customerProfileId && paymentMethod.customerPaymentProfileId) {
+      try {
+        const { apiLoginId, transactionKey, endpoint } = getAuthorizeNetConfig();
+        const merchantAuthenticationType = new APIContracts.MerchantAuthenticationType();
+        merchantAuthenticationType.setName(apiLoginId);
+        merchantAuthenticationType.setTransactionKey(transactionKey);
 
-      const ctrl = new APIControllers.DeleteCustomerPaymentProfileController(deleteRequest.getJSON());
-      ctrl.setEnvironment(endpoint);
+        const deleteRequest = new APIContracts.DeleteCustomerPaymentProfileRequest();
+        deleteRequest.setMerchantAuthentication(merchantAuthenticationType);
+        deleteRequest.setCustomerProfileId(paymentMethod.customerProfileId);
+        deleteRequest.setCustomerPaymentProfileId(paymentMethod.customerPaymentProfileId);
 
-      await new Promise((resolve, reject) => {
-        ctrl.execute(() => {
-          const apiResponse = ctrl.getResponse();
-          const response = new APIContracts.DeleteCustomerPaymentProfileResponse(apiResponse);
-          
-          if (response.getMessages().getResultCode() === APIContracts.MessageTypeEnum.OK) {
-            resolve();
-          } else {
-            console.error('Failed to delete from Authorize.Net:', response.getMessages().getMessage()[0].getText());
-            // Continue with local deletion even if Authorize.Net deletion fails
-            resolve();
-          }
+        const ctrl = new APIControllers.DeleteCustomerPaymentProfileController(deleteRequest.getJSON());
+        ctrl.setEnvironment(endpoint);
+
+        await new Promise((resolve, reject) => {
+          ctrl.execute(() => {
+            const apiResponse = ctrl.getResponse();
+            const response = new APIContracts.DeleteCustomerPaymentProfileResponse(apiResponse);
+            
+            if (response.getMessages().getResultCode() === APIContracts.MessageTypeEnum.OK) {
+              resolve();
+            } else {
+              // Log error but don't fail the deletion
+              console.warn('Warning: Failed to delete payment profile from Authorize.Net:', response.getMessages().getMessage()[0].getText());
+              resolve();
+            }
+          });
         });
-      });
+      } catch (authorizeError) {
+        console.warn('Warning: Error deleting from Authorize.Net:', authorizeError);
+        // Continue with local deletion
+      }
     }
 
     // Remove from user's billing methods
-    user.billing = user.billing.filter(method => method.id !== paymentMethodId);
+    user.billing.splice(paymentMethodIndex, 1);
+
+    // If this was the default and there are other methods, set the first one as default
+    if (paymentMethod.isDefault && user.billing.length > 0) {
+      user.billing[0].isDefault = true;
+    }
+
     await user.save();
 
     res.json({
@@ -495,193 +893,7 @@ exports.deletePaymentMethod = async (req, res) => {
   }
 };
 
-// Process payment with saved card
-exports.processPaymentWithSavedCard = async (req, res) => {
-  try {
-    const {
-      paymentMethodId,
-      amount,
-      cartItems,
-      shippingAddress,
-      billingAddress,
-      orderType = 'delivery',
-      tip = 0,
-      bagFee = 0
-    } = req.body;
-
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    const paymentMethod = user.billing.find(method => method.id === paymentMethodId);
-    if (!paymentMethod) {
-      return res.status(404).json({ success: false, message: 'Payment method not found' });
-    }
-
-    // Validate cart items and calculate totals
-    const productIds = cartItems.map(item => item.product);
-    const products = await Product.find({ _id: { $in: productIds } });
-    
-    let subtotal = 0;
-    const validatedItems = [];
-
-    for (const item of cartItems) {
-      const product = products.find(p => p._id.toString() === item.product);
-      if (!product) {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Product not found: ${item.product}` 
-        });
-      }
-      
-      const itemTotal = (product.saleprice || product.price) * item.quantity;
-      subtotal += itemTotal;
-      
-      validatedItems.push({
-        product: product._id,
-        name: product.name,
-        price: product.saleprice || product.price,
-        quantity: item.quantity,
-        image: product.productimg
-      });
-    }
-
-    const tax = subtotal * 0.08; // 8% tax rate
-    const total = subtotal + tax + tip + bagFee;
-
-    if (Math.abs(total - amount) > 0.01) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Amount mismatch' 
-      });
-    }
-
-    const { apiLoginId, transactionKey, endpoint } = getAuthorizeNetConfig();
-    const merchantAuthenticationType = new APIContracts.MerchantAuthenticationType();
-    merchantAuthenticationType.setName(apiLoginId);
-    merchantAuthenticationType.setTransactionKey(transactionKey);
-
-    // Create customer profile transaction request
-    const profileTransAuthCapture = new APIContracts.CreateTransactionRequest();
-    profileTransAuthCapture.setMerchantAuthentication(merchantAuthenticationType);
-
-    const transactionRequest = new APIContracts.TransactionRequestType();
-    transactionRequest.setTransactionType(APIContracts.TransactionTypeEnum.AUTHCAPTURETRANSACTION);
-    transactionRequest.setAmount(total.toFixed(2));
-
-    const customerProfilePayment = new APIContracts.CustomerProfilePaymentType();
-    customerProfilePayment.setCustomerProfileId(user.authorizeNetCustomerProfileId);
-    
-    const paymentProfile = new APIContracts.PaymentProfile();
-    paymentProfile.setPaymentProfileId(paymentMethod.customerPaymentProfileId);
-    customerProfilePayment.setPaymentProfile(paymentProfile);
-
-    transactionRequest.setProfile(customerProfilePayment);
-
-    // Set addresses
-    const billTo = new APIContracts.CustomerAddressType();
-    billTo.setFirstName(billingAddress.firstName);
-    billTo.setLastName(billingAddress.lastName);
-    billTo.setAddress(billingAddress.address);
-    billTo.setCity(billingAddress.city);
-    billTo.setState(billingAddress.state);
-    billTo.setZip(billingAddress.zip);
-    billTo.setCountry(billingAddress.country || 'US');
-    transactionRequest.setBillTo(billTo);
-
-    if (orderType === 'delivery' && shippingAddress) {
-      const shipTo = new APIContracts.CustomerAddressType();
-      shipTo.setFirstName(shippingAddress.firstName);
-      shipTo.setLastName(shippingAddress.lastName);
-      shipTo.setAddress(shippingAddress.address);
-      shipTo.setCity(shippingAddress.city);
-      shipTo.setState(shippingAddress.state);
-      shipTo.setZip(shippingAddress.zip);
-      shipTo.setCountry(shippingAddress.country || 'US');
-      transactionRequest.setShipTo(shipTo);
-    }
-
-    profileTransAuthCapture.setTransactionRequest(transactionRequest);
-
-    const ctrl = new APIControllers.CreateTransactionController(profileTransAuthCapture.getJSON());
-    ctrl.setEnvironment(endpoint);
-
-    const paymentResult = await new Promise((resolve, reject) => {
-      ctrl.execute(() => {
-        const apiResponse = ctrl.getResponse();
-        const response = new APIContracts.CreateTransactionResponse(apiResponse);
-        
-        if (response.getMessages().getResultCode() === APIContracts.MessageTypeEnum.OK) {
-          const transactionResponse = response.getTransactionResponse();
-          if (transactionResponse.getMessages().getMessage().length > 0) {
-            resolve({
-              success: true,
-              transactionId: transactionResponse.getTransId(),
-              authCode: transactionResponse.getAuthCode(),
-              responseCode: transactionResponse.getResponseCode(),
-              messageCode: transactionResponse.getMessages().getMessage()[0].getCode(),
-              description: transactionResponse.getMessages().getMessage()[0].getDescription(),
-              method: 'saved_card',
-              lastFour: paymentMethod.lastFour,
-              cardType: paymentMethod.cardType
-            });
-          } else {
-            const errors = transactionResponse.getErrors().getError();
-            reject(new Error(errors[0].getErrorText()));
-          }
-        } else {
-          const error = response.getMessages().getMessage()[0];
-          reject(new Error(`Error: ${error.getCode()} - ${error.getText()}`));
-        }
-      });
-    });
-
-    // Create order after successful payment
-    const order = new Order({
-      customer: user._id,
-      items: validatedItems,
-      subtotal: subtotal,
-      tax: tax,
-      total: total,
-      shippingAddress: orderType === 'delivery' ? shippingAddress : null,
-      billingAddress: billingAddress,
-      paymentInfo: {
-        transactionId: paymentResult.transactionId,
-        method: 'saved_card',
-        lastFour: paymentMethod.lastFour,
-        cardType: paymentMethod.cardType,
-        amount: total
-      },
-      orderType: orderType,
-      tip: tip,
-      bagFee: bagFee,
-      status: 'pending'
-    });
-
-    await order.save();
-
-    // Update user's orders
-    user.orders.push(order._id);
-    await user.save();
-
-    res.json({
-      success: true,
-      order: order,
-      payment: paymentResult,
-      message: 'Payment processed successfully'
-    });
-
-  } catch (error) {
-    console.error('Payment processing error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Payment processing failed'
-    });
-  }
-};
-
-// Validate payment methods (check if they still exist in Authorize.Net)
+// Validate Payment Methods (check if they still exist in Authorize.Net)
 exports.validatePaymentMethods = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -689,8 +901,13 @@ exports.validatePaymentMethods = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    if (!user.authorizeNetCustomerProfileId || user.billing.length === 0) {
-      return res.json({ success: true, validMethods: [], invalidMethods: [] });
+    if (!user.billing.length) {
+      return res.json({
+        success: true,
+        validMethods: [],
+        invalidMethods: [],
+        message: 'No payment methods to validate'
+      });
     }
 
     const { apiLoginId, transactionKey, endpoint } = getAuthorizeNetConfig();
@@ -702,7 +919,7 @@ exports.validatePaymentMethods = async (req, res) => {
     const invalidMethods = [];
 
     for (const method of user.billing) {
-      if (!method.customerPaymentProfileId) {
+      if (!method.customerProfileId || !method.customerPaymentProfileId) {
         invalidMethods.push(method.id);
         continue;
       }
@@ -710,7 +927,7 @@ exports.validatePaymentMethods = async (req, res) => {
       try {
         const getRequest = new APIContracts.GetCustomerPaymentProfileRequest();
         getRequest.setMerchantAuthentication(merchantAuthenticationType);
-        getRequest.setCustomerProfileId(user.authorizeNetCustomerProfileId);
+        getRequest.setCustomerProfileId(method.customerProfileId);
         getRequest.setCustomerPaymentProfileId(method.customerPaymentProfileId);
 
         const ctrl = new APIControllers.GetCustomerPaymentProfileController(getRequest.getJSON());
@@ -730,11 +947,12 @@ exports.validatePaymentMethods = async (req, res) => {
           invalidMethods.push(method.id);
         }
       } catch (error) {
+        console.warn(`Error validating payment method ${method.id}:`, error);
         invalidMethods.push(method.id);
       }
     }
 
-    // Remove invalid methods from user record
+    // Remove invalid methods from user profile
     if (invalidMethods.length > 0) {
       user.billing = user.billing.filter(method => !invalidMethods.includes(method.id));
       await user.save();
@@ -744,7 +962,7 @@ exports.validatePaymentMethods = async (req, res) => {
       success: true,
       validMethods,
       invalidMethods,
-      message: `Validated ${user.billing.length} payment methods`
+      message: `Validated ${user.billing.length} payment methods. Removed ${invalidMethods.length} invalid methods.`
     });
 
   } catch (error) {
@@ -756,58 +974,95 @@ exports.validatePaymentMethods = async (req, res) => {
   }
 };
 
-// Get payment history
+// Get Payment History (from orders)
 exports.getPaymentHistory = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate({
-      path: 'orders',
-      select: 'orderNumber total paymentInfo status createdAt',
-      options: { sort: { createdAt: -1 } }
-    });
-
+    const { page = 1, limit = 10 } = req.query;
+    
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
+    const orders = await Order.find({ customer: user._id })
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .populate('items.product', 'name productimg')
+      .exec();
+
+    const totalOrders = await Order.countDocuments({ customer: user._id });
+
+    const paymentHistory = orders.map(order => ({
+      orderId: order._id,
+      transactionId: order.paymentInfo?.transactionId,
+      amount: order.total,
+      paymentMethod: order.paymentInfo?.method || 'unknown',
+      status: order.status,
+      date: order.createdAt,
+      items: order.items.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        image: item.product?.productimg
+      })),
+      refundInfo: order.refundInfo
+    }));
+
     res.json({
       success: true,
-      paymentHistory: user.orders
+      payments: paymentHistory,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalOrders / limit),
+        totalOrders,
+        hasNext: page * limit < totalOrders,
+        hasPrev: page > 1
+      }
     });
 
   } catch (error) {
-    console.error('Error getting payment history:', error);
+    console.error('Error fetching payment history:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Failed to get payment history'
+      message: error.message || 'Failed to fetch payment history'
     });
   }
 };
 
-// Refund transaction
 exports.refundTransaction = async (req, res) => {
   try {
     const { transactionId, amount, reason } = req.body;
-
-    // Find the order
-    const order = await Order.findOne({ 'paymentInfo.transactionId': transactionId });
-    if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
-    }
-
-    // Check if user owns this order
-    if (order.customer.toString() !== req.user.id) {
-      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    
+    if (!transactionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Transaction ID is required'
+      });
     }
 
     const { apiLoginId, transactionKey, endpoint } = getAuthorizeNetConfig();
+    
     const merchantAuthenticationType = new APIContracts.MerchantAuthenticationType();
     merchantAuthenticationType.setName(apiLoginId);
     merchantAuthenticationType.setTransactionKey(transactionKey);
 
+    // Create credit card with last 4 digits (required for refund)
+    const creditCard = new APIContracts.CreditCardType();
+    creditCard.setCardNumber('XXXX'); // Only last 4 digits needed for refund
+    creditCard.setExpirationDate('XXXX');
+
+    const paymentType = new APIContracts.PaymentType();
+    paymentType.setCreditCard(creditCard);
+
     const transactionRequest = new APIContracts.TransactionRequestType();
     transactionRequest.setTransactionType(APIContracts.TransactionTypeEnum.REFUNDTRANSACTION);
-    transactionRequest.setAmount(amount.toFixed(2));
     transactionRequest.setRefTransId(transactionId);
+    transactionRequest.setPayment(paymentType);
+    
+    if (amount) {
+      transactionRequest.setAmount(parseFloat(amount).toFixed(2));
+    }
 
     const createRequest = new APIContracts.CreateTransactionRequest();
     createRequest.setMerchantAuthentication(merchantAuthenticationType);
@@ -823,27 +1078,44 @@ exports.refundTransaction = async (req, res) => {
         
         if (response.getMessages().getResultCode() === APIContracts.MessageTypeEnum.OK) {
           const transactionResponse = response.getTransactionResponse();
-          if (transactionResponse.getMessages().getMessage().length > 0) {
+          
+          if (transactionResponse.getMessages() && transactionResponse.getMessages().getMessage().length > 0) {
             resolve({
-              success: true,
               refundTransactionId: transactionResponse.getTransId(),
-              authCode: transactionResponse.getAuthCode(),
+              originalTransactionId: transactionId,
+              success: true,
+              message: transactionResponse.getMessages().getMessage()[0].getDescription(),
               responseCode: transactionResponse.getResponseCode()
             });
           } else {
             const errors = transactionResponse.getErrors().getError();
-            reject(new Error(errors[0].getErrorText()));
+            const error = errors[0];
+            reject(new Error(`Refund Error: ${error.getErrorCode()} - ${error.getErrorText()}`));
           }
         } else {
           const error = response.getMessages().getMessage()[0];
-          reject(new Error(`Error: ${error.getCode()} - ${error.getText()}`));
+          reject(new Error(`API Error: ${error.getCode()} - ${error.getText()}`));
         }
       });
     });
 
-    // Update order status
-    order.status = 'cancelled';
-    await order.save();
+    // Update order status to refunded if needed
+    try {
+      const order = await Order.findOne({ 'paymentInfo.transactionId': transactionId });
+      if (order) {
+        order.status = 'refunded';
+        order.refundInfo = {
+          refundTransactionId: refundResult.refundTransactionId,
+          refundAmount: amount || order.total,
+          refundDate: new Date(),
+          reason: reason || 'Customer request'
+        };
+        await order.save();
+      }
+    } catch (orderError) {
+      console.error('Error updating order status:', orderError);
+      // Don't fail the refund if order update fails
+    }
 
     res.json({
       success: true,
@@ -856,6 +1128,61 @@ exports.refundTransaction = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Refund processing failed'
+    });
+  }
+};
+
+// Sync Payment Methods with Authorize.Net (retrieve actual card details)
+exports.syncPaymentMethods = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    let updatedCount = 0;
+    const updatedMethods = [];
+
+    for (const method of user.billing) {
+      if (method.customerProfileId && method.customerPaymentProfileId) {
+        try {
+          const cardDetails = await getCardDetailsFromAuthorizeNet(
+            method.customerProfileId,
+            method.customerPaymentProfileId
+          );
+          
+          // Update the payment method with real card details
+          method.cardType = cardDetails.cardType;
+          method.lastFour = cardDetails.lastFour;
+          method.expiryMonth = cardDetails.expiryMonth;
+          method.expiryYear = cardDetails.expiryYear;
+          method.cardholderName = cardDetails.cardholderName;
+          
+          updatedMethods.push(method);
+          updatedCount++;
+        } catch (error) {
+          console.error(`Error syncing payment method ${method.id}:`, error);
+          updatedMethods.push(method); // Keep original if sync fails
+        }
+      } else {
+        updatedMethods.push(method); // Keep methods without Authorize.Net IDs
+      }
+    }
+
+    user.billing = updatedMethods;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: `Synced ${updatedCount} payment methods`,
+      paymentMethods: user.billing
+    });
+
+  } catch (error) {
+    console.error('Error syncing payment methods:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to sync payment methods'
     });
   }
 };

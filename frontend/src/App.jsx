@@ -10,13 +10,14 @@ import Account from './pages/Account.jsx';
 import AuthProvider from './components/AuthContext.jsx';
 import Cart from './pages/Cart.jsx';
 import { CartProvider } from './Context/CartContext.jsx';
+import { CMSProvider } from './Context/CMSContext.jsx'; // Import CMS Provider
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ProtectedRoute from './components/ProtectedRoute';
 import Profile from './components/Profile';
 import Checkout from './pages/Checkout.jsx';
 
-function App(cmsData) {
+function App() {
     const location = useLocation(); // Get the current location
 
     // Animation variants for route transitions
@@ -38,25 +39,26 @@ function App(cmsData) {
     };
 
     return (
-                <AuthProvider>
-                    <CartProvider>
-                        <Navbar cmsData={cmsData} />
-                        <main className="min-h-screen">
-                            <AnimatePresence mode="wait"> {/* AnimatePresence for route transitions */}
-                                <Routes location={location} key={location.pathname}>
-                                    <Route
-                                        path="/"
-                                        element={
-                                            <motion.div
-                                                variants={pageVariants}
-                                                initial="initial"
-                                                animate="animate"
-                                                exit="exit"
-                                            >
-                                                <Home cmsData={cmsData} />
-                                            </motion.div>
-                                        }
-                                    />
+        <CMSProvider>
+            <AuthProvider>
+                <CartProvider>
+                    <Navbar />
+                    <main className="min-h-screen">
+                        <AnimatePresence mode="wait"> {/* AnimatePresence for route transitions */}
+                            <Routes location={location} key={location.pathname}>
+                                <Route
+                                    path="/"
+                                    element={
+                                        <motion.div
+                                            variants={pageVariants}
+                                            initial="initial"
+                                            animate="animate"
+                                            exit="exit"
+                                        >
+                                            <Home />
+                                        </motion.div>
+                                    }
+                                />
                                     <Route
                                         path="/products"
                                         element={
@@ -121,23 +123,28 @@ function App(cmsData) {
                                                 <Checkout />
                                             </motion.div>
                                         }
-                                    />
-                                    <Route
-                                        path="/account/:section"
-                                        element={
-                                            <ProtectedRoute>
-                                            
-                                                    <Profile />
-                                            </ProtectedRoute>
-                                        }
-                                    />
-                                </Routes>
-                            </AnimatePresence>
+                                    />                    <Route
+                        path="/account/:section"
+                        element={
+                            <motion.div
+                                variants={pageVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                            >
+                                <ProtectedRoute>
+                                    <Profile />
+                                </ProtectedRoute>
+                            </motion.div>
+                        }
+                    />
+                                </Routes>                            </AnimatePresence>
                         </main>
                         <Footer />
                         <ToastContainer />
                     </CartProvider>
                 </AuthProvider>
+            </CMSProvider>
     );
 }
 

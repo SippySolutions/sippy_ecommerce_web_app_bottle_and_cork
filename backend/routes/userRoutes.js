@@ -2,8 +2,7 @@
 const express = require('express');
 const {
   getUserProfile, updateUserDetails, deleteUser,
-  addAddress, updateAddress, deleteAddress,
-  addBillingMethod, updateBillingMethod, deleteBillingMethod
+  addAddress, updateAddress, deleteAddress
 } = require('../controllers/userController');
 const auth = require('../middleware/authMiddleware');
 const router = express.Router();
@@ -17,9 +16,6 @@ router.post('/me/addresses', auth, addAddress);
 router.put('/me/addresses/:addressId', auth, updateAddress);
 router.delete('/me/addresses/:addressId', auth, deleteAddress);
 
-// Billing routes
-router.post('/me/billing', auth, addBillingMethod);
-router.put('/me/billing/:billingId', auth, updateBillingMethod);
-router.delete('/me/billing/:billingId', auth, deleteBillingMethod);
+// LEGACY BILLING ROUTES REMOVED - Use /checkout/* endpoints instead
 
 module.exports = router;

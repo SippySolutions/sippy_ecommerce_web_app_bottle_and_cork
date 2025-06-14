@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const productRoutes = require('./routes/productRoutes');
 const cmsDataRoutes = require('./routes/CMSDataRoutes');
+const cmsRoutes = require('./routes/cmsRoutes'); // Add new CMS routes
 const featuredproductRoutes = require('./routes/featuredproductRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const authRoutes = require('./routes/authRoutes');
@@ -31,9 +32,10 @@ app.use('/api/products', productRoutes);
 app.use('/api/featured-products', featuredproductRoutes);
 app.use('/api/similar', similarProductRoutes);
 app.use('/api', cmsDataRoutes);
+app.use('/api/cms-data', cmsRoutes); // Add new CMS data route
 app.use('/api', departmentRoutes);
 app.use('/api', authRoutes);
-app.use('/api', userRoutes); // Register user routes
+app.use('/api/users', userRoutes); // Register user routes
 app.use('/api/orders', orderRoutes); // Register order routes
 app.use('/api/checkout', checkoutRoutes); // Register checkout routes
 const PORT = process.env.PORT || 5001;

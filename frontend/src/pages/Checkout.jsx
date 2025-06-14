@@ -119,16 +119,22 @@ const Checkout = () => {
 
   const handlePrevStep = () => {
     setStep(prev => prev - 1);
-  };
-  const handleAcceptJSToken = async (tokenData) => {
+  };  const handleAcceptJSToken = async (tokenData) => {
     setLoading(true);
     try {
+      // Check if user wants to save card but has reached limit
+      const shouldSaveCard = saveCard && user?.billing?.length < 3;
+      
+      if (saveCard && user?.billing?.length >= 3) {
+        toast.warning('Card limit reached. Processing payment without saving card.');
+      }
+
       const orderData = {
         dataDescriptor: tokenData.dataDescriptor,
         dataValue: tokenData.dataValue,
         amount: total,
         cartItems: cartItems.map(item => ({
-          product: item.id,
+          product: item._id,
           quantity: item.quantity
         })),
         shippingAddress: orderType === 'delivery' ? shippingAddress : null,
@@ -136,7 +142,7 @@ const Checkout = () => {
         orderType: orderType,
         tip: tip,
         bagFee: orderType === 'delivery' ? bagFee : 0,
-        saveCard: saveCard
+        saveCard: shouldSaveCard
       };
 
       const response = await processCheckout(orderData);
@@ -163,12 +169,11 @@ const Checkout = () => {
     }
 
     setLoading(true);
-    try {
-      const orderData = {
+    try {      const orderData = {
         paymentMethodId: selectedCard.id,
         amount: total,
         cartItems: cartItems.map(item => ({
-          product: item.id,
+          product: item._id,
           quantity: item.quantity
         })),
         shippingAddress: orderType === 'delivery' ? shippingAddress : null,
@@ -520,40 +525,66 @@ const Checkout = () => {
                           >
                             New Card
                           </button>
-                        </div>
-
-                        {paymentMethod === 'saved' && (
+                        </div>                        {paymentMethod === 'saved' && (
                           <div className="space-y-3">
-                            {user.billing.map((card) => (
-                              <div
-                                key={card.id}
-                                onClick={() => setSelectedCard(card)}
-                                className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                                  selectedCard?.id === card.id
-                                    ? 'border-blue-500 bg-blue-50'
-                                    : 'border-gray-300 hover:border-gray-400'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-6 bg-gray-200 rounded flex items-center justify-center text-xs font-medium">
-                                      {card.cardType}
-                                    </div>
-                                    <div>
-                                      <div className="font-medium">**** **** **** {card.lastFour}</div>
-                                      <div className="text-sm text-gray-600">
-                                        Expires {card.expiryMonth}/{card.expiryYear}
+                            {user.billing && user.billing.length > 0 ? (
+                              user.billing.map((card) => (
+                                <div
+                                  key={card.id}
+                                  onClick={() => setSelectedCard(card)}
+                                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                                    selectedCard?.id === card.id
+                                      ? 'border-blue-500 bg-blue-50'
+                                      : 'border-gray-300 hover:border-gray-400'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-12 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded flex items-center justify-center text-xs font-medium text-white">
+                                        {card.cardType?.substring(0, 4) || 'CARD'}
+                                      </div>
+                                      <div>
+                                        <div className="font-medium">
+                                          {card.cardType || 'Card'} ending in {card.lastFour || '****'}
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                          Expires {card.expiryMonth}/{card.expiryYear}
+                                        </div>
+                                        {card.billingAddress && (
+                                          <div className="text-xs text-gray-500">
+                                            {card.billingAddress.city}, {card.billingAddress.state}
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
+                                    <div className="flex items-center space-x-2">
+                                      {card.isDefault && (
+                                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                          Default
+                                        </span>
+                                      )}
+                                      {selectedCard?.id === card.id && (
+                                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                          </svg>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                  {card.isDefault && (
-                                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                                      Default
-                                    </span>
-                                  )}
                                 </div>
+                              ))
+                            ) : (
+                              <div className="text-center py-8 text-gray-500">
+                                <p>No saved payment methods found</p>
+                                <button
+                                  onClick={() => setPaymentMethod('new')}
+                                  className="mt-2 text-blue-600 hover:text-blue-800 text-sm"
+                                >
+                                  Add a new payment method
+                                </button>
                               </div>
-                            ))}
+                            )}
                           </div>
                         )}
                       </div>
@@ -566,19 +597,32 @@ const Checkout = () => {
                           onTokenReceived={handleAcceptJSToken}
                           disabled={loading}
                           billingAddress={billingAddress}
-                        />
-                        <div className="mt-4">
+                        />                        <div className="mt-4">
                           <label className="flex items-center space-x-2">
                             <input
                               type="checkbox"
                               checked={saveCard}
                               onChange={(e) => setSaveCard(e.target.checked)}
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              disabled={user?.billing?.length >= 3}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50"
                             />
                             <span className="text-sm text-gray-700">
                               Save this card for future purchases
+                              {user?.billing?.length >= 3 && (
+                                <span className="text-red-600 ml-1">
+                                  (Maximum 3 cards - delete one to save new)
+                                </span>
+                              )}
                             </span>
                           </label>
+                          {user?.billing?.length >= 3 && (
+                            <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                              <p className="text-sm text-yellow-800">
+                                <strong>Card limit reached:</strong> You have {user.billing.length}/3 saved cards. 
+                                Go to your profile to manage saved payment methods.
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -599,9 +643,8 @@ const Checkout = () => {
                     <h3 className="text-lg font-semibold mb-4">Review Your Order</h3>
                     
                     {/* Order Items */}
-                    <div className="space-y-4 mb-6">
-                      {cartItems.map((item) => (
-                        <div key={item.id} className="flex items-center space-x-4 p-4 border rounded-lg">
+                    <div className="space-y-4 mb-6">                      {cartItems.map((item) => (
+                        <div key={item._id} className="flex items-center space-x-4 p-4 border rounded-lg">
                           <img
                             src={item.productimg}
                             alt={item.name}
@@ -694,9 +737,8 @@ const Checkout = () => {
             <div className="bg-white p-6 rounded-lg shadow-md sticky top-4">
               <h3 className="text-lg font-semibold mb-4">Order Summary</h3>
               
-              <div className="space-y-3 mb-4">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm">
+              <div className="space-y-3 mb-4">                {cartItems.map((item) => (
+                  <div key={item._id} className="flex justify-between text-sm">
                     <span>{item.name} (x{item.quantity})</span>
                     <span>${((item.saleprice || item.price) * item.quantity).toFixed(2)}</span>
                   </div>

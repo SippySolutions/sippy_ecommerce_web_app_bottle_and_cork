@@ -6,6 +6,7 @@ const {
   addPaymentMethod,
   deletePaymentMethod,
   validatePaymentMethods,
+  syncPaymentMethods,
   getPaymentHistory,
   refundTransaction
 } = require('../controllers/checkoutController');
@@ -25,11 +26,14 @@ router.post('/create-profile', authMiddleware, createCustomerProfile);
 // POST /api/checkout/add-payment-method - Add payment method to profile
 router.post('/add-payment-method', authMiddleware, addPaymentMethod);
 
-// DELETE /api/checkout/delete-payment-method - Delete payment method
-router.delete('/delete-payment-method', authMiddleware, deletePaymentMethod);
+// DELETE /api/checkout/payment-method/:paymentMethodId - Delete payment method
+router.delete('/payment-method/:paymentMethodId', authMiddleware, deletePaymentMethod);
 
 // POST /api/checkout/validate-payment-methods - Validate payment methods
 router.post('/validate-payment-methods', authMiddleware, validatePaymentMethods);
+
+// POST /api/checkout/sync-payment-methods - Sync payment methods with Authorize.Net
+router.post('/sync-payment-methods', authMiddleware, syncPaymentMethods);
 
 // GET /api/checkout/payment-history - Get payment history
 router.get('/payment-history', authMiddleware, getPaymentHistory);

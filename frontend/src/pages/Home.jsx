@@ -5,17 +5,33 @@ import Categories from "../components/Categories";
 import Exclusive from "../components/Exclusive";
 import HeroSection from "../components/HeroSection";
 import StaffPick from "../components/StaffPick";
+import { useCMS } from "../Context/CMSContext";
 
-function Home({ cmsData }) {
+function Home() {
+  const { 
+    getHeroSection, 
+    getBanner, 
+    getBrandBanner, 
+    getCategories,
+    loading 
+  } = useCMS();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
   return (
     <>
-      <HeroSection data={cmsData.cmsData.heroSection} />
+      <HeroSection data={getHeroSection()} />
       <BestSellers /> 
-      <Categories categories={cmsData.cmsData.categories} />
+      <Categories categories={getCategories()} />
       <Exclusive  />
-      <Banner data={cmsData.cmsData.banner} />
+      <Banner data={getBanner()} />
       <StaffPick />
-      <BrandBanner brands={cmsData.cmsData.brandBanner} />
+      <BrandBanner brands={getBrandBanner()} />
     </>
   );
 }

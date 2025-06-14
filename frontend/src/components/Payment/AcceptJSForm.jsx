@@ -8,9 +8,9 @@ const AcceptJSForm = ({
   disabled = false,
   buttonText = "Pay Now",
   amount 
-}) => {  const [loading, setLoading] = useState(false);
+}) => {
+  const [loading, setLoading] = useState(false);
   const [acceptJSLoaded, setAcceptJSLoaded] = useState(false);
-  const [developmentMode, setDevelopmentMode] = useState(false);
   const [formData, setFormData] = useState({
     cardNumber: '',
     expirationDate: '',
@@ -19,29 +19,73 @@ const AcceptJSForm = ({
     address: '',
     city: '',
     state: '',
-    zipCode: ''
-  });
+    zipCode: ''  });
+  // Production mode detection - use real Accept.js in production
+  const isProduction = import.meta.env.VITE_MODE === 'production';
+  const isHttps = window.location.protocol === 'https:';
+  // Always use real Accept.js in production mode
+  const useAcceptJS = isProduction || isHttps;
   // Initialize Accept.js when component mounts
   useEffect(() => {
-    // Check if we're in development and not using HTTPS
-    const isHttpDevelopment = import.meta.env.MODE === 'development' && !window.location.protocol.includes('https');
-    
-    if (isHttpDevelopment) {
-      console.warn('⚠️ Accept.js requires HTTPS connection.');
-      console.warn('📝 Running in development bypass mode for testing.');
-      setDevelopmentMode(true);
-      setAcceptJSLoaded(true); // Allow form to work in dev mode
+    // In production mode, always use real Accept.js regardless of protocol
+    if (isProduction) {
+      console.log('� Production Mode: Loading real Accept.js for payment processing');
+      
+      // Check if Accept.js is already loaded
+      if (window.Accept) {
+        setAcceptJSLoaded(true);
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://js.authorize.net/v1/Accept.js'; // Always production endpoint
+      script.async = true;
+      
+      script.onload = () => {
+        console.log('✅ Accept.js loaded successfully');
+        setAcceptJSLoaded(true);
+      };
+      
+      script.onerror = () => {
+        console.error('❌ Failed to load Accept.js');
+        toast.error('Payment system is temporarily unavailable');
+      };
+
+      document.head.appendChild(script);
       return;
     }
+
+    // // Development mode - require HTTPS for Accept.js
+    // if (window.location.protocol === 'http:') {
+    //   console.warn('⚠️ Payment processing requires HTTPS. Current URL uses HTTP.');
+    //   const httpsUrl = window.location.href.replace('http://', 'https://');
+    //   console.warn(`Please switch to: ${httpsUrl}`);
+      
+    //   // Show immediate toast warning
+    //   toast.warn(
+    //     <div>
+    //       <p><strong>HTTPS Required for Payments</strong></p>
+    //       <p style={{ fontSize: '12px', marginTop: '4px' }}>
+    //         Please use: <a href={httpsUrl} style={{ color: '#3b82f6', textDecoration: 'underline' }}>{httpsUrl}</a>
+    //       </p>
+    //       <p style={{ fontSize: '11px', marginTop: '2px', opacity: '0.8' }}>
+    //         Or restart with: npm run dev:https
+    //       </p>
+    //     </div>,
+    //     { 
+    //       autoClose: false, // Don't auto-close this important warning
+    //       position: 'top-center'
+    //     }
+    //   );
+    //   return;
+    // }
 
     // Check if Accept.js is already loaded
     if (window.Accept) {
       setAcceptJSLoaded(true);
       return;
-    }
-
-    const script = document.createElement('script');
-    script.src = import.meta.env.MODE === 'production' 
+    }    const script = document.createElement('script');
+    script.src = import.meta.env.VITE_MODE === 'production' 
       ? 'https://js.authorize.net/v1/Accept.js' 
       : 'https://jstest.authorize.net/v1/Accept.js';
     script.async = true;
@@ -61,6 +105,7 @@ const AcceptJSForm = ({
       // Don't remove script on unmount as it may be used by other components
     };
   }, []);
+
   // Auto-fill billing info if provided
   useEffect(() => {
     if (billingAddress) {
@@ -93,6 +138,7 @@ const AcceptJSForm = ({
     
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -102,127 +148,19 @@ const AcceptJSForm = ({
     }    setLoading(true);
 
     try {
-      // Development mode bypass for HTTP testing
-      if (developmentMode) {
-        console.log('🧪 Development mode: Simulating payment processing');
-        
-        // Simulate payment processing delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Create mock payment token data
-        const mockTokenData = {
-          dataDescriptor: 'COMMON.ACCEPT.INAPP.PAYMENT',
-          dataValue: 'mock_development_token_' + Date.now(),
-          cardInfo: {
-            cardType: detectCardType(formData.cardNumber),
-            lastFour: formData.cardNumber.replace(/\s+/g, '').slice(-4),
-            expiryMonth: formData.expirationDate.split('/')[0],
-            expiryYear: formData.expirationDate.split('/')[1]
-          }
-        };
-        
-        console.log('🧪 Mock payment token:', mockTokenData);
-        
-        if (onTokenReceived) {
-          onTokenReceived(mockTokenData);
-        }
-        
-        setLoading(false);
+      // Always use real Accept.js payment processing in production
+      if (isProduction) {
+        return handleRealPayment();
+      }
+
+      // Development mode - check HTTPS requirement
+      if (!isHttps) {
+        toast.error('HTTPS is required for payment processing');
         return;
       }
 
-      // Validate Accept.js is loaded
-      if (typeof window.Accept === 'undefined') {
-        throw new Error('Accept.js library not loaded. Please refresh and try again.');
-      }
-
-      // Basic client-side validation
-      if (!formData.cardNumber || formData.cardNumber.replace(/\s+/g, '').length < 13) {
-        throw new Error('Please enter a valid card number');
-      }
-      
-      if (!formData.expirationDate || formData.expirationDate.length !== 5) {
-        throw new Error('Please enter a valid expiration date (MM/YY)');
-      }
-      
-      if (!formData.securityCode || formData.securityCode.length < 3) {
-        throw new Error('Please enter a valid security code');
-      }      // Prepare payment data for Accept.js
-      const authData = {
-        clientKey: import.meta.env.VITE_AUTHORIZE_NET_PUBLIC_KEY,
-        apiLoginID: import.meta.env.VITE_AUTHORIZE_NET_API_LOGIN_ID
-      };
-
-      // Validate environment variables
-      if (!authData.clientKey || !authData.apiLoginID) {
-        throw new Error('Payment configuration error. Please contact support.');
-      }
-
-      const [expMonth, expYear] = formData.expirationDate.split('/');
-      const fullYear = expYear.length === 2 ? `20${expYear}` : expYear;
-
-      const cardData = {
-        cardNumber: formData.cardNumber.replace(/\s+/g, ''),
-        month: expMonth,
-        year: fullYear,
-        cardCode: formData.securityCode,
-        fullName: formData.fullName,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        zip: formData.zipCode,
-        country: 'US'
-      };
-
-      // Call Accept.js to get payment nonce
-      window.Accept.dispatchData({
-        authData: authData,
-        cardData: cardData      }, (response) => {
-        if (response.messages.resultCode === "Error") {
-          const errorMessages = response.messages.message || [];
-          const errorMessage = errorMessages.map(msg => msg.text).join(', ') || 'Payment processing failed';
-          console.error('Accept.js Error:', response);
-          
-          // Check for HTTPS requirement error
-          const httpsError = errorMessages.find(msg => msg.code === 'E_WC_02' || msg.text.includes('HTTPS'));
-          if (httpsError) {
-            const httpsMessage = 'Payment processing requires a secure connection (HTTPS). Please ensure your development server is running with HTTPS enabled.';
-            console.error('HTTPS Required:', httpsMessage);
-            
-            if (onPaymentError) {
-              onPaymentError(new Error(httpsMessage));
-            } else {
-              toast.error(httpsMessage);
-            }
-          } else {
-            if (onPaymentError) {
-              onPaymentError(new Error(errorMessage));
-            } else {
-              toast.error(errorMessage);
-            }
-          }
-          setLoading(false);
-        } else {
-          // Success - payment nonce received
-          console.log('Accept.js Success:', response);
-          
-          if (onTokenReceived) {
-            onTokenReceived({
-              dataDescriptor: response.opaqueData.dataDescriptor,
-              dataValue: response.opaqueData.dataValue,
-              cardInfo: {
-                cardType: detectCardType(formData.cardNumber),
-                lastFour: formData.cardNumber.replace(/\s+/g, '').slice(-4),
-                expiryMonth: expMonth,
-                expiryYear: expYear
-              }
-            });
-          }
-          
-          setLoading(false);
-        }
-      });
-
+      // Development mode with HTTPS - use real Accept.js
+      return handleRealPayment();
     } catch (error) {
       console.error('Payment processing error:', error);
       
@@ -233,7 +171,133 @@ const AcceptJSForm = ({
       }
       
       setLoading(false);
+    }  };
+
+  // Real payment handler for production Accept.js processing
+  const handleRealPayment = async () => {
+    // Validate Accept.js is loaded
+    if (typeof window.Accept === 'undefined') {
+      throw new Error('Accept.js library not loaded. Please refresh and try again.');
     }
+
+    // Basic client-side validation
+    if (!formData.cardNumber || formData.cardNumber.replace(/\s+/g, '').length < 13) {
+      throw new Error('Please enter a valid card number');
+    }
+    
+    if (!formData.expirationDate || formData.expirationDate.length !== 5) {
+      throw new Error('Please enter a valid expiration date (MM/YY)');
+    }
+    
+    if (!formData.securityCode || formData.securityCode.length < 3) {
+      throw new Error('Please enter a valid security code');
+    }
+
+    // Prepare payment data for Accept.js
+    const authData = {
+      clientKey: import.meta.env.VITE_AUTHORIZE_NET_PUBLIC_KEY,
+      apiLoginID: import.meta.env.VITE_AUTHORIZE_NET_API_LOGIN_ID
+    };
+
+    // Validate environment variables
+    if (!authData.clientKey || !authData.apiLoginID) {
+      throw new Error('Payment configuration error. Please contact support.');
+    }
+
+    const [expMonth, expYear] = formData.expirationDate.split('/');
+    const fullYear = expYear.length === 2 ? `20${expYear}` : expYear;
+
+    const cardData = {
+      cardNumber: formData.cardNumber.replace(/\s+/g, ''),
+      month: expMonth,
+      year: fullYear,
+      cardCode: formData.securityCode,
+      fullName: formData.fullName,
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      zip: formData.zipCode,
+      country: 'US'
+    };
+
+    // Call Accept.js to get payment nonce
+    window.Accept.dispatchData({
+      authData: authData,
+      cardData: cardData
+    }, (response) => {
+      if (response.messages.resultCode === "Error") {
+        const errorMessages = response.messages.message || [];
+        const errorMessage = errorMessages.map(msg => msg.text).join(', ') || 'Payment processing failed';
+        console.error('Accept.js Error:', response);
+        
+        // Check for HTTPS requirement error
+        const httpsError = errorMessages.find(msg => msg.code === 'E_WC_02' || msg.text.includes('HTTPS') || msg.text.includes('secure'));
+        if (httpsError) {
+          const currentProtocol = window.location.protocol;
+          const currentUrl = window.location.href;
+          const httpsUrl = currentUrl.replace('http://', 'https://');
+          
+          let httpsMessage = 'Payment processing requires a secure connection (HTTPS).';
+          
+          if (currentProtocol === 'http:') {
+            httpsMessage += ` Please use HTTPS: ${httpsUrl}`;
+            console.error('HTTPS Required:', httpsMessage);
+            console.log('Alternative: Restart the development server with: npm run dev:https');
+            
+            // Show user-friendly message with action
+            toast.error(
+              <div>
+                <p>Secure connection required for payments.</p>
+                <p style={{ fontSize: '12px', marginTop: '4px' }}>
+                  Please switch to: <a href={httpsUrl} style={{ color: '#3b82f6' }}>{httpsUrl}</a>
+                </p>
+              </div>,
+              { autoClose: 10000 }
+            );
+          } else {
+            console.error('HTTPS Error:', httpsMessage);
+            toast.error('Payment security error. Please refresh and try again.');
+          }
+          
+          if (onPaymentError) {
+            onPaymentError(new Error(httpsMessage));
+          } else {
+            toast.error(httpsMessage);
+          }
+        } else {
+          if (onPaymentError) {
+            onPaymentError(new Error(errorMessage));
+          } else {
+            toast.error(errorMessage);
+          }
+        }
+        setLoading(false);
+      } else {
+        // Success - payment nonce received
+        console.log('Accept.js Success:', response);
+          if (onTokenReceived) {
+          onTokenReceived({
+            dataDescriptor: response.opaqueData.dataDescriptor,
+            dataValue: response.opaqueData.dataValue,
+            cardInfo: {
+              cardType: detectCardType(formData.cardNumber),
+              lastFour: formData.cardNumber.replace(/\s+/g, '').slice(-4),
+              expiryMonth: expMonth,
+              expiryYear: expYear,
+              // Include billing address for saving cards
+              firstName: formData.fullName.split(' ')[0] || '',
+              lastName: formData.fullName.split(' ').slice(1).join(' ') || '',
+              address: formData.address,
+              city: formData.city,
+              state: formData.state,
+              zip: formData.zipCode
+            }
+          });
+        }
+        
+        setLoading(false);
+      }
+    });
   };
 
   // Helper function to detect card type
@@ -247,31 +311,28 @@ const AcceptJSForm = ({
   };
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg">
-      <h3 className="text-lg font-semibold mb-4">Credit Card Information</h3>
-        {/* HTTPS Warning for Development */}
-      {developmentMode && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+      {/* Production Mode Banner */}
+      {isProduction && (
+        <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">
-                Development Mode Active
+              <h3 className="text-sm font-medium text-green-800">
+                � Production Mode
               </h3>
-              <div className="mt-2 text-sm text-blue-700">
-                <p>
-                  Running in development bypass mode. Payment processing will be simulated.
-                  <br />
-                  For full functionality, use: <code className="bg-blue-100 px-1 rounded">npm run dev:https</code>
-                </p>
+              <div className="mt-2 text-sm text-green-700">
+                <p>Secure payment processing with Authorize.Net production servers. All transactions are real.</p>
               </div>
             </div>
           </div>
         </div>
       )}
+      
+      <h3 className="text-lg font-semibold mb-4">Credit Card Information</h3>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Card Number */}
@@ -412,33 +473,39 @@ const AcceptJSForm = ({
               />
             </div>
           </div>
-        </div>        {/* Payment Button */}
+        </div>
+
+        {/* Payment Button */}
         <div className="pt-4">
           <button
             type="submit"
-            disabled={disabled || loading || !acceptJSLoaded}
-            className={`w-full py-3 px-4 rounded-md font-medium text-white transition-colors ${
+            disabled={disabled || loading || !acceptJSLoaded}            className={`w-full py-3 px-4 rounded-md font-medium text-white transition-colors ${
               disabled || loading || !acceptJSLoaded
                 ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500'
+                : isProduction
+                  ? 'bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500' 
+                  : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500'
             }`}
           >
             {loading ? (
               <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Processing...
-              </div>
-            ) : !acceptJSLoaded ? (
+                Processing secure payment...
+              </div>) : !acceptJSLoaded ? (
               'Loading payment system...'
             ) : (
-              `${buttonText} ${amount ? `($${amount.toFixed(2)})` : ''}`
+              `${isProduction ? '� ' : ''}${buttonText} ${amount ? `($${amount.toFixed(2)})` : ''}`
             )}
           </button>
         </div>
 
         {/* Security Notice */}
         <div className="text-xs text-gray-500 mt-2 text-center">
-          🔒 Your payment information is securely processed by Authorize.Net
+          {isProduction ? (
+            '� Production Mode: Real payments processed securely by Authorize.Net'
+          ) : (
+            '🔒 Your payment information is securely processed by Authorize.Net'
+          )}
         </div>
       </form>
     </div>

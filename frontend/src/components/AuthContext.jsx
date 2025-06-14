@@ -5,21 +5,28 @@ export const AuthContext = createContext();
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-
   // Load user from localStorage on app load
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       fetchUserProfile()
         .then(setUser)
-        .catch(() => setUser(null));
+        .catch((error) => {
+          console.error('Error fetching user profile on app load:', error);
+          // Only logout if it's a 401 error
+          if (error.response?.status === 401) {
+            setUser(null);
+            localStorage.removeItem('token');
+          } else {
+            // For other errors, just log them but don't logout
+            console.warn('Profile fetch failed but not logging out:', error.message);
+          }
+        });
     }
   }, []);
-
   // Update user details
-  const updateUser = async (updates) => {
-    const data = await updateUserProfile(updates);
-    setUser(data.user);
+  const updateUser = (updatedUserData) => {
+    setUser(updatedUserData);
   };
 
   // Delete user
@@ -41,11 +48,19 @@ const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     setUser(null);
-  };
-  // Refresh user from backend
+  };  // Refresh user from backend
   const refreshUser = async () => {
-    const data = await fetchUserProfile();
-    setUser(data.user);
+    try {
+      const data = await fetchUserProfile();
+      setUser(data.user || data); // Handle both data.user and direct data response
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+      // Don't logout on refresh errors unless it's 401
+      if (error.response?.status === 401) {
+        console.warn('Auth error during refresh, logging out');
+        logout();
+      }
+    }
   };
 
   // Check if user is authenticated

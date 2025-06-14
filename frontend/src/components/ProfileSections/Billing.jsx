@@ -1,360 +1,126 @@
-import React, { useState } from 'react';
-import { addBilling, updateBilling, deleteBilling, validateAllBillingMethods } from '../../services/api';
+import React, { useContext } from 'react';
+import { AuthContext } from '../AuthContext';
+import PaymentMethodManager from '../Payment/PaymentMethodManager';
 
-const Billing = ({ billingMethods = [], refreshUser }) => {
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [form, setForm] = useState({
-    cardNumber: '',
-    expiryMonth: '',
-    expiryYear: '',
-    cardType: '',
-    cardholderName: '',
-    isDefault: false,
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [validating, setValidating] = useState(false);
+const Billing = ({ refreshUser }) => {
+  const { user, updateUser } = useContext(AuthContext);
 
-  const handleInput = e => {
-    const { name, value, type, checked } = e.target;
-    setForm(f => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
-  };
+  // Debug logging
+  console.log('Billing component - user:', user);
+  console.log('Billing component - user.billing:', user?.billing);
 
-  const handleAddCard = async e => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess('');
-    try {
-      console.log('🔄 Adding new card to Authorize.Net...');
-      const result = await addBilling(form);
-      setSuccess(result.message || 'Card added successfully and payment profile created in Authorize.Net!');
-      setShowAddForm(false);
-      setForm({ cardNumber: '', expiryMonth: '', expiryYear: '', cardType: '', cardholderName: '', isDefault: false });
-      if (refreshUser) refreshUser();
-    } catch (err) {
-      console.error('❌ Error adding card:', err);
-      setError(err?.message || err?.response?.data?.message || 'Failed to add card to Authorize.Net.');
-    } finally {
-      setLoading(false);
+  const handlePaymentMethodsUpdated = (updatedMethods) => {
+    // Update the user context with new payment methods
+    const updatedUser = {
+      ...user,
+      billing: updatedMethods
+    };
+    updateUser(updatedUser);
+    
+    // Call the parent refresh function if provided
+    if (refreshUser) {
+      refreshUser();
     }
-  };
+  };  return (
+    <div className="max-w-6xl mx-auto space-y-8">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Payment Methods</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Manage your saved payment methods for faster checkout. Maximum 3 cards allowed.
+            </p>
+          </div>
+          <div className="hidden sm:block">
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+          </div>
+        </div>
 
-  const handleSetDefault = async (card) => {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-    try {
-      const result = await updateBilling(card.id, { isDefault: true });
-      setSuccess(result.message || 'Default card updated.');
-      if (refreshUser) refreshUser();
-    } catch (err) {
-      console.error('❌ Error setting default:', err);
-      if (err.profileInvalid) {
-        setError('This card\'s payment profile is invalid in Authorize.Net. Please delete and re-add the card.');
-      } else {
-        setError(err?.message || 'Failed to set default.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (card) => {
-    if (!window.confirm(`Delete ${card.cardType} ****${card.lastFour}? This will remove it from both the database and Authorize.Net.`)) return;
-    setLoading(true);
-    setError('');
-    setSuccess('');
-    try {
-      console.log('🔄 Deleting card from Authorize.Net...');
-      const result = await deleteBilling(card.id);
-      setSuccess(result.message || 'Card deleted from both database and Authorize.Net.');
-      if (refreshUser) refreshUser();
-    } catch (err) {
-      console.error('❌ Error deleting card:', err);
-      setError(err?.response?.data?.message || err?.message || 'Failed to delete card from Authorize.Net.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleValidateCards = async () => {
-    setValidating(true);
-    setError('');
-    setSuccess('');
-    try {
-      console.log('🔄 Validating all cards with Authorize.Net...');
-      const result = await validateAllBillingMethods();
-      
-      if (result.invalidCards.length > 0) {
-        setError(`Found ${result.invalidCards.length} invalid card(s). These cards may need to be re-added.`);
-      } else {
-        setSuccess(`All ${result.validCards.length} card(s) are valid in Authorize.Net.`);
-      }
-      
-      console.log('📊 Validation result:', result.summary);
-    } catch (err) {
-      console.error('❌ Error validating cards:', err);
-      setError('Failed to validate cards with Authorize.Net.');
-    } finally {
-      setValidating(false);
-    }
-  };
-
-  // Test function for debugging
-  const handleTestCard = async () => {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-    try {
-      const testCardData = {
-        cardNumber: '4111111111111111',
-        expiryMonth: '12',
-        expiryYear: '2025',
-        cardType: 'Visa',
-        cardholderName: 'Test User',
-        isDefault: false
-      };
-      
-      console.log('🔄 Adding test card for debugging...');
-      const result = await addBilling(testCardData);
-      setSuccess('Test card added successfully! Check console for details.');
-      if (refreshUser) refreshUser();
-    } catch (err) {
-      console.error('❌ Error adding test card:', err);
-      setError('Failed to add test card: ' + (err?.message || 'Unknown error'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div>
-      <h2 className="text-xl font-bold text-[var(--color-primary)] mb-4">Billing & Payment Methods</h2>
-      {error && <div className="text-red-600 mb-2 p-2 bg-red-50 border border-red-200 rounded">{error}</div>}
-      {success && <div className="text-green-600 mb-2 p-2 bg-green-50 border border-green-200 rounded">{success}</div>}
-        {/* Action Buttons */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        <button
-          className="bg-[var(--color-primary)] text-white px-4 py-2 rounded"
-          onClick={() => setShowAddForm(f => !f)}
-          disabled={loading}
-        >
-          {showAddForm ? 'Cancel' : 'Add New Card'}
-        </button>
-        
-        {billingMethods.length > 0 && (
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-            onClick={handleValidateCards}
-            disabled={validating || loading}
-          >
-            {validating ? 'Validating...' : 'Validate Cards'}
-          </button>
+        {/* Error state for when payment functionality is not available */}
+        {!user?.billing && !Array.isArray(user?.billing) && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-amber-800">
+                  Payment Methods Not Available
+                </h3>
+                <div className="mt-2 text-sm text-amber-700">
+                  <p>
+                    The payment method management feature is currently experiencing issues. 
+                    This may be due to server configuration or payment gateway connectivity.
+                  </p>
+                  <p className="mt-1">
+                    Please contact support if you need to manage your saved payment methods.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
-        
-        {/* Debug Test Button */}
-        <button
-          className="bg-green-600 text-white px-4 py-2 rounded text-sm"
-          onClick={handleTestCard}
-          disabled={loading}
-          title="Add a test Visa card for debugging"
-        >
-          {loading ? 'Adding...' : '🧪 Add Test Card'}
-        </button>
+
+        <PaymentMethodManager 
+          onPaymentMethodsUpdated={handlePaymentMethodsUpdated}
+        />
       </div>
 
-      {/* Developer Debug Info */}
-      {billingMethods.length > 0 && (
-        <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
-          <details>
-            <summary className="cursor-pointer font-semibold text-sm text-gray-700 mb-2">
-              🔧 Developer Info (Click to expand)
-            </summary>
-            <div className="text-xs text-gray-600 space-y-1">
-              <p><strong>Total Cards:</strong> {billingMethods.length}</p>
-              <p><strong>Cards with Profile IDs:</strong> {billingMethods.filter(c => c.customerProfileId && c.customerPaymentProfileId).length}</p>
-              <p><strong>Default Card:</strong> {billingMethods.find(c => c.isDefault)?.cardType || 'None'} ****{billingMethods.find(c => c.isDefault)?.lastFour || 'N/A'}</p>
-              <div className="mt-2">
-                <strong>Profile IDs:</strong>
-                <ul className="ml-4 mt-1">
-                  {billingMethods.map(card => (
-                    <li key={card.id} className="truncate">
-                      {card.cardType} ****{card.lastFour}: 
-                      {card.customerProfileId ? ` Customer:${card.customerProfileId}` : ' No Customer ID'} 
-                      {card.customerPaymentProfileId ? ` | Payment:${card.customerPaymentProfileId}` : ' | No Payment ID'}
-                    </li>
-                  ))}
+      {/* Security and Limit Information */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Security Info */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-blue-800">
+                Secure Payment Storage
+              </h3>
+              <div className="mt-2 text-sm text-blue-700">
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Cards stored securely by Authorize.Net</li>
+                  <li>PCI DSS compliant security</li>
+                  <li>No card data on our servers</li>
+                  <li>Industry-standard encryption</li>
                 </ul>
               </div>
             </div>
-          </details>
+          </div>
         </div>
-      )}
 
-      {/* Saved Cards */}
-      <div className="mb-6">
-        {billingMethods.length === 0 && (
-          <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded">
-            <p className="text-gray-600">No cards saved.</p>
-            <p className="text-sm text-gray-500 mt-1">Add a card to securely store it in Authorize.Net for future checkout.</p>
-          </div>
-        )}
-        {billingMethods.map(card => (
-          <div key={card.id} className="flex items-center justify-between bg-white rounded shadow p-4 mb-2 border">            
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold">{card.cardType}</span> 
-                <span>**** {card.lastFour}</span>
-                <span className="text-gray-500">(Exp: {card.expiryMonth}/{card.expiryYear})</span>
-                {card.isDefault && <span className="ml-2 px-2 py-0.5 bg-blue-600 text-white rounded text-xs">Default</span>}
+        {/* Card Limit Info */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-gray-800">
+                Payment Method Limits
+              </h3>
+              <div className="mt-2 text-sm text-gray-600">
+                <p>
+                  Maximum 3 payment methods per account. 
+                  Delete existing cards to add new ones.
+                </p>
+                <p className="mt-1 font-semibold">
+                  Current: {user?.billing?.length || 0}/3 cards saved
+                </p>
               </div>
-              
-              {/* Show profile IDs with status indicator */}
-              {card.customerProfileId && card.customerPaymentProfileId && (
-                <div className="text-xs text-gray-400 mt-1 flex items-center gap-2">
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                    Authorize.Net Profile Active
-                  </span>
-                  <span className="text-gray-300">|</span>
-                  <span>Profile: {card.customerProfileId}</span>
-                  <span>Payment: {card.customerPaymentProfileId}</span>
-                </div>
-              )}
-              
-              {(!card.customerProfileId || !card.customerPaymentProfileId) && (
-                <div className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                  <span className="w-2 h-2 bg-red-400 rounded-full"></span>
-                  Missing Authorize.Net Profile - Re-add Required
-                </div>
-              )}
-            </div>
-            
-            <div className="flex gap-2">
-              {!card.isDefault && (
-                <button 
-                  onClick={() => handleSetDefault(card)} 
-                  className="text-blue-600 hover:underline text-sm" 
-                  disabled={loading}
-                >
-                  Set Default
-                </button>
-              )}
-              <button 
-                onClick={() => handleDelete(card)} 
-                className="text-red-500 hover:underline text-sm" 
-                disabled={loading}
-              >
-                {loading ? 'Deleting...' : 'Delete'}
-              </button>
             </div>
           </div>
-        ))}
-      </div>      {/* Add Card Form */}
-      {showAddForm && (
-        <form className="bg-white rounded shadow p-4 mt-2 max-w-md border" onSubmit={handleAddCard}>
-          <div className="mb-4">
-            <h3 className="font-semibold text-lg mb-2">Add New Payment Card</h3>
-            <p className="text-sm text-gray-600">
-              Your card will be securely tokenized and stored in Authorize.Net. No sensitive card data is stored on our servers.
-            </p>
-          </div>
-          
-          <div className="mb-2">
-            <label className="block font-semibold mb-1">Cardholder Name</label>
-            <input 
-              name="cardholderName" 
-              value={form.cardholderName} 
-              onChange={handleInput} 
-              className="border rounded px-2 py-1 w-full" 
-              required 
-              placeholder="John Doe"
-            />
-          </div>
-          
-          <div className="mb-2">
-            <label className="block font-semibold mb-1">Card Number</label>
-            <input 
-              name="cardNumber" 
-              value={form.cardNumber} 
-              onChange={handleInput} 
-              className="border rounded px-2 py-1 w-full" 
-              maxLength={19} 
-              required 
-              placeholder="4111111111111111"
-            />
-            <p className="text-xs text-gray-500 mt-1">Test cards: Visa 4111111111111111, MC 5424000000000015</p>
-          </div>
-          
-          <div className="flex gap-2 mb-2">
-            <div>
-              <label className="block font-semibold mb-1">Expiry Month</label>
-              <input 
-                name="expiryMonth" 
-                value={form.expiryMonth} 
-                onChange={handleInput} 
-                className="border rounded px-2 py-1 w-20" 
-                maxLength={2} 
-                required 
-                placeholder="12"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Expiry Year</label>
-              <input 
-                name="expiryYear" 
-                value={form.expiryYear} 
-                onChange={handleInput} 
-                className="border rounded px-2 py-1 w-20" 
-                maxLength={4} 
-                required 
-                placeholder="2025"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Card Type</label>
-              <select 
-                name="cardType" 
-                value={form.cardType} 
-                onChange={handleInput} 
-                className="border rounded px-2 py-1 w-28" 
-                required
-              >
-                <option value="">Select</option>
-                <option value="Visa">Visa</option>
-                <option value="MasterCard">MasterCard</option>
-                <option value="Amex">Amex</option>
-                <option value="Discover">Discover</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="mb-4 flex items-center gap-2">
-            <input 
-              type="checkbox" 
-              name="isDefault" 
-              checked={form.isDefault} 
-              onChange={handleInput} 
-              id="isDefault" 
-            />
-            <label htmlFor="isDefault" className="text-sm">Set as default payment method</label>
-          </div>
-          
-          <button 
-            type="submit" 
-            className="bg-blue-600 text-white px-4 py-2 rounded w-full" 
-            disabled={loading}
-          >
-            {loading ? 'Creating Authorize.Net Profile...' : 'Add Card & Create Payment Profile'}
-          </button>
-          
-          <p className="text-xs text-gray-500 mt-2 text-center">
-            🔒 Secured by Authorize.Net tokenization
-          </p>
-        </form>
-      )}
+        </div>
+      </div>
     </div>
   );
 };
