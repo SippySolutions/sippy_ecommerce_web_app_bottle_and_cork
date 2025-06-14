@@ -9,7 +9,13 @@ const orderItemSchema = new mongoose.Schema({
 }, { _id: false });
 
 const orderSchema = new mongoose.Schema({
-  customer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  customer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  guest: { type: mongoose.Schema.Types.ObjectId, ref: 'Guest' },
+  customerType: { type: String, enum: ['user', 'guest'], required: true },
+  guestInfo: {
+    email: String,
+    phone: String
+  },
   items: [orderItemSchema],
   subtotal: { type: Number, required: true },
   tax: { type: Number, default: 0 },

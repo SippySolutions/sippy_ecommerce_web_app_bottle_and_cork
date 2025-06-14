@@ -167,6 +167,29 @@ export const processSavedCardCheckout = async (checkoutData) => {
   }
 };
 
+export const processGuestCheckout = async (checkoutData) => {
+  try {
+    console.log('Sending guest checkout data to backend:', checkoutData);
+    const response = await axios.post(`${API_BASE_URL}/guest/checkout`, checkoutData);
+    return response.data;
+  } catch (error) {
+    console.error('Error during guest checkout:', error.response || error);
+    console.error('Error response data:', error.response?.data);
+    console.error('Error status:', error.response?.status);
+    
+    // Create a proper error object with message
+    const errorMessage = error.response?.data?.message || 
+                        error.response?.data?.error || 
+                        error.message || 
+                        'An error occurred while processing the guest payment.';
+    
+    const errorObj = new Error(errorMessage);
+    errorObj.status = error.response?.status;
+    errorObj.data = error.response?.data;
+    throw errorObj;
+  }
+};
+
 export const fetchUserProfile = async () => {
   const response = await axios.get(`${API_BASE_URL}/users/me`, { headers: getAuthHeaders() });
   return response.data;

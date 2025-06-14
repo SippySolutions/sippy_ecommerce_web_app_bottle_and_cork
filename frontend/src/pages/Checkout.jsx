@@ -8,7 +8,7 @@ import { useCMS } from '../Context/CMSContext';
 import { useAgeVerification } from '../Context/AgeVerificationContext';
 import AcceptJSForm from '../components/Payment/AcceptJSForm';
 import axios from 'axios';
-import { processCheckout, processSavedCardCheckout } from '../services/api';
+import { processCheckout, processSavedCardCheckout, processGuestCheckout } from '../services/api';
 
 const Checkout = () => {
   const navigate = useNavigate();  const { cartItems, getTotalPrice, clearCart } = useContext(CartContext);
@@ -19,10 +19,16 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [orderType, setOrderType] = useState('delivery');
   const [step, setStep] = useState(1); // 1: Addresses, 2: Payment, 3: Review
-  const [tip, setTip] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState('new'); // 'new' or 'saved'
+  const [tip, setTip] = useState(0);  const [paymentMethod, setPaymentMethod] = useState('new'); // 'new' or 'saved'
   const [selectedCard, setSelectedCard] = useState(null);
   const [saveCard, setSaveCard] = useState(false);
+  
+  // Guest checkout fields
+  const [guestInfo, setGuestInfo] = useState({
+    email: '',
+    phone: ''
+  });
+  
   // Get bag fee and delivery fee from CMS data
   const bagFee = cmsData?.storeInfo?.bag || 0.5;
   const deliveryFeeAmount = cmsData?.storeInfo?.delivery?.fee || 5;
@@ -50,20 +56,14 @@ const Checkout = () => {
   });
 
   const [sameAsShipping, setSameAsShipping] = useState(true);
-
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/account');
-      return;
-    }
-
     if (cartItems.length === 0) {
       navigate('/cart');
       return;
     }
 
-    // Pre-populate addresses from user profile
-    if (user?.addresses?.length > 0) {
+    // Pre-populate addresses from user profile if authenticated
+    if (isAuthenticated && user?.addresses?.length > 0) {
       const defaultAddress = user.addresses.find(addr => addr.isDefault) || user.addresses[0];
       setShippingAddress({
         firstName: user.name.split(' ')[0] || '',
@@ -77,7 +77,7 @@ const Checkout = () => {
     }
 
     // Set default payment method if user has saved cards
-    if (user?.billing?.length > 0) {
+    if (isAuthenticated && user?.billing?.length > 0) {
       setPaymentMethod('saved');
       const defaultCard = user.billing.find(card => card.isDefault) || user.billing[0];
       setSelectedCard(defaultCard);
@@ -113,9 +113,22 @@ const Checkout = () => {
     const required = ['firstName', 'lastName', 'address', 'city', 'state', 'zip'];
     return required.every(field => address[field] && address[field].trim());
   };
-
   const handleNextStep = () => {
     if (step === 1) {
+      // Validate guest info for non-authenticated users
+      if (!isAuthenticated) {
+        if (!guestInfo.email || !guestInfo.phone) {
+          toast.error('Please fill in your email and phone number');
+          return;
+        }
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(guestInfo.email)) {
+          toast.error('Please enter a valid email address');
+          return;
+        }
+      }
+      
       // Validate addresses
       if (orderType === 'delivery' && !validateAddress(shippingAddress)) {
         toast.error('Please fill in all shipping address fields');
@@ -133,45 +146,88 @@ const Checkout = () => {
     setStep(prev => prev - 1);
   };  const handleAcceptJSToken = async (tokenData) => {
     setLoading(true);
-    try {      // Check if user wants to save card but has reached limit
-      const shouldSaveCard = saveCard && user?.billing?.length < 3;
-      
-      if (saveCard && user?.billing?.length >= 3) {
-        toast.warning('Card limit reached. Processing payment without saving card.');
-      }
-
+    try {
       // Get age verification data
       const ageVerificationData = getAgeVerificationStatus();
       const ageVerified = Boolean(ageVerificationData);
       const ageVerifiedAt = ageVerified ? new Date(ageVerificationData) : null;
 
-      const orderData = {
-        dataDescriptor: tokenData.dataDescriptor,
-        dataValue: tokenData.dataValue,
-        amount: total,
-        cartItems: cartItems.map(item => ({
-          product: item._id,
-          quantity: item.quantity
-        })),
-        shippingAddress: orderType === 'delivery' ? shippingAddress : null,
-        billingAddress: billingAddress,
-        orderType: orderType,
-        tip: tip,
-        bagFee: orderType === 'delivery' ? bagFee : 0,
-        deliveryFee: orderType === 'delivery' ? deliveryFee : 0,
-        saveCard: shouldSaveCard,
-        ageVerified: ageVerified,
-        ageVerifiedAt: ageVerifiedAt
-      };
+      if (isAuthenticated) {
+        // Authenticated user checkout
+        // Check if user wants to save card but has reached limit
+        const shouldSaveCard = saveCard && user?.billing?.length < 3;
+        
+        if (saveCard && user?.billing?.length >= 3) {
+          toast.warning('Card limit reached. Processing payment without saving card.');
+        }
 
-      const response = await processCheckout(orderData);
+        const orderData = {
+          dataDescriptor: tokenData.dataDescriptor,
+          dataValue: tokenData.dataValue,
+          amount: total,
+          cartItems: cartItems.map(item => ({
+            product: item._id,
+            quantity: item.quantity
+          })),
+          shippingAddress: orderType === 'delivery' ? shippingAddress : null,
+          billingAddress: billingAddress,
+          orderType: orderType,
+          tip: tip,
+          bagFee: orderType === 'delivery' ? bagFee : 0,
+          deliveryFee: orderType === 'delivery' ? deliveryFee : 0,
+          saveCard: shouldSaveCard,
+          ageVerified: ageVerified,
+          ageVerifiedAt: ageVerifiedAt
+        };
 
-      if (response.success) {
-        toast.success('Order placed successfully!');
-        clearCart();
-        navigate(`/orders/${response.order._id}`);
+        const response = await processCheckout(orderData);
+
+        if (response.success) {
+          toast.success('Order placed successfully!');
+          clearCart();
+          navigate(`/orders/${response.order._id}`);
+        } else {
+          throw new Error(response.message);
+        }
       } else {
-        throw new Error(response.message);
+        // Guest checkout
+        // Validate guest info
+        if (!guestInfo.email || !guestInfo.phone) {
+          toast.error('Email and phone number are required for guest checkout');
+          return;
+        }
+
+        const orderData = {
+          dataDescriptor: tokenData.dataDescriptor,
+          dataValue: tokenData.dataValue,
+          amount: total,
+          cartItems: cartItems.map(item => ({
+            product: item._id,
+            quantity: item.quantity
+          })),
+          shippingAddress: orderType === 'delivery' ? shippingAddress : null,
+          billingAddress: billingAddress,
+          orderType: orderType,
+          tip: tip,
+          bagFee: orderType === 'delivery' ? bagFee : 0,
+          deliveryFee: orderType === 'delivery' ? deliveryFee : 0,
+          ageVerified: ageVerified,
+          ageVerifiedAt: ageVerifiedAt,
+          guestInfo: {
+            email: guestInfo.email,
+            phone: guestInfo.phone
+          }
+        };
+
+        const response = await processGuestCheckout(orderData);
+
+        if (response.success) {
+          toast.success('Order placed successfully!');
+          clearCart();
+          navigate('/'); // Redirect to home for guest users
+        } else {
+          throw new Error(response.message);
+        }
       }
     } catch (error) {
       console.error('Checkout error:', error);
@@ -373,9 +429,57 @@ const Checkout = () => {
                         }`}
                       >
                         Pickup
-                      </button>
-                    </div>
+                      </button>                    </div>
                   </div>
+
+                  {/* Guest Information */}
+                  {!isAuthenticated && (
+                    <div className="bg-white p-6 rounded-lg shadow-md">
+                      <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Email Address *
+                          </label>
+                          <input
+                            type="email"
+                            value={guestInfo.email}
+                            onChange={(e) => setGuestInfo(prev => ({ ...prev, email: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="your@email.com"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Phone Number *
+                          </label>
+                          <input
+                            type="tel"
+                            value={guestInfo.phone}
+                            onChange={(e) => setGuestInfo(prev => ({ ...prev, phone: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="(555) 123-4567"
+                            required
+                          />
+                        </div>
+                      </div>                      <p className="text-sm text-gray-600 mt-2">
+                        * Required for order confirmation and delivery updates
+                      </p>
+                      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                        <p className="text-sm text-blue-800">
+                          <strong>Want to save time next time?</strong>{' '}
+                          <button
+                            onClick={() => navigate('/account')}
+                            className="text-blue-600 hover:text-blue-800 underline"
+                          >
+                            Create an account
+                          </button>{' '}
+                          to save your information and track orders.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Shipping Address */}
                   {orderType === 'delivery' && (
@@ -522,13 +626,11 @@ const Checkout = () => {
                         </button>
                       ))}
                     </div>
-                  </div>
-
-                  {/* Payment Method Selection */}
+                  </div>                  {/* Payment Method Selection */}
                   <div className="bg-white p-6 rounded-lg shadow-md">
                     <h3 className="text-lg font-semibold mb-4">Payment Method</h3>
                     
-                    {user?.billing?.length > 0 && (
+                    {isAuthenticated && user?.billing?.length > 0 && (
                       <div className="mb-6">
                         <div className="flex space-x-4 mb-4">
                           <button
@@ -622,34 +724,37 @@ const Checkout = () => {
                           amount={total}
                           onTokenReceived={handleAcceptJSToken}
                           disabled={loading}
-                          billingAddress={billingAddress}
-                        />                        <div className="mt-4">
-                          <label className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              checked={saveCard}
-                              onChange={(e) => setSaveCard(e.target.checked)}
-                              disabled={user?.billing?.length >= 3}
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50"
-                            />
-                            <span className="text-sm text-gray-700">
-                              Save this card for future purchases
-                              {user?.billing?.length >= 3 && (
-                                <span className="text-red-600 ml-1">
-                                  (Maximum 3 cards - delete one to save new)
-                                </span>
-                              )}
-                            </span>
-                          </label>
-                          {user?.billing?.length >= 3 && (
-                            <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                              <p className="text-sm text-yellow-800">
-                                <strong>Card limit reached:</strong> You have {user.billing.length}/3 saved cards. 
-                                Go to your profile to manage saved payment methods.
-                              </p>
-                            </div>
-                          )}
-                        </div>
+                          billingAddress={billingAddress}                        />
+
+                        {isAuthenticated && (
+                          <div className="mt-4">
+                            <label className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                checked={saveCard}
+                                onChange={(e) => setSaveCard(e.target.checked)}
+                                disabled={user?.billing?.length >= 3}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50"
+                              />
+                              <span className="text-sm text-gray-700">
+                                Save this card for future purchases
+                                {user?.billing?.length >= 3 && (
+                                  <span className="text-red-600 ml-1">
+                                    (Maximum 3 cards - delete one to save new)
+                                  </span>
+                                )}
+                              </span>
+                            </label>
+                            {user?.billing?.length >= 3 && (
+                              <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                                <p className="text-sm text-yellow-800">
+                                  <strong>Card limit reached:</strong> You have {user.billing.length}/3 saved cards. 
+                                  Go to your profile to manage saved payment methods.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
