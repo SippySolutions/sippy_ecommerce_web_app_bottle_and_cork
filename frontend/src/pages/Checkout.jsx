@@ -6,6 +6,7 @@ import { CartContext } from '../Context/CartContext';
 import { AuthContext } from '../components/AuthContext';
 import AcceptJSForm from '../components/Payment/AcceptJSForm';
 import axios from 'axios';
+import { processCheckout, processSavedCardCheckout } from '../services/api';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -119,7 +120,6 @@ const Checkout = () => {
   const handlePrevStep = () => {
     setStep(prev => prev - 1);
   };
-
   const handleAcceptJSToken = async (tokenData) => {
     setLoading(true);
     try {
@@ -139,22 +139,18 @@ const Checkout = () => {
         saveCard: saveCard
       };
 
-      const response = await axios.post('/api/checkout/process', orderData, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await processCheckout(orderData);
 
-      if (response.data.success) {
+      if (response.success) {
         toast.success('Order placed successfully!');
         clearCart();
-        navigate(`/orders/${response.data.order._id}`);
+        navigate(`/orders/${response.order._id}`);
       } else {
-        throw new Error(response.data.message);
+        throw new Error(response.message);
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      toast.error(error.response?.data?.message || 'Payment failed');
+      toast.error(error?.message || 'Payment failed');
     } finally {
       setLoading(false);
     }
@@ -180,24 +176,18 @@ const Checkout = () => {
         orderType: orderType,
         tip: tip,
         bagFee: orderType === 'delivery' ? bagFee : 0
-      };
+      };      const response = await processSavedCardCheckout(orderData);
 
-      const response = await axios.post('/api/checkout/process-saved-card', orderData, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.data.success) {
+      if (response.success) {
         toast.success('Order placed successfully!');
         clearCart();
-        navigate(`/orders/${response.data.order._id}`);
+        navigate(`/orders/${response.order._id}`);
       } else {
-        throw new Error(response.data.message);
+        throw new Error(response.message);
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      toast.error(error.response?.data?.message || 'Payment failed');
+      toast.error(error?.message || 'Payment failed');
     } finally {
       setLoading(false);
     }

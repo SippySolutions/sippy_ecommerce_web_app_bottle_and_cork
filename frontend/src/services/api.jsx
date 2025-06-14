@@ -92,11 +92,25 @@ export const fetchSimilarProducts = async (department, category, subcategory, pr
 export const processCheckout = async (checkoutData) => {
   try {
     console.log('Sending checkout data to backend:', checkoutData); // Debug log
-    const response = await axios.post(`${API_BASE_URL}/checkout`, checkoutData);
+    const response = await axios.post(`${API_BASE_URL}/checkout/process`, checkoutData, {
+      headers: getAuthHeaders()
+    });
+    return response.data; // Return the response data
+  } catch (error) {    console.error('Error during checkout:', error.response || error); // Debug log
+    throw error.response?.data?.message || 'An error occurred while processing the payment.';
+  }
+};
+
+export const processSavedCardCheckout = async (checkoutData) => {
+  try {
+    console.log('Sending saved card checkout data to backend:', checkoutData); // Debug log
+    const response = await axios.post(`${API_BASE_URL}/checkout/process-saved-card`, checkoutData, {
+      headers: getAuthHeaders()
+    });
     return response.data; // Return the response data
   } catch (error) {
-    console.error('Error during checkout:', error.response || error); // Debug log
-    throw error.response?.data?.message || 'An error occurred while processing the payment.';
+    console.error('Error during saved card checkout:', error.response || error); // Debug log
+    throw error.response?.data?.message || 'An error occurred while processing the payment with saved card.';
   }
 };
 
