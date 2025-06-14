@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { CartContext } from '../Context/CartContext';
 import { AuthContext } from '../components/AuthContext';
+import { useCMS } from '../Context/CMSContext';
 import AcceptJSForm from '../components/Payment/AcceptJSForm';
 import axios from 'axios';
 import { processCheckout, processSavedCardCheckout } from '../services/api';
@@ -12,15 +13,19 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { cartItems, getTotalPrice, clearCart } = useContext(CartContext);
   const { user, isAuthenticated } = useContext(AuthContext);
+  const { cmsData } = useCMS();
 
   const [loading, setLoading] = useState(false);
   const [orderType, setOrderType] = useState('delivery');
   const [step, setStep] = useState(1); // 1: Addresses, 2: Payment, 3: Review
   const [tip, setTip] = useState(0);
-  const [bagFee] = useState(0.99); // Fixed bag fee
   const [paymentMethod, setPaymentMethod] = useState('new'); // 'new' or 'saved'
   const [selectedCard, setSelectedCard] = useState(null);
   const [saveCard, setSaveCard] = useState(false);
+  // Get bag fee and delivery fee from CMS data
+  const bagFee = cmsData?.storeInfo?.bag || 0.5;
+  const deliveryFeeAmount = cmsData?.storeInfo?.delivery?.fee || 5;
+  const deliveryMinimum = cmsData?.storeInfo?.delivery?.under || 30;
 
   // Form data
   const [shippingAddress, setShippingAddress] = useState({
@@ -83,11 +88,13 @@ const Checkout = () => {
     if (sameAsShipping) {
       setBillingAddress({ ...shippingAddress });
     }
-  }, [shippingAddress, sameAsShipping]);
-
-  const subtotal = getTotalPrice();
+  }, [shippingAddress, sameAsShipping]);  const subtotal = getTotalPrice();
   const tax = subtotal * 0.08; // 8% tax
-  const total = subtotal + tax + tip + (orderType === 'delivery' ? bagFee : 0);
+  
+  // Calculate conditional delivery fee
+  const deliveryFee = (orderType === 'delivery' && subtotal < deliveryMinimum) ? deliveryFeeAmount : 0;
+  
+  const total = subtotal + tax + tip + (orderType === 'delivery' ? bagFee + deliveryFee : 0);
 
   const handleAddressChange = (type, field, value) => {
     if (type === 'shipping') {
@@ -127,9 +134,7 @@ const Checkout = () => {
       
       if (saveCard && user?.billing?.length >= 3) {
         toast.warning('Card limit reached. Processing payment without saving card.');
-      }
-
-      const orderData = {
+      }      const orderData = {
         dataDescriptor: tokenData.dataDescriptor,
         dataValue: tokenData.dataValue,
         amount: total,
@@ -142,6 +147,7 @@ const Checkout = () => {
         orderType: orderType,
         tip: tip,
         bagFee: orderType === 'delivery' ? bagFee : 0,
+        deliveryFee: orderType === 'delivery' ? deliveryFee : 0,
         saveCard: shouldSaveCard
       };
 
@@ -180,8 +186,9 @@ const Checkout = () => {
         billingAddress: billingAddress,
         orderType: orderType,
         tip: tip,
-        bagFee: orderType === 'delivery' ? bagFee : 0
-      };      const response = await processSavedCardCheckout(orderData);
+        bagFee: orderType === 'delivery' ? bagFee : 0,
+        deliveryFee: orderType === 'delivery' ? deliveryFee : 0
+      };const response = await processSavedCardCheckout(orderData);
 
       if (response.success) {
         toast.success('Order placed successfully!');
@@ -676,19 +683,43 @@ const Checkout = () => {
                           <div className="flex justify-between">
                             <span>Tip</span>
                             <span>${tip.toFixed(2)}</span>
-                          </div>
-                        )}
+                          </div>                        )}
                         {orderType === 'delivery' && (
-                          <div className="flex justify-between">
-                            <span>Bag Fee</span>
-                            <span>${bagFee.toFixed(2)}</span>
-                          </div>
-                        )}
-                        <div className="flex justify-between text-lg font-semibold border-t pt-2">
+                          <>
+                            <div className="flex justify-between">
+                              <span>Bag Fee</span>
+                              <span>${bagFee.toFixed(2)}</span>                            </div>
+                            <div className="flex justify-between">
+                              <span>
+                                Delivery Fee
+                                {subtotal >= deliveryMinimum && (
+                                  <span className="text-green-600 text-xs ml-1">(Free over ${deliveryMinimum})</span>
+                                )}
+                              </span>
+                              <span className={deliveryFee === 0 ? 'text-green-600 font-semibold' : ''}>
+                                {deliveryFee === 0 ? 'FREE' : `$${deliveryFee.toFixed(2)}`}
+                              </span>
+                            </div>
+                          </>
+                        )}                        <div className="flex justify-between text-lg font-semibold border-t pt-2">
                           <span>Total</span>
                           <span>${total.toFixed(2)}</span>
                         </div>
                       </div>
+
+                      {/* Free Delivery Incentive */}
+                      {orderType === 'delivery' && subtotal < deliveryMinimum && (
+                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-center gap-2 text-blue-800">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="text-sm font-medium">
+                              Add ${(deliveryMinimum - subtotal).toFixed(2)} more to get FREE delivery!
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Place Order Button */}
@@ -758,13 +789,24 @@ const Checkout = () => {
                   <div className="flex justify-between">
                     <span>Tip</span>
                     <span>${tip.toFixed(2)}</span>
-                  </div>
-                )}
+                  </div>                )}
                 {orderType === 'delivery' && (
-                  <div className="flex justify-between">
-                    <span>Bag Fee</span>
-                    <span>${bagFee.toFixed(2)}</span>
-                  </div>
+                  <>
+                    <div className="flex justify-between">
+                      <span>Bag Fee</span>
+                      <span>${bagFee.toFixed(2)}</span>                    </div>
+                    <div className="flex justify-between">
+                      <span>
+                        Delivery Fee
+                        {subtotal >= deliveryMinimum && (
+                          <span className="text-green-600 text-xs ml-1">(Free over ${deliveryMinimum})</span>
+                        )}
+                      </span>
+                      <span className={deliveryFee === 0 ? 'text-green-600 font-semibold' : ''}>
+                        {deliveryFee === 0 ? 'FREE' : `$${deliveryFee.toFixed(2)}`}
+                      </span>
+                    </div>
+                  </>
                 )}
                 <div className="flex justify-between text-lg font-semibold border-t pt-2">
                   <span>Total</span>
