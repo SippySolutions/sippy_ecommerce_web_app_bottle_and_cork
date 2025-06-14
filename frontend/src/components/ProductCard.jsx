@@ -128,9 +128,11 @@ function ProductCard({ product }) {
               <UserGroupIcon className="w-3 h-3" />
               Staff Pick
             </span>
-          )}
-          {getDiscountPercentage() > 0 && (
-            <div className="bg-accent text-white px-2 py-1 rounded-md text-xs font-bold">
+          )}          {getDiscountPercentage() > 0 && (
+            <div 
+              className="text-white px-2 py-1 rounded-md text-xs font-bold shadow-lg"
+              style={{ backgroundColor: theme.accent }}
+            >
               -{getDiscountPercentage()}%
             </div>
           )}
