@@ -194,6 +194,17 @@ function ProductCard({ product }) {
             <div className="animate-pulse bg-gray-300 rounded w-12 h-16"></div>
           </div>
         )}
+        
+        {/* Size Floating Badge - Bottom Right */}
+        {product.size && (
+          <div 
+            className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-white text-xs font-semibold shadow-lg backdrop-blur-sm border border-white/20"
+            style={{ backgroundColor: `${theme.accent}CC` }}
+            title={`Size: ${product.size}`}
+          >
+            {product.size}
+          </div>
+        )}
       </div>      {/* Product Information */}
       <div className="p-3 flex-1 flex flex-col min-h-0">
         {/* Product Name */}
@@ -201,35 +212,23 @@ function ProductCard({ product }) {
           {product.name}
         </h3>
 
-        {/* Brand */}
-        {product.brand && (
-          <div className="mb-2 flex-shrink-0">
-            <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-              {product.brand}
-            </span>
-          </div>
-        )}
-
         {/* Flexible space */}
-        <div className="flex-1 min-h-0"></div>
-
-        {/* Bottom Section - Categorization, Pricing, Size Details */}
-        <div className="space-y-2 flex-shrink-0">
-          {/* Category and Size Row */}
-          <div className="flex items-center justify-between gap-2">
-            {/* Category */}
-            <div className="flex items-center gap-2">
-              {(product.category || product.department) && (
-                <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">
-                  {product.category || product.department}
-                </span>
-              )}
-            </div>
-            
-            {/* Size */}
-            {product.size && (
-              <span className="text-xs text-gray-700 font-medium">
-                {product.size}
+        <div className="flex-1 min-h-0"></div>{/* Bottom Section - Categorization, Pricing, Size Details */}
+        <div className="space-y-2 flex-shrink-0">          {/* Category, Subcategory Row */}
+          <div className="flex items-center gap-1 flex-wrap">
+            {product.category && (
+              <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">
+                {product.category}
+              </span>
+            )}
+            {product.subcategory && (
+              <span className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md border">
+                {product.subcategory}
+              </span>
+            )}
+            {!product.category && !product.subcategory && product.department && (
+              <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">
+                {product.department}
               </span>
             )}
           </div>
@@ -257,7 +256,7 @@ function ProductCard({ product }) {
           {/* Price Section */}
           <div className="text-center">
             {product.saleprice > 0 ? (
-              <div className="space-y-1">
+              <div className="flex items-center justify-center gap-2">
                 <div className="text-xl font-bold text-accent">
                   {formatPrice(product.saleprice)}
                 </div>
