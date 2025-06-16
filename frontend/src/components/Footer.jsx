@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "./AuthContext"; // Import AuthContext
 import Android from "../assets/android.png";
-import Apple from "../assets/apple.png";
+import Apple from "../assets/Apple.png";
 import Visa from "../assets/Visa.png";
 import MasterCard from "../assets/Master.png";
 import Amex from "../assets/amex.png";
