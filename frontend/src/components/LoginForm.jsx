@@ -16,11 +16,8 @@ const LoginForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-
-    try {
+    setError(null);    try {
       const response = await loginUser(formData); // Call the API function
-      console.log('Login successful:', response);
 
       // Save user and token in AuthContext
       login(response.user, response.token);

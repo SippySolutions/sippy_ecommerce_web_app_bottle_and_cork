@@ -270,12 +270,10 @@ const AcceptJSForm = ({
           } else {
             toast.error(errorMessage);
           }
-        }
-        setLoading(false);
+        }        setLoading(false);
       } else {
         // Success - payment nonce received
-        console.log('Accept.js Success:', response);
-          if (onTokenReceived) {
+        if (onTokenReceived) {
           onTokenReceived({
             dataDescriptor: response.opaqueData.dataDescriptor,
             dataValue: response.opaqueData.dataValue,

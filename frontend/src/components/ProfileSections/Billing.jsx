@@ -5,10 +5,6 @@ import PaymentMethodManager from '../Payment/PaymentMethodManager';
 const Billing = ({ refreshUser }) => {
   const { user, updateUser } = useContext(AuthContext);
 
-  // Debug logging
-  console.log('Billing component - user:', user);
-  console.log('Billing component - user.billing:', user?.billing);
-
   const handlePaymentMethodsUpdated = (updatedMethods) => {
     // Update the user context with new payment methods
     const updatedUser = {

@@ -32,13 +32,10 @@ function Navbar() {  const { user, logout } = useContext(AuthContext); // Use us
   const [dropdownOpen, setDropdownOpen] = useState(false); // State to toggle dropdown
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // State for mobile menu
   const navigate = useNavigate();
-
   // Get store status
   const storeStatus = getCurrentStoreStatus();
 
   useEffect(() => {
-    console.log('User:', user); // Debugging log to check user state
-
     const getDepartments = async () => {
       try {
         const data = await fetchDepartments();

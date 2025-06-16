@@ -6,13 +6,9 @@ import AcceptJSForm from './AcceptJSForm';
 
 const PaymentMethodManager = ({ onPaymentMethodsUpdated }) => {
   const { user, updateUser } = useContext(AuthContext);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);  const [loading, setLoading] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState([]);
-  // Debug logging
-  console.log('PaymentMethodManager - user:', user);
-  console.log('PaymentMethodManager - user.billing:', user?.billing);
-  console.log('PaymentMethodManager - paymentMethods:', paymentMethods);
+  
   useEffect(() => {
     if (user?.billing) {
       setPaymentMethods(user.billing);
@@ -55,10 +51,7 @@ const PaymentMethodManager = ({ onPaymentMethodsUpdated }) => {
       if (paymentMethods.length >= 3) {
         toast.error('Maximum of 3 saved cards allowed. Please delete a card first.');
         setLoading(false);
-        return;
-      }
-
-      console.log('Adding payment method with token data:', tokenData);
+        return;      }
 
       const paymentData = {
         dataDescriptor: tokenData.dataDescriptor,
@@ -71,14 +64,10 @@ const PaymentMethodManager = ({ onPaymentMethodsUpdated }) => {
           state: tokenData.cardInfo?.state || '',
           zip: tokenData.cardInfo?.zip || '',
           country: 'US'
-        },
-        setAsDefault: paymentMethods.length === 0 // Set as default if it's the first card
+        },        setAsDefault: paymentMethods.length === 0 // Set as default if it's the first card
       };
 
-      console.log('Sending payment data to API:', paymentData);
-
       const response = await addPaymentMethod(paymentData);
-      console.log('API response:', response);
 
       if (response.success) {
         toast.success('Payment method added successfully!');
@@ -86,7 +75,8 @@ const PaymentMethodManager = ({ onPaymentMethodsUpdated }) => {
         await refreshUserData();
       } else {
         throw new Error(response.message || 'Failed to add payment method');
-      }    } catch (error) {
+      }
+    } catch (error) {
       console.error('Error adding payment method:', error);
       
       let errorMessage = 'Failed to add payment method';
@@ -118,12 +108,8 @@ const PaymentMethodManager = ({ onPaymentMethodsUpdated }) => {
       return;
     }
 
-    setLoading(true);
-    try {
-      console.log('Deleting payment method:', paymentMethodId);
-      
+    setLoading(true);    try {
       const response = await deletePaymentMethod(paymentMethodId);
-      console.log('Delete response:', response);
 
       if (response.success) {
         toast.success('Payment method deleted successfully!');

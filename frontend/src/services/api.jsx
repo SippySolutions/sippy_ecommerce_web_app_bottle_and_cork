@@ -6,7 +6,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001
 // Helper to get token from localStorage
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
-  console.log('Auth token for request:', token ? `${token.substring(0, 20)}...` : 'No token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
@@ -119,7 +118,6 @@ export const fetchSimilarProducts = async (department, category, subcategory, pr
  */
 export const processCheckout = async (checkoutData) => {
   try {
-    console.log('Sending checkout data to backend:', checkoutData);
     const response = await axios.post(`${API_BASE_URL}/checkout/process`, checkoutData, {
       headers: getAuthHeaders()
     });
@@ -144,7 +142,6 @@ export const processCheckout = async (checkoutData) => {
 
 export const processSavedCardCheckout = async (checkoutData) => {
   try {
-    console.log('Sending saved card checkout data to backend:', checkoutData);
     const response = await axios.post(`${API_BASE_URL}/checkout/process-saved-card`, checkoutData, {
       headers: getAuthHeaders()
     });
@@ -169,7 +166,6 @@ export const processSavedCardCheckout = async (checkoutData) => {
 
 export const processGuestCheckout = async (checkoutData) => {
   try {
-    console.log('Sending guest checkout data to backend:', checkoutData);
     const response = await axios.post(`${API_BASE_URL}/guest/checkout`, checkoutData);
     return response.data;
   } catch (error) {

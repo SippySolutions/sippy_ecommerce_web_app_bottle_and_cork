@@ -27,10 +27,7 @@ const SignupForm = () => {
         } catch (err) {
             setError(err); // Display the error message
         }
-    };
-
-    const handleGoogleSignup = () => {
-        console.log('Sign up with Google');
+    };    const handleGoogleSignup = () => {
         // Add your Google signup logic here
     };
 
