@@ -71,8 +71,7 @@ const WishlistIcon = ({ product, size = 'md', className = '' }) => {
           d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
         />
       </svg>
-      
-      {/* Loading spinner */}
+        {/* Loading spinner */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div 
@@ -85,11 +84,6 @@ const WishlistIcon = ({ product, size = 'md', className = '' }) => {
           />
         </div>
       )}
-      
-      {/* Tooltip */}
-      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-        {inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
-      </div>
     </button>
   );
 };

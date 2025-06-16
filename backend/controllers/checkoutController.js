@@ -1198,3 +1198,75 @@ exports.syncPaymentMethods = async (req, res) => {
     });
   }
 };
+
+// Export utility functions for use in other controllers
+exports.getAuthorizeNetConfig = getAuthorizeNetConfig;
+
+// Process Authorize.Net payment (for guest checkout)
+exports.processAuthorizeNetPayment = async ({ apiLoginId, transactionKey, endpoint, dataDescriptor, dataValue, amount, billingAddress }) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const merchantAuthenticationType = new APIContracts.MerchantAuthenticationType();
+      merchantAuthenticationType.setName(apiLoginId);
+      merchantAuthenticationType.setTransactionKey(transactionKey);
+
+      const opaqueData = new APIContracts.OpaqueDataType();
+      opaqueData.setDataDescriptor(dataDescriptor);
+      opaqueData.setDataValue(dataValue);
+
+      const paymentType = new APIContracts.PaymentType();
+      paymentType.setOpaqueData(opaqueData);
+
+      const billTo = new APIContracts.CustomerAddressType();
+      billTo.setFirstName(billingAddress.firstName);
+      billTo.setLastName(billingAddress.lastName);
+      billTo.setAddress(billingAddress.address);
+      billTo.setCity(billingAddress.city);
+      billTo.setState(billingAddress.state);
+      billTo.setZip(billingAddress.zip);
+      billTo.setCountry(billingAddress.country);
+
+      const transactionRequest = new APIContracts.TransactionRequestType();
+      transactionRequest.setTransactionType(APIContracts.TransactionTypeEnum.AUTHCAPTURETRANSACTION);
+      transactionRequest.setPayment(paymentType);
+      transactionRequest.setAmount(amount.toFixed(2));
+      transactionRequest.setBillTo(billTo);
+
+      const createRequest = new APIContracts.CreateTransactionRequest();
+      createRequest.setMerchantAuthentication(merchantAuthenticationType);
+      createRequest.setTransactionRequest(transactionRequest);
+
+      const ctrl = new APIControllers.CreateTransactionController(createRequest.getJSON());
+      ctrl.setEnvironment(endpoint);
+
+      ctrl.execute(() => {
+        const apiResponse = ctrl.getResponse();
+        const response = new APIContracts.CreateTransactionResponse(apiResponse);
+        
+        if (response.getMessages().getResultCode() === APIContracts.MessageTypeEnum.OK) {
+          const transactionResponse = response.getTransactionResponse();
+          
+          if (transactionResponse.getMessages() && transactionResponse.getMessages().getMessage().length > 0) {
+            resolve({
+              transactionId: transactionResponse.getTransId(),
+              success: true,
+              message: transactionResponse.getMessages().getMessage()[0].getDescription(),
+              authCode: transactionResponse.getAuthCode(),
+              responseCode: transactionResponse.getResponseCode()
+            });
+          } else {
+            const errors = transactionResponse.getErrors().getError();
+            const error = errors[0];
+            reject(new Error(`Transaction Error: ${error.getErrorCode()} - ${error.getErrorText()}`));
+          }
+        } else {
+          const errors = response.getMessages().getMessage();
+          const error = errors[0];
+          reject(new Error(`Payment Error: ${error.getCode()} - ${error.getText()}`));
+        }
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
