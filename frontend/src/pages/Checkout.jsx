@@ -145,6 +145,7 @@ const Checkout = () => {
   const handlePrevStep = () => {
     setStep(prev => prev - 1);
   };  const handleAcceptJSToken = async (tokenData) => {
+    if (loading) return; // Prevent double submission
     setLoading(true);
     try {
       // Get age verification data
@@ -236,12 +237,14 @@ const Checkout = () => {
       setLoading(false);
     }
   };
-
   const handleSavedCardPayment = async () => {
     if (!selectedCard) {
       toast.error('Please select a payment method');
       return;
-    }    setLoading(true);
+    }
+
+    if (loading) return; // Prevent double submission
+    setLoading(true);
     try {
       // Get age verification data
       const ageVerificationData = getAgeVerificationStatus();

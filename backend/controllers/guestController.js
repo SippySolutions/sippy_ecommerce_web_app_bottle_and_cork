@@ -43,12 +43,26 @@ exports.processGuestPayment = async (req, res) => {
         success: false, 
         message: 'Missing payment token data' 
       });
-    }
-
-    if (!guestInfo || !guestInfo.email || !guestInfo.phone) {
+    }    if (!guestInfo || !guestInfo.email || !guestInfo.phone) {
       return res.status(400).json({
         success: false,
         message: 'Email and phone number are required for guest checkout'
+      });
+    }
+
+    // Check for duplicate guest transactions (prevent double charging)
+    const duplicateWindow = 30000; // 30 seconds
+    const recentGuestOrders = await Order.find({
+      'guestInfo.email': guestInfo.email,
+      total: amount,
+      createdAt: { $gte: new Date(Date.now() - duplicateWindow) }
+    });
+
+    if (recentGuestOrders.length > 0) {
+      console.log('⚠️ Potential duplicate guest transaction detected');
+      return res.status(400).json({
+        success: false,
+        message: 'Duplicate transaction detected. Please wait before trying again.'
       });
     }
 

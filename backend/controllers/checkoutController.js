@@ -126,10 +126,27 @@ exports.processPayment = async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) {
       console.log('❌ User not found');
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(404).json({ success: false, message: 'User not found' });    }
+
+    console.log('✅ User found:', user.email);
+
+    // Check for duplicate transactions (prevent double charging)
+    const duplicateWindow = 30000; // 30 seconds
+    const recentOrders = await Order.find({
+      customer: user._id,
+      total: amount,
+      createdAt: { $gte: new Date(Date.now() - duplicateWindow) }
+    });
+
+    if (recentOrders.length > 0) {
+      console.log('⚠️ Potential duplicate transaction detected');
+      return res.status(400).json({
+        success: false,
+        message: 'Duplicate transaction detected. Please wait before trying again.'
+      });
     }
 
-    console.log('✅ User found:', user.email);    // Validate cart items and calculate totals
+    // Validate cart items and calculate totals
     const productIds = cartItems.map(item => {
       console.log('Processing cart item for ID extraction:', item);
       return item.product || item._id;
@@ -303,11 +320,10 @@ exports.processPayment = async (req, res) => {
           reject(new Error(`API Error: ${error.getCode()} - ${error.getText()}`));
         }
       });
-    });    console.log('Payment processing completed successfully');
-
-    // Create order after successful payment
+    });    console.log('Payment processing completed successfully');    // Create order after successful payment
     const order = new Order({
       customer: user._id,
+      customerType: 'user',
       items: validatedItems,
       subtotal: roundToTwo(subtotal),
       tax: roundToTwo(tax),
@@ -385,11 +401,25 @@ exports.processPaymentWithSavedCard = async (req, res) => {
       deliveryFee = 0,
       ageVerified = false,
       ageVerifiedAt = null
-    } = req.body;
-
-    const user = await User.findById(req.user.id);
+    } = req.body;    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Check for duplicate transactions (prevent double charging)
+    const duplicateWindow = 30000; // 30 seconds
+    const recentOrders = await Order.find({
+      customer: user._id,
+      total: amount,
+      createdAt: { $gte: new Date(Date.now() - duplicateWindow) }
+    });
+
+    if (recentOrders.length > 0) {
+      console.log('⚠️ Potential duplicate transaction detected in saved card payment');
+      return res.status(400).json({
+        success: false,
+        message: 'Duplicate transaction detected. Please wait before trying again.'
+      });
     }
 
     // Validate cart items and calculate totals (same as above)
@@ -548,11 +578,10 @@ exports.processPaymentWithSavedCard = async (req, res) => {
           const error = response.getMessages().getMessage()[0];
           reject(new Error(`API Error: ${error.getCode()} - ${error.getText()}`));
         }
-      });    });
-
-    // Create order
+      });    });    // Create order
     const order = new Order({
       customer: user._id,
+      customerType: 'user',
       items: validatedItems,
       subtotal: roundToTwo(subtotal),
       tax: roundToTwo(tax),
