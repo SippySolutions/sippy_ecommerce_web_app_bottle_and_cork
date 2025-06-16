@@ -5,7 +5,7 @@ const fetchFeaturedProducts = async (req, res) => {
     const { type } = req.params; // Use req.params to get the type from the URL
 
     // Validate the type parameter
-    if (!['bestseller', 'exclusive', 'staffPick'].includes(type)) {
+    if (!['bestseller', 'exclusive', 'staffpick'].includes(type)) {
       return res.status(400).json({ error: 'Invalid type. Allowed values are bestseller, exclusive, staffPick.',type });
     }
 

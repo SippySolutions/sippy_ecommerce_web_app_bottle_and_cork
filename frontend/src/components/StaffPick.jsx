@@ -13,7 +13,7 @@ function StaffPick() {
   useEffect(() => {
     const fetchStaffPicks = async () => {
       try {
-        const data = await fetchfeturedProducts('staffPick');
+        const data = await fetchfeturedProducts('staffpick');
         setProducts(data.products);
         setCategories(data.categories || []);
       } catch (err) {
