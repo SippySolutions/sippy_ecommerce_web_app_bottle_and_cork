@@ -88,6 +88,7 @@ export const CMSProvider = ({ children }) => {
   const getLogo = () => cmsData.logo;
   const getBestSellers = () => cmsData.bestSellers || [];
   const getCategories = () => cmsData.categories || [];
+  const getPromoBanner = () => cmsData.promo_banner || null;
 
   // Store hours helper
   const getStoreHours = (day) => {
@@ -148,6 +149,7 @@ export const CMSProvider = ({ children }) => {
     getLogo,
     getBestSellers,
     getCategories,
+    getPromoBanner,
     getStoreHours,
     getCurrentStoreStatus,
     

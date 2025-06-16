@@ -4,6 +4,7 @@ import { fetchProductById } from '../services/api';
 import { useCart } from '../Context/CartContext';
 import { useCMS } from '../Context/CMSContext';
 import SimilarProducts from '../components/SimilarProducts';
+import PromoBanner from '../components/PromoBanner';
 import { toast } from 'react-toastify';
 
 function SingleProduct() {
@@ -561,6 +562,9 @@ function SingleProduct() {
               </div>
             )}
           </div>
+        </div>        {/* Promotional Banner */}
+        <div className="mt-12">
+          <PromoBanner type="grid" />
         </div>
 
         {/* Similar Products Section */}

@@ -45,7 +45,12 @@ const defaultCmsData = {
   brandBanner: [],
   logo: 'https://sippysolutionsbucket.s3.us-east-2.amazonaws.com/universal_liquors/Logo.png',
   bestSellers: [],
-  categories: []
+  categories: [],
+  promo_banner: {
+    promo_1: "https://cityhive-prod-cdn.cityhive.net/media_gallery/payments/city_hive/5a04398ee779890ec4deae24/image/6849eddcf75f645186377c4f.png?1749675484",
+    promo_2: "https://cityhive-prod-cdn.cityhive.net/media_gallery/supplier/5ea05dc0e99c8d493991bb48/image/682de834ddba3c2962da685e.png?1747839028",
+    promo_3: "https://cityhive-prod-cdn.cityhive.net/media_gallery/supplier/5ea9a30bddd8f112bbb0d0dc/image/681ccd01d943472782d987d9.png?1746717953"
+  }
 };
 
 export default defaultCmsData;

@@ -6,6 +6,7 @@ import { useContext } from 'react';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
+import PromoBanner from '../components/PromoBanner';
 
 const Wishlist = () => {
   const { wishlistItems, loading, clearWishlist } = useWishlist();
@@ -94,18 +95,40 @@ const Wishlist = () => {
               Browse Products
             </a>
           </div>        ) : (
-          /* Wishlist Grid */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {wishlistItems.map((product, index) => (
-              <motion.div
-                key={product._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
+          <>
+            {/* Promotional Banner */}
+            <PromoBanner type="horizontal" className="mb-8" />
+            
+            {/* Wishlist Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {wishlistItems.map((product, index) => (
+                <motion.div
+                  key={product._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </div>
+            
+            {/* Another Promotional Banner after products */}
+            {wishlistItems.length > 4 && (
+              <PromoBanner type="single" className="mt-8" />
+            )}
+          </>
+        )}
+
+        {/* Promo Banner - Only show if there are items in the wishlist */}
+        {wishlistItems.length > 0 && (
+          <div className="mt-12">
+            <PromoBanner 
+              title={cmsData.promoBanner.title} 
+              description={cmsData.promoBanner.description} 
+              ctaText={cmsData.promoBanner.ctaText} 
+              ctaLink={cmsData.promoBanner.ctaLink}
+            />
           </div>
         )}
       </div>

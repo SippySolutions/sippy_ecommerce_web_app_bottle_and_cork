@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useCart } from '../Context/CartContext';
 import SimilarProducts from '../components/SimilarProducts';
+import PromoBanner from '../components/PromoBanner';
 import { useNavigate } from 'react-router-dom';
 import { fetchCMSData } from '../services/api';
 
@@ -143,11 +144,15 @@ const Cart = () => {
         >
           Proceed to Checkout
         </button>
+      </div>      {/* Bottom Section: Promotional Banner and Recommendations */}
+      <div className="lg:col-span-3 mt-8">
+        <PromoBanner type="horizontal" />
+        <SimilarProducts department="WINE" priceRange="10-50" />
       </div>
 
-      {/* Bottom Section: Recommendations */}
+      {/* Promo Banner */}
       <div className="lg:col-span-3 mt-8">
-        <SimilarProducts department="WINE" priceRange="10-50" />
+        <PromoBanner />
       </div>
     </div>
   );

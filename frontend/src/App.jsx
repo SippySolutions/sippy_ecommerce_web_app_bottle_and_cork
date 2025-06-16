@@ -5,6 +5,7 @@ import AllProducts from './pages/AllProducts';
 import SingleProduct from './pages/SingleProduct';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import PromoBanner from './components/PromoBanner';
 import Account from './pages/Account.jsx';
 import AuthProvider from './components/AuthContext.jsx';
 import Cart from './pages/Cart.jsx';
@@ -72,6 +73,7 @@ function AppContent() {
     return (
         <>
             <Navbar />
+            <PromoBanner type="carousel" className="w-full" />
             <main className="min-h-screen">
                 <AnimatePresence mode="wait">
                     <Routes location={location} key={location.pathname}>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { searchProducts, fetchProducts, fetchDepartments } from '../services/api';
 import ProductCard from '../components/ProductCard';
+import PromoBanner from '../components/PromoBanner';
 import { useCMS } from '../Context/CMSContext';
 import { toast } from 'react-toastify';
 
@@ -630,19 +631,50 @@ const AllProducts = () => {
           </div>
 
           {/* Main content */}
-          <div className="flex-1">
-            {products.length > 0 ? (
+          <div className="flex-1">            {products.length > 0 ? (
               <>
-                {/* Products grid with enhanced styling */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-                  {products.map((product) => (
-                    <div key={product._id} className="transform hover:scale-105 transition-transform duration-200">
-                      <ProductCard product={product} />
+                {/* Products grid with enhanced styling and promotional banners */}
+                <div className="space-y-8">
+                  {/* First promotional banner after 4 products */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {products.slice(0, 8).map((product) => (
+                      <div key={product._id} className="transform hover:scale-105 transition-transform duration-200">
+                        <ProductCard product={product} />
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* First promotional banner */}
+                  {products.length > 8 && <PromoBanner type="single" />}
+                  
+                  {/* Remaining products with promotional banners every 12 products */}
+                  {products.length > 8 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {products.slice(8, 20).map((product) => (
+                        <div key={product._id} className="transform hover:scale-105 transition-transform duration-200">
+                          <ProductCard product={product} />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>                {/* Enhanced Pagination with CMS theme */}
+                  )}
+                  
+                  {/* Second promotional banner */}
+                  {products.length > 20 && <PromoBanner type="single" />}
+                  
+                  {/* Continue with remaining products */}
+                  {products.length > 20 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {products.slice(20).map((product) => (
+                        <div key={product._id} className="transform hover:scale-105 transition-transform duration-200">
+                          <ProductCard product={product} />
+                        </div>
+                      ))}
+                    </div>
+                  )}                </div>
+                
+                {/* Enhanced Pagination with CMS theme */}
                 {pagination && pagination.totalPages > 1 && (
-                  <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border-2 border-white/20 p-8">
+                  <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border-2 border-white/20 p-8 mt-8">
                     <div className="flex justify-center items-center space-x-4">
                       <button
                         onClick={() => handlePageChange(pagination.page - 1)}

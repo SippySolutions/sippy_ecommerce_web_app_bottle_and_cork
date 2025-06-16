@@ -5,6 +5,7 @@ import Categories from "../components/Categories";
 import Exclusive from "../components/Exclusive";
 import HeroSection from "../components/HeroSection";
 import StaffPick from "../components/StaffPick";
+import PromoBanner from "../components/PromoBanner";
 import { useCMS } from "../Context/CMSContext";
 
 function Home() {
@@ -24,13 +25,18 @@ function Home() {
     );
   }
   return (
-    <>
-      <HeroSection data={getHeroSection()} />
+    <>      <HeroSection data={getHeroSection()} />
       <BestSellers /> 
+      <div className="container mx-auto px-4">
+        <PromoBanner type="horizontal" />
+      </div>
       <Categories categories={getCategories()} />
       <Exclusive  />
       <Banner data={getBanner()} />
       <StaffPick />
+      <div className="container mx-auto px-4">
+        <PromoBanner type="grid" />
+      </div>
       <BrandBanner brands={getBrandBanner()} />
     </>
   );
