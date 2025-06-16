@@ -34,9 +34,8 @@ function SingleProduct() {
     }
     fetchData();
   }, [id]);
-
   const handleAddToCart = () => {
-    if (product && product.totalqty > 0) {
+    if (product) {
       addToCart(
         {
           ...product,
@@ -46,7 +45,8 @@ function SingleProduct() {
         },
         quantity
       );
-      toast.success(`${quantity} ${product.name} added to cart!`, {
+      const stockMessage = product.totalqty > 0 ? '' : ' (Out of Stock)';
+      toast.success(`${quantity} ${product.name} added to cart!${stockMessage}`, {
         position: "top-right",
         autoClose: 3000,
       });
@@ -77,19 +77,11 @@ function SingleProduct() {
       minimumFractionDigits: 2
     }).format(price);
   };
-
   const getDiscountPercentage = () => {
     if (product?.saleprice > 0 && product?.price > product?.saleprice) {
       return Math.round(((product.price - product.saleprice) / product.price) * 100);
     }
     return 0;
-  };
-
-  const getStockStatus = () => {
-    if (!product) return { status: 'unknown', color: 'gray', text: 'Unknown' };
-    if (product.totalqty === 0) return { status: 'out-of-stock', color: 'red', text: 'Out of Stock' };
-    if (product.totalqty <= 5) return { status: 'low-stock', color: 'orange', text: `Low Stock (${product.totalqty} left)` };
-    return { status: 'in-stock', color: 'green', text: `In Stock (${product.totalqty} available)` };
   };
 
   if (loading) {
@@ -120,8 +112,6 @@ function SingleProduct() {
       </div>
     );
   }
-
-  const stockStatus = getStockStatus();
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white py-8">
       <div className="container mx-auto px-4 max-w-7xl">
@@ -315,37 +305,11 @@ function SingleProduct() {
                     <div className="text-sm text-gray-600 mb-1">Origin</div>
                     <div className="font-semibold text-gray-900">{product.country}</div>
                   </div>
-                )}
-              </div>
-
-              {/* Stock Status */}
-              <div className={`p-4 rounded-xl mb-6 border-l-4 ${
-                stockStatus.color === 'green' ? 'bg-green-50 border-green-500' :
-                stockStatus.color === 'orange' ? 'bg-orange-50 border-orange-500' :
-                'bg-red-50 border-red-500'
-              }`}>
-                <div className={`flex items-center gap-2 ${
-                  stockStatus.color === 'green' ? 'text-green-800' :
-                  stockStatus.color === 'orange' ? 'text-orange-800' :
-                  'text-red-800'
-                }`}>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    {stockStatus.status === 'in-stock' ? (
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    ) : stockStatus.status === 'low-stock' ? (
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                    ) : (
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    )}
-                  </svg>
-                  <span className="font-semibold">{stockStatus.text}</span>
-                </div>
-              </div>
+                )}              </div>
             </div>
 
             {/* Quantity & Add to Cart Section */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              {/* Quantity Selector */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">              {/* Quantity Selector */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Quantity
@@ -363,41 +327,30 @@ function SingleProduct() {
                   <input
                     type="number"
                     min="1"
-                    max={product.totalqty}
                     value={quantity}
-                    onChange={e => setQuantity(Math.max(1, Math.min(product.totalqty, parseInt(e.target.value) || 1)))}
+                    onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
                     className="w-16 text-center py-3 border-0 outline-none text-lg font-semibold"
                   />
                   <button
-                    onClick={() => setQuantity(q => Math.min(product.totalqty, q + 1))}
-                    disabled={quantity >= product.totalqty}
-                    className="px-4 py-3 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    onClick={() => setQuantity(q => q + 1)}
+                    className="px-4 py-3 text-gray-600 hover:bg-gray-50 transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                   </button>
                 </div>
-              </div>
-
-              {/* Action Buttons */}
+              </div>              {/* Action Buttons */}
               <div className="flex gap-4">
                 <button
                   onClick={handleAddToCart}
-                  disabled={product.totalqty <= 0}
-                  className={`flex-1 py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 flex items-center justify-center gap-3 ${
-                    product.totalqty > 0
-                      ? 'text-white shadow-lg hover:shadow-xl transform hover:scale-105'
-                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
-                  style={{
-                    backgroundColor: product.totalqty > 0 ? theme.accent : undefined
-                  }}
+                  className="flex-1 py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 flex items-center justify-center gap-3 text-white shadow-lg hover:shadow-xl transform hover:scale-105"
+                  style={{ backgroundColor: theme.accent }}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5-5M7 13l-2.5 5M17 17a2 2 0 11-4 0 2 2 0 014 0zM9 17a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
-                  {product.totalqty > 0 ? 'Add to Cart' : 'Out of Stock'}
+                  Add to Cart
                 </button>
                 
                 <button
@@ -485,11 +438,9 @@ function SingleProduct() {
                     { label: 'Department', value: product.department },
                     { label: 'Subcategory', value: product.subcategory },
                     { label: 'Size', value: product.size },
-                    { label: 'Vintage', value: product.vintage && product.vintage !== "No Vintage" ? product.vintage : null },
-                    { label: 'ABV', value: product.abv ? `${product.abv}%` : null },
+                    { label: 'Vintage', value: product.vintage && product.vintage !== "No Vintage" ? product.vintage : null },                    { label: 'ABV', value: product.abv ? `${product.abv}%` : null },
                     { label: 'Country of Origin', value: product.country && product.country !== "NAN" ? product.country : null },
-                    { label: 'Pack Size', value: product.packsize },
-                    { label: 'Stock Level', value: `${product.totalqty} units` }
+                    { label: 'Pack Size', value: product.packsize }
                   ].filter(spec => spec.value).map((spec, index) => (
                     <div key={index} className="bg-gray-50 p-4 rounded-lg">
                       <div className="text-sm text-gray-600 mb-1">{spec.label}</div>
