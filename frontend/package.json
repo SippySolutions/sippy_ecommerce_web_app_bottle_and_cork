@@ -7,6 +7,7 @@
     "dev:https": "vite --port 3003 --https",
     "dev:http": "vite --port 3003",
     "build": "vite build",
+    "vercel-build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "setup:certs": "node -e \"console.log('Certificates are already set up! Run: npm run dev:https')\"",

@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import fs from 'fs'
 import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // Check if certificates exist
 const certPath = path.resolve(__dirname, 'certs/localhost.pem')
@@ -23,6 +26,20 @@ export default defineConfig({
     host: true,
     // Use HTTPS if certificates are available
     https: httpsConfig,
+  },
+  build: {
+    // Optimize for production
+    minify: 'terser',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          ui: ['framer-motion', '@mui/material', '@mui/icons-material'],
+        },
+      },
+    },
   },
   // Resolve any potential SSL issues
   define: {
