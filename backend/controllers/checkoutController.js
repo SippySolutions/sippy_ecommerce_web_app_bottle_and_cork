@@ -1241,25 +1241,26 @@ exports.processAuthorizeNetPayment = async ({ apiLoginId, transactionKey, endpoi
 
       const opaqueData = new APIContracts.OpaqueDataType();
       opaqueData.setDataDescriptor(dataDescriptor);
-      opaqueData.setDataValue(dataValue);
-
-      const paymentType = new APIContracts.PaymentType();
+      opaqueData.setDataValue(dataValue);      const paymentType = new APIContracts.PaymentType();
       paymentType.setOpaqueData(opaqueData);
-
-      const billTo = new APIContracts.CustomerAddressType();
-      billTo.setFirstName(billingAddress.firstName);
-      billTo.setLastName(billingAddress.lastName);
-      billTo.setAddress(billingAddress.address);
-      billTo.setCity(billingAddress.city);
-      billTo.setState(billingAddress.state);
-      billTo.setZip(billingAddress.zip);
-      billTo.setCountry(billingAddress.country);
 
       const transactionRequest = new APIContracts.TransactionRequestType();
       transactionRequest.setTransactionType(APIContracts.TransactionTypeEnum.AUTHCAPTURETRANSACTION);
       transactionRequest.setPayment(paymentType);
       transactionRequest.setAmount(amount.toFixed(2));
-      transactionRequest.setBillTo(billTo);
+      
+      // Only set billing address if provided
+      if (billingAddress) {
+        const billTo = new APIContracts.CustomerAddressType();
+        billTo.setFirstName(billingAddress.firstName);
+        billTo.setLastName(billingAddress.lastName);
+        billTo.setAddress(billingAddress.address);
+        billTo.setCity(billingAddress.city);
+        billTo.setState(billingAddress.state);
+        billTo.setZip(billingAddress.zip);
+        billTo.setCountry(billingAddress.country);
+        transactionRequest.setBillTo(billTo);
+      }
 
       const createRequest = new APIContracts.CreateTransactionRequest();
       createRequest.setMerchantAuthentication(merchantAuthenticationType);

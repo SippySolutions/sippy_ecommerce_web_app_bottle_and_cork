@@ -27,7 +27,12 @@ async function initializeApp() {
   const rootElement = document.getElementById("root");
   createRoot(rootElement).render(
     <StrictMode>
-      <Router>
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}
+      >
         <App cmsData={cmsData} />
       </Router>
     </StrictMode>

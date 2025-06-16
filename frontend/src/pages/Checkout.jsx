@@ -10,6 +10,87 @@ import AcceptJSForm from '../components/Payment/AcceptJSForm';
 import axios from 'axios';
 import { processCheckout, processSavedCardCheckout, processGuestCheckout } from '../services/api';
 
+// AddressForm component moved outside to prevent re-mounting issues
+const AddressForm = ({ address, onChange, title, type }) => (
+  <div className="bg-white p-6 rounded-lg shadow-md">
+    <h3 className="text-lg font-semibold mb-4">{title}</h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          First Name *
+        </label>
+        <input
+          type="text"
+          value={address.firstName}
+          onChange={(e) => onChange(type, 'firstName', e.target.value)}
+          className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Last Name *
+        </label>
+        <input
+          type="text"
+          value={address.lastName}
+          onChange={(e) => onChange(type, 'lastName', e.target.value)}
+          className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          required
+        />
+      </div>
+      <div className="md:col-span-2">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Address *
+        </label>
+        <input
+          type="text"
+          value={address.address}
+          onChange={(e) => onChange(type, 'address', e.target.value)}
+          className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          City *
+        </label>
+        <input
+          type="text"
+          value={address.city}
+          onChange={(e) => onChange(type, 'city', e.target.value)}
+          className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          State *
+        </label>
+        <input
+          type="text"
+          value={address.state}
+          onChange={(e) => onChange(type, 'state', e.target.value)}
+          className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          ZIP Code *
+        </label>
+        <input
+          type="text"
+          value={address.zip}
+          onChange={(e) => onChange(type, 'zip', e.target.value)}
+          className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          required
+        />
+      </div>
+    </div>
+  </div>
+);
+
 const Checkout = () => {
   const navigate = useNavigate();  const { cartItems, getTotalPrice, clearCart } = useContext(CartContext);
   const { user, isAuthenticated } = useContext(AuthContext);
@@ -127,14 +208,13 @@ const Checkout = () => {
           toast.error('Please enter a valid email address');
           return;
         }
-      }
-      
-      // Validate addresses
+      }      // Validate addresses
       if (orderType === 'delivery' && !validateAddress(shippingAddress)) {
         toast.error('Please fill in all shipping address fields');
         return;
       }
-      if (!validateAddress(billingAddress)) {
+      // Only require billing address for authenticated users
+      if (isAuthenticated && !validateAddress(billingAddress)) {
         toast.error('Please fill in all billing address fields');
         return;
       }
@@ -196,9 +276,7 @@ const Checkout = () => {
         if (!guestInfo.email || !guestInfo.phone) {
           toast.error('Email and phone number are required for guest checkout');
           return;
-        }
-
-        const orderData = {
+        }        const orderData = {
           dataDescriptor: tokenData.dataDescriptor,
           dataValue: tokenData.dataValue,
           amount: total,
@@ -207,17 +285,19 @@ const Checkout = () => {
             quantity: item.quantity
           })),
           shippingAddress: orderType === 'delivery' ? shippingAddress : null,
-          billingAddress: billingAddress,
+          billingAddress: isAuthenticated ? billingAddress : null,
           orderType: orderType,
           tip: tip,
           bagFee: orderType === 'delivery' ? bagFee : 0,
           deliveryFee: orderType === 'delivery' ? deliveryFee : 0,
           ageVerified: ageVerified,
           ageVerifiedAt: ageVerifiedAt,
-          guestInfo: {
-            email: guestInfo.email,
-            phone: guestInfo.phone
-          }
+          ...(isAuthenticated ? {} : {
+            guestInfo: {
+              email: guestInfo.email,
+              phone: guestInfo.phone
+            }
+          })
         };
 
         const response = await processGuestCheckout(orderData);
@@ -249,9 +329,7 @@ const Checkout = () => {
       // Get age verification data
       const ageVerificationData = getAgeVerificationStatus();
       const ageVerified = Boolean(ageVerificationData);
-      const ageVerifiedAt = ageVerified ? new Date(ageVerificationData) : null;
-
-      const orderData = {
+      const ageVerifiedAt = ageVerified ? new Date(ageVerificationData) : null;      const orderData = {
         paymentMethodId: selectedCard.id,
         amount: total,
         cartItems: cartItems.map(item => ({
@@ -259,7 +337,7 @@ const Checkout = () => {
           quantity: item.quantity
         })),
         shippingAddress: orderType === 'delivery' ? shippingAddress : null,
-        billingAddress: billingAddress,
+        billingAddress: billingAddress, // For authenticated users, always include billing address
         orderType: orderType,
         tip: tip,
         bagFee: orderType === 'delivery' ? bagFee : 0,
@@ -282,7 +360,6 @@ const Checkout = () => {
       setLoading(false);
     }
   };
-
   const tipOptions = [
     { label: 'No tip', value: 0 },
     { label: '15%', value: subtotal * 0.15 },
@@ -290,86 +367,6 @@ const Checkout = () => {
     { label: '20%', value: subtotal * 0.20 },
     { label: 'Custom', value: 'custom' }
   ];
-
-  const AddressForm = ({ address, onChange, title, type }) => (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h3 className="text-lg font-semibold mb-4">{title}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            First Name *
-          </label>
-          <input
-            type="text"
-            value={address.firstName}
-            onChange={(e) => onChange(type, 'firstName', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Last Name *
-          </label>
-          <input
-            type="text"
-            value={address.lastName}
-            onChange={(e) => onChange(type, 'lastName', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-        </div>
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Address *
-          </label>
-          <input
-            type="text"
-            value={address.address}
-            onChange={(e) => onChange(type, 'address', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            City *
-          </label>
-          <input
-            type="text"
-            value={address.city}
-            onChange={(e) => onChange(type, 'city', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            State *
-          </label>
-          <input
-            type="text"
-            value={address.state}
-            onChange={(e) => onChange(type, 'state', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            ZIP Code *
-          </label>
-          <input
-            type="text"
-            value={address.zip}
-            onChange={(e) => onChange(type, 'zip', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -435,7 +432,7 @@ const Checkout = () => {
                       </button>                    </div>
                   </div>
 
-                  {/* Guest Information */}
+                  {/* Guest Information */}                  {/* Guest Information - Show for non-authenticated users */}
                   {!isAuthenticated && (
                     <div className="bg-white p-6 rounded-lg shadow-md">
                       <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
@@ -467,7 +464,7 @@ const Checkout = () => {
                           />
                         </div>
                       </div>                      <p className="text-sm text-gray-600 mt-2">
-                        * Required for order confirmation and delivery updates
+                        * Required for order confirmation and updates
                       </p>
                       <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                         <p className="text-sm text-blue-800">
@@ -484,120 +481,110 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  {/* Shipping Address */}
+                  {/* Shipping Address - Only for delivery orders */}
                   {orderType === 'delivery' && (
                     <AddressForm
                       address={shippingAddress}
                       onChange={handleAddressChange}
                       title="Shipping Address"
                       type="shipping"
-                    />
-                  )}
+                    />                  )}
 
-                  {/* Billing Address */}
-                  <div className="bg-white p-6 rounded-lg shadow-md">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold">Billing Address</h3>
-                      {orderType === 'delivery' && (
-                        <label className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={sameAsShipping}
-                            onChange={(e) => setSameAsShipping(e.target.checked)}
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          />
-                          <span className="text-sm text-gray-700">Same as shipping</span>
-                        </label>
+                  {/* Billing Address - Only show for authenticated users */}
+                  {isAuthenticated && (
+                    <div className="bg-white p-6 rounded-lg shadow-md">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold">Billing Address</h3>
+                        {orderType === 'delivery' && (
+                          <label className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={sameAsShipping}
+                              onChange={(e) => setSameAsShipping(e.target.checked)}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-700">Same as shipping</span>
+                          </label>
+                        )}
+                      </div>
+                      {(!sameAsShipping || orderType === 'pickup') && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              First Name *
+                            </label>
+                            <input
+                              type="text"
+                              value={billingAddress.firstName}
+                              onChange={(e) => handleAddressChange('billing', 'firstName', e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Last Name *
+                            </label>
+                            <input
+                              type="text"
+                              value={billingAddress.lastName}
+                              onChange={(e) => handleAddressChange('billing', 'lastName', e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              required
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Address *
+                            </label>
+                            <input
+                              type="text"
+                              value={billingAddress.address}
+                              onChange={(e) => handleAddressChange('billing', 'address', e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              City *
+                            </label>
+                            <input
+                              type="text"
+                              value={billingAddress.city}
+                              onChange={(e) => handleAddressChange('billing', 'city', e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              State *
+                            </label>
+                            <input
+                              type="text"
+                              value={billingAddress.state}
+                              onChange={(e) => handleAddressChange('billing', 'state', e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              ZIP Code *
+                            </label>
+                            <input
+                              type="text"
+                              value={billingAddress.zip}
+                              onChange={(e) => handleAddressChange('billing', 'zip', e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              required
+                            />
+                          </div>
+                        </div>
                       )}
                     </div>
-                    {!sameAsShipping && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            First Name *
-                          </label>
-                          <input
-                            type="text"
-                            value={billingAddress.firstName}
-                            onChange={(e) => handleAddressChange('billing', 'firstName', e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Last Name *
-                          </label>
-                          <input
-                            type="text"
-                            value={billingAddress.lastName}
-                            onChange={(e) => handleAddressChange('billing', 'lastName', e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            required
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Address *
-                          </label>
-                          <input
-                            type="text"
-                            value={billingAddress.address}
-                            onChange={(e) => handleAddressChange('billing', 'address', e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            City *
-                          </label>
-                          <input
-                            type="text"
-                            value={billingAddress.city}
-                            onChange={(e) => handleAddressChange('billing', 'city', e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            State *
-                          </label>
-                          <input
-                            type="text"
-                            value={billingAddress.state}
-                            onChange={(e) => handleAddressChange('billing', 'state', e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            ZIP Code *
-                          </label>
-                          <input
-                            type="text"
-                            value={billingAddress.zip}
-                            onChange={(e) => handleAddressChange('billing', 'zip', e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            required
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-
-              {step === 2 && (
-                <motion.div
-                  key="step2"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="space-y-6"
-                >
+                  )}
                   {/* Tip Selection */}
                   <div className="bg-white p-6 rounded-lg shadow-md">
                     <h3 className="text-lg font-semibold mb-4">Add a Tip</h3>
@@ -627,9 +614,10 @@ const Checkout = () => {
                             <div className="text-sm">${option.value.toFixed(2)}</div>
                           )}
                         </button>
-                      ))}
-                    </div>
-                  </div>                  {/* Payment Method Selection */}
+                      ))}                    </div>
+                  </div>
+
+                  {/* Payment Method Selection */}
                   <div className="bg-white p-6 rounded-lg shadow-md">
                     <h3 className="text-lg font-semibold mb-4">Payment Method</h3>
                     
