@@ -46,3 +46,18 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari, and Opera */
 }
+
+/* Full width utilities for breaking out of containers */
+.full-width {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+}
+
+/* Ensure body doesn't have horizontal overflow */
+body {
+  overflow-x: hidden;
+}

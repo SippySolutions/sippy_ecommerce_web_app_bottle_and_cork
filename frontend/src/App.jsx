@@ -70,10 +70,9 @@ function AppContent() {
     if (!isVerified) {
         return <AgeVerification onVerified={handleVerified} onDenied={handleDenied}/>;
     }    // Show main app content if age verified
-    return (
-        <>
+    return (        <>
             <Navbar />
-            <PromoBanner type="carousel" className="w-full" />
+            <PromoBanner type="carousel" />
             <main className="min-h-screen">
                 <AnimatePresence mode="wait">
                     <Routes location={location} key={location.pathname}>

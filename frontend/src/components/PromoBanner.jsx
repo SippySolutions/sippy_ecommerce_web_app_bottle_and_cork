@@ -68,12 +68,11 @@ const PromoBanner = ({ type = 'horizontal', className = '' }) => {
       x: direction < 0 ? 1000 : -1000,
       opacity: 0
     })
-  };
-  if (type === 'carousel') {
+  };  if (type === 'carousel') {
     // Full-width carousel - for under navbar
     return (
-      <div className={`w-full bg-gray-100 ${className}`} style={{ margin: 0, padding: 0 }}>
-        <div className="relative w-full h-32 md:h-48 lg:h-56 overflow-hidden" style={{ maxWidth: '100vw' }}>
+      <div className={`full-width bg-gray-100 ${className}`}>
+        <div className="relative w-full h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 overflow-hidden">
           <AnimatePresence initial={false} custom={currentIndex}>
             <motion.div
               key={currentIndex}
@@ -91,8 +90,8 @@ const PromoBanner = ({ type = 'horizontal', className = '' }) => {
               <img
                 src={promoImages[currentIndex]}
                 alt={`Promotional Banner ${currentIndex + 1}`}
-                className="w-full h-full object-cover"
-                style={{ objectPosition: 'center center' }}
+                className="w-full h-full object-cover object-center"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
             </motion.div>
@@ -155,7 +154,6 @@ const PromoBanner = ({ type = 'horizontal', className = '' }) => {
       </div>
     );
   }
-
   if (type === 'single') {
     // Single banner display - good for between products
     const randomImage = promoImages[Math.floor(Math.random() * promoImages.length)];
@@ -168,23 +166,24 @@ const PromoBanner = ({ type = 'horizontal', className = '' }) => {
         viewport={{ once: true, amount: 0.3 }}
       >
         <motion.div
-          className="relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
+          className="relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
           variants={itemVariants}
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.3 }}
         >
-          <img
-            src={randomImage}
-            alt="Promotional Banner"
-            className="w-full h-auto object-cover"
-            style={{ maxHeight: '200px' }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+          <div className="relative w-full" style={{ paddingBottom: '25%' }}>
+            <img
+              src={randomImage}
+              alt="Promotional Banner"
+              className="absolute inset-0 w-full h-full object-cover object-center"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+          </div>
         </motion.div>
       </motion.div>
     );
   }
-
   if (type === 'grid') {
     // Grid layout for multiple banners
     return (
@@ -199,24 +198,26 @@ const PromoBanner = ({ type = 'horizontal', className = '' }) => {
           {promoImages.map((image, index) => (
             <motion.div
               key={index}
-              className="relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
+              className="relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
               variants={itemVariants}
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.3 }}
             >
-              <img
-                src={image}
-                alt={`Promotional Banner ${index + 1}`}
-                className="w-full h-48 object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
+              <div className="relative w-full" style={{ paddingBottom: '60%' }}>
+                <img
+                  src={image}
+                  alt={`Promotional Banner ${index + 1}`}
+                  className="absolute inset-0 w-full h-full object-cover object-center"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
+              </div>
             </motion.div>
           ))}
         </div>
       </motion.div>
     );
   }
-
   // Horizontal carousel layout - default
   return (
     <motion.div
@@ -230,17 +231,20 @@ const PromoBanner = ({ type = 'horizontal', className = '' }) => {
         {promoImages.map((image, index) => (
           <motion.div
             key={index}
-            className="flex-1 relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
+            className="flex-1 relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
             variants={itemVariants}
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.3 }}
           >
-            <img
-              src={image}
-              alt={`Promotional Banner ${index + 1}`}
-              className="w-full h-32 md:h-40 object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+            <div className="relative w-full" style={{ paddingBottom: '40%' }}>
+              <img
+                src={image}
+                alt={`Promotional Banner ${index + 1}`}
+                className="absolute inset-0 w-full h-full object-cover object-center"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+            </div>
           </motion.div>
         ))}
       </div>
