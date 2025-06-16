@@ -4,8 +4,8 @@ import Android from "../assets/android.png";
 import Apple from "../assets/Apple.png";
 import Visa from "../assets/Visa.png";
 import MasterCard from "../assets/Master.png";
-import Amex from "../assets/amex.png";
-import Discover from "../assets/discover.png";
+import Amex from "../assets/Amex.png";
+import Discover from "../assets/Discover.png";
 import { fetchCMSData } from "../services/api"; // <-- Import from api.jsx
 
 function Footer() {

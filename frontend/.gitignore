@@ -142,3 +142,5 @@ storybook-static/
 
 # PostCSS
 .postcss-cache/
+
+.vercel
