@@ -18,6 +18,7 @@ const AllProducts = () => {
   const [sortOption, setSortOption] = useState('default');
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [departmentsData, setDepartmentsData] = useState([]);
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const query = searchParams.get('q') || '';
   const department = searchParams.get('department') || '';
   const category = searchParams.get('category') || '';
@@ -358,33 +359,56 @@ const AllProducts = () => {
         <div className="mb-8">
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border-2 border-white/20 p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-              <div className="flex items-center space-x-6">
-                <label 
-                  className="text-lg font-bold flex items-center"
-                  style={{ color: theme.headingText }}
-                >
-                  <div 
-                    className="w-2 h-2 rounded-full mr-3"
-                    style={{ backgroundColor: theme.accent }}
-                  ></div>
-                  <div className='text-black'>Sort by:</div>
-                </label>
-                <select
-                  value={sortOption}
-                  onChange={(e) => handleSortChange(e.target.value)}
-                  className="border-2 rounded-xl px-6 py-3 text-sm font-medium focus:outline-none focus:ring-4 bg-white shadow-lg transition-all duration-200"
+              <div className="flex items-center justify-between w-full sm:w-auto">
+                {/* Mobile Filter Button */}
+                <button
+                  onClick={() => setIsMobileFiltersOpen(true)}
+                  className="lg:hidden inline-flex items-center px-4 py-2 rounded-xl font-medium transition-all duration-200 shadow-lg"
                   style={{ 
-                    borderColor: theme.muted,
-                    focusRingColor: `${theme.accent}40`
+                    backgroundColor: theme.primary,
+                    color: 'white'
                   }}
                 >
-                  <option value="default">Default</option>
-                  <option value="name-asc">Name (A-Z)</option>
-                  <option value="name-desc">Name (Z-A)</option>
-                  <option value="price-asc">Price (Low to High)</option>
-                  <option value="price-desc">Price (High to Low)</option>
-                  <option value="newest">Newest First</option>
-                </select>
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+                  </svg>
+                  Filters
+                  {(department || category || subcategory) && (
+                    <span className="ml-2 bg-white/20 rounded-full px-2 py-0.5 text-xs">
+                      {[department, category, subcategory].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
+
+                {/* Sort Dropdown */}
+                <div className="flex items-center space-x-4">
+                  <label 
+                    className="text-lg font-bold hidden sm:flex items-center"
+                    style={{ color: theme.headingText }}
+                  >
+                    <div 
+                      className="w-2 h-2 rounded-full mr-3"
+                      style={{ backgroundColor: theme.accent }}
+                    ></div>
+                    <div className='text-black'>Sort by:</div>
+                  </label>
+                  <select
+                    value={sortOption}
+                    onChange={(e) => handleSortChange(e.target.value)}
+                    className="border-2 rounded-xl px-6 py-3 text-sm font-medium focus:outline-none focus:ring-4 bg-white shadow-lg transition-all duration-200"
+                    style={{ 
+                      borderColor: theme.muted,
+                      focusRingColor: `${theme.accent}40`
+                    }}
+                  >
+                    <option value="default">Default</option>
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="name-desc">Name (Z-A)</option>
+                    <option value="price-asc">Price (Low to High)</option>
+                    <option value="price-desc">Price (High to Low)</option>
+                    <option value="newest">Newest First</option>
+                  </select>
+                </div>
               </div>
               
               {/* Results summary with theme colors */}
@@ -401,10 +425,220 @@ const AllProducts = () => {
               )}
             </div>
           </div>
-        </div>
+        </div>        <div className="flex flex-col lg:flex-row gap-8">          {/* Mobile Filter Overlay */}
+          {isMobileFiltersOpen && (
+            <div className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={() => setIsMobileFiltersOpen(false)}>
+              <div 
+                className="fixed inset-y-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-6">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-black">Filter Products</h3>
+                    <button
+                      onClick={() => setIsMobileFiltersOpen(false)}
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">          {/* Enhanced Sidebar with CMS theme */}
-          <div className="lg:w-1/4">
+                  {/* Active Filters - Mobile */}
+                  {(department || category || subcategory) && (
+                    <div className="mb-6 p-4 bg-gray-50 rounded-xl">
+                      <div className="text-sm font-semibold text-gray-700 mb-3">Active Filters:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {department && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {department}
+                            <button onClick={() => clearFilter('department')} className="ml-2 text-blue-600">×</button>
+                          </span>
+                        )}
+                        {category && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {category}
+                            <button onClick={() => clearFilter('category')} className="ml-2 text-green-600">×</button>
+                          </span>
+                        )}
+                        {subcategory && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            {subcategory}
+                            <button onClick={() => clearFilter('subcategory')} className="ml-2 text-purple-600">×</button>
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={clearAllFilters}
+                        className="mt-3 text-sm text-red-600 font-medium underline"
+                      >
+                        Clear all filters
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Filter Content - Mobile */}
+                  <div className="space-y-6">
+                    {/* Departments */}
+                    <div>
+                      <h4 className="font-semibold text-lg mb-3 text-black">Departments</h4>
+                      <div className="space-y-2">
+                        {suggestions?.departments && suggestions.departments.length > 0 ? (
+                          suggestions.departments.slice(0, 12).map((dept, index) => (
+                            <button
+                              key={index}
+                              onClick={() => {
+                                handleFilterClick('department', dept);
+                                setIsMobileFiltersOpen(false);
+                              }}
+                              className={`block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-colors ${
+                                department === dept 
+                                  ? 'bg-blue-600 text-white' 
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              {dept}
+                            </button>
+                          ))
+                        ) : (
+                          departmentsData.slice(0, 12).map((deptData, index) => (
+                            <button
+                              key={index}
+                              onClick={() => {
+                                handleFilterClick('department', deptData.department);
+                                setIsMobileFiltersOpen(false);
+                              }}
+                              className={`block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-colors ${
+                                department === deptData.department 
+                                  ? 'bg-blue-600 text-white' 
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              {deptData.department}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Categories */}
+                    {(suggestions?.categories?.length > 0 || getAllCategories().length > 0) && (
+                      <div>
+                        <h4 className="font-semibold text-lg mb-3 text-black">Categories</h4>
+                        <div className="space-y-2">
+                          {suggestions?.categories && suggestions.categories.length > 0 ? (
+                            suggestions.categories.slice(0, 12).map((cat, index) => (
+                              <button
+                                key={index}
+                                onClick={() => {
+                                  handleFilterClick('category', cat);
+                                  setIsMobileFiltersOpen(false);
+                                }}
+                                className={`block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-colors ${
+                                  category === cat 
+                                    ? 'bg-green-600 text-white' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                              >
+                                {cat}
+                              </button>
+                            ))                          ) : (
+                            getAllCategories().slice(0, 12).map((cat, index) => (
+                              <button
+                                key={index}
+                                onClick={() => {
+                                  handleFilterClick('category', cat);
+                                  setIsMobileFiltersOpen(false);
+                                }}
+                                className={`block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-colors ${
+                                  category === cat 
+                                    ? 'bg-green-600 text-white' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                              >
+                                {cat}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Subcategories */}
+                    {(suggestions?.subcategories?.length > 0 || getAllSubcategories().length > 0) && (
+                      <div>
+                        <h4 className="font-semibold text-lg mb-3 text-black">Subcategories</h4>
+                        <div className="space-y-2">
+                          {suggestions?.subcategories && suggestions.subcategories.length > 0 ? (
+                            suggestions.subcategories.slice(0, 12).map((subcat, index) => (
+                              <button
+                                key={index}
+                                onClick={() => {
+                                  handleFilterClick('subcategory', subcat);
+                                  setIsMobileFiltersOpen(false);
+                                }}
+                                className={`block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-colors ${
+                                  subcategory === subcat 
+                                    ? 'bg-purple-600 text-white' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                              >
+                                {subcat}
+                              </button>
+                            ))
+                          ) : (
+                            getAllSubcategories().slice(0, 12).map((subcat, index) => (
+                              <button
+                                key={index}
+                                onClick={() => {
+                                  handleFilterClick('subcategory', subcat);
+                                  setIsMobileFiltersOpen(false);
+                                }}
+                                className={`block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-colors ${
+                                  subcategory === subcat 
+                                    ? 'bg-purple-600 text-white' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                              >
+                                {subcat}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Price Range */}
+                    <div>
+                      <h4 className="font-semibold text-lg mb-3 text-black">Price Range</h4>
+                      <div className="space-y-2">
+                        {[
+                          { range: '0-25', label: 'Under $25' },
+                          { range: '25-50', label: '$25 - $50' },
+                          { range: '50-100', label: '$50 - $100' },
+                          { range: '100+', label: '$100+' }
+                        ].map((priceRange, index) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              handleFilterClick('priceRange', priceRange.range);
+                              setIsMobileFiltersOpen(false);
+                            }}
+                            className="block w-full text-left text-sm py-2 px-3 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                          >
+                            💰 {priceRange.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}          {/* Desktop Sidebar */}
+          <div className="hidden lg:block lg:w-1/4">
             <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border-2 border-white/20 p-8 sticky top-4">
               <h3 
                 className="font-bold text-2xl mb-8 flex items-center"
@@ -474,7 +708,9 @@ const AllProducts = () => {
                     ))
                   )}
                 </div>
-              </div>              {/* Categories with theme colors */}
+              </div>
+
+              {/* Categories with theme colors */}
               {(suggestions?.categories?.length > 0 || getAllCategories().length > 0) && (
                 <div className="mb-8">
                   <h4 
@@ -533,7 +769,9 @@ const AllProducts = () => {
                     )}
                   </div>
                 </div>
-              )}              {/* Subcategories with theme colors */}
+              )}
+
+              {/* Subcategories with theme colors */}
               {(suggestions?.subcategories?.length > 0 || getAllSubcategories().length > 0) && (
                 <div className="mb-8">
                   <h4 
@@ -544,7 +782,7 @@ const AllProducts = () => {
                       className="w-2 h-2 rounded-full mr-3"
                       style={{ backgroundColor: theme.accent }}
                     ></div>
-                    Subcategories
+                    <div className='text-black'>Subcategories</div>
                   </h4>
                   <div className="space-y-3">
                     {suggestions?.subcategories && suggestions.subcategories.length > 0 ? (
@@ -604,7 +842,7 @@ const AllProducts = () => {
                     className="w-2 h-2 rounded-full mr-3"
                     style={{ backgroundColor: '#FFB000' }}
                   ></div>
-                  Price Range
+                  <div className='text-black'>Price Range</div>
                 </h4>
                 <div className="space-y-3">
                   {[
@@ -777,6 +1015,29 @@ const AllProducts = () => {
               </div>
             )}
           </div>
+        </div>
+        {/* Floating Filter Button for Mobile */}
+        <div className="lg:hidden fixed bottom-6 right-6 z-40">
+          <button
+            onClick={() => setIsMobileFiltersOpen(true)}
+            className="bg-white shadow-2xl rounded-full p-4 border-2 transition-all duration-200 hover:scale-110"
+            style={{ 
+              borderColor: theme.primary,
+              color: theme.primary 
+            }}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+            </svg>
+            {(department || category || subcategory) && (
+              <span 
+                className="absolute -top-2 -right-2 rounded-full text-xs font-bold text-white px-2 py-0.5 min-w-[20px] text-center"
+                style={{ backgroundColor: theme.accent }}
+              >
+                {[department, category, subcategory].filter(Boolean).length}
+              </span>
+            )}
+          </button>
         </div>
       </div>
     </div>
