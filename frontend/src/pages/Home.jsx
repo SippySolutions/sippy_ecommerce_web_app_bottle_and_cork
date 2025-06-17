@@ -38,10 +38,10 @@ function Home() {
       <HeroSection data={getHeroSection()} />
     <Categories categories={getCategories()} />
       <BestSellers /> 
-      
+      <Banner data={getBanner()} />
       
       <Exclusive  />
-      <Banner data={getBanner()} />
+       <PromoBanner type="carousel" />
       <StaffPick />
       <div className="container mx-auto px-4">
       
