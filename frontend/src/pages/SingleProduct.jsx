@@ -516,14 +516,12 @@ function SingleProduct() {
         </div>        {/* Promotional Banner */}
         <div className="mt-12">
           <PromoBanner type="grid" />
-        </div>
-
-        {/* Similar Products Section */}
+        </div>        {/* Similar Products Section */}
         <div className="mt-16">
           <SimilarProducts
             department={product.department}
-            category={product.category || undefined}
-            subcategory={product.subcategory || undefined}
+            category={product.category}
+            subcategory={product.subcategory}
             priceRange={`${Math.max(0, (product.price || 0) - 50)}-${(product.price || 0) + 50}`}
           />
         </div>

@@ -7,15 +7,22 @@ import BestSellers from './BestSellers';
 const SimilarProducts = ({ department, category, subcategory, priceRange }) => {
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const getSimilarProducts = async () => {
       try {
         setLoading(true);
+        
+        // Ensure we have valid parameters
+        if (!department || !priceRange) {
+          setSimilarProducts([]);
+          return;
+        }
+        
         const products = await fetchSimilarProducts(department, category, subcategory, priceRange);
-        setSimilarProducts(products.products || []); // Access the `products` array
+        setSimilarProducts(products?.products || []); // Access the `products` array with fallback
       } catch (error) {
         console.error('Error fetching similar products:', error);
+        setSimilarProducts([]); // Set empty array on error
       } finally {
         setLoading(false);
       }
@@ -61,14 +68,13 @@ const SimilarProducts = ({ department, category, subcategory, priceRange }) => {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-        >
-          {similarProducts.map((product) => (
+        >          {similarProducts.map((product) => (
             <motion.div
-              key={product._id}
+              key={product?._id || Math.random()}
               variants={itemVariants}
               className="flex-shrink-0 w-[250px]"
             >
-          <ProductCard key={product._id} product={product} />
+              {product && <ProductCard product={product} />}
             </motion.div>
           ))}
         </motion.div>

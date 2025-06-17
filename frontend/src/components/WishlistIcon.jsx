@@ -9,6 +9,11 @@ const WishlistIcon = ({ product, size = 'md', className = '' }) => {
   const [isLoading, setIsLoading] = useState(false);
   const theme = getTheme();
   
+  // Safety check for product
+  if (!product || !product._id) {
+    return null;
+  }
+  
   const inWishlist = isInWishlist(product._id);
   
   const sizeClasses = {

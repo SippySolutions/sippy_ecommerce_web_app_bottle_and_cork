@@ -18,13 +18,15 @@ const fetchSimilarProducts = async (req, res) => {
       price: { $gte: minPrice, $lte: maxPrice }, // Price range
     };
 
-    // Add category and subcategory to the query only if they are provided
-    if (category) {
+    // Add category and subcategory to the query only if they are provided and not 'undefined'
+    if (category && category !== 'undefined' && category.trim() !== '') {
       query.category = category;
     }
-    if (subcategory) {
+    if (subcategory && subcategory !== 'undefined' && subcategory.trim() !== '') {
       query.subcategory = subcategory;
     }
+
+    console.log('Similar products query:', query); // Debug log
 
     // Fetch similar products
     const similarProducts = await Product.find(query).limit(10); // Limit to 10 products

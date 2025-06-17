@@ -41,11 +41,14 @@ export const WishlistProvider = ({ children }) => {
       setLoading(false);
     }
   };
-
   const addToWishlist = async (product) => {
     if (!isAuthenticated) {
       // Could show login prompt here
       return { success: false, message: 'Please login to add items to wishlist' };
+    }
+
+    if (!product || !product._id) {
+      return { success: false, message: 'Invalid product' };
     }
 
     try {
@@ -63,14 +66,17 @@ export const WishlistProvider = ({ children }) => {
       };
     }
   };
-
   const removeFromWishlist = async (productId) => {
     if (!isAuthenticated) return { success: false, message: 'Not authenticated' };
+    
+    if (!productId) {
+      return { success: false, message: 'Invalid product ID' };
+    }
 
     try {
       const response = await api.delete(`/wishlist/${productId}`);
       if (response.data.success) {
-        setWishlistItems(prev => prev.filter(item => item._id !== productId));
+        setWishlistItems(prev => prev.filter(item => item && item._id !== productId));
         return { success: true, message: 'Removed from wishlist' };
       }
       return { success: false, message: response.data.message };
@@ -101,9 +107,9 @@ export const WishlistProvider = ({ children }) => {
       };
     }
   };
-
   const isInWishlist = (productId) => {
-    return wishlistItems.some(item => item._id === productId);
+    if (!productId) return false;
+    return wishlistItems.some(item => item && item._id === productId);
   };
 
   const getWishlistCount = () => {

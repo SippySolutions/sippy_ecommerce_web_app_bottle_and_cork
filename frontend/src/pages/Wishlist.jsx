@@ -118,16 +118,14 @@ const Wishlist = () => {
               <PromoBanner type="single" className="mt-8" />
             )}
           </>
-        )}
-
-        {/* Promo Banner - Only show if there are items in the wishlist */}
-        {wishlistItems.length > 0 && (
+        )}        {/* Promo Banner - Only show if there are items in the wishlist */}
+        {wishlistItems.length > 0 && cmsData?.promoBanner && (
           <div className="mt-12">
             <PromoBanner 
-              title={cmsData.promoBanner.title} 
-              description={cmsData.promoBanner.description} 
-              ctaText={cmsData.promoBanner.ctaText} 
-              ctaLink={cmsData.promoBanner.ctaLink}
+              title={cmsData.promoBanner.title || 'Special Offers'} 
+              description={cmsData.promoBanner.description || 'Check out our amazing deals!'} 
+              ctaText={cmsData.promoBanner.ctaText || 'Shop Now'} 
+              ctaLink={cmsData.promoBanner.ctaLink || '/products'}
             />
           </div>
         )}

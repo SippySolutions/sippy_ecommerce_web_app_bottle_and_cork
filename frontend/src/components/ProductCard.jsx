@@ -61,13 +61,18 @@ const ExclamationIcon = ({className}) => (
     </svg>
 );
 
-function ProductCard({product}) {
+function ProductCard({ product }) {
     const navigate = useNavigate();
-    const {addToCart} = useCart();
-    const {getTheme} = useCMS();
+    const { addToCart } = useCart();
+    const { getTheme } = useCMS();
     const [imageLoaded, setImageLoaded] = useState(false);
 
     const theme = getTheme();
+
+    // Safety check for product
+    if (!product || !product._id) {
+        return null;
+    }
 
     const handleAddToCart = (e) => {
         e.stopPropagation();
@@ -77,7 +82,7 @@ function ProductCard({product}) {
                 ? product.saleprice
                 : product.price
         }, 1);
-        toast.success(`${product.name} added to cart!`, {
+        toast.success(`${product.name || 'Product'} added to cart!`, {
             position: "top-right",
             autoClose: 3000,
             hideProgressBar: false,
@@ -250,10 +255,9 @@ function ProductCard({product}) {
             {/* Product Information */}
             <div className="p-3 flex-1 flex flex-col min-h-0">
                 {/* Product Name and Category Row */}
-                <div className="flex items-start justify-between gap-2 mb-2 flex-shrink-0">
-                    <h3
+                <div className="flex items-start justify-between gap-2 mb-2 flex-shrink-0">                    <h3
                         className="font-semibold text-base text-gray-900 line-clamp-2 group-hover:text-primary transition-colors flex-1">
-                        {product.name}
+                        {product.name || 'Unnamed Product'}
                     </h3>
                     <div className="flex flex-col gap-1 flex-shrink-0">
                         {

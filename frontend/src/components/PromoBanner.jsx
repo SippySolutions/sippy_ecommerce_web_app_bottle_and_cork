@@ -2,7 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useCMS } from '../Context/CMSContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const PromoBanner = ({ type = 'horizontal', className = '' }) => {
+const PromoBanner = ({ 
+  type = 'horizontal', 
+  className = '', 
+  title, 
+  description, 
+  ctaText, 
+  ctaLink 
+}) => {
   const { cmsData, getTheme } = useCMS();
   const theme = getTheme();
   const [currentIndex, setCurrentIndex] = useState(0);

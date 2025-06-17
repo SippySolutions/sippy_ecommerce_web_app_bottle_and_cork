@@ -97,16 +97,26 @@ export const loginUser = async (formData) => {
 
 export const fetchSimilarProducts = async (department, category, subcategory, priceRange) => {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/similar?department=${department}&category=${category}&subcategory=${subcategory}&priceRange=${priceRange}`
-    );
+    // Build query parameters, only include defined values
+    const params = new URLSearchParams();
+    params.append('department', department);
+    params.append('priceRange', priceRange);
+    
+    if (category && category !== 'undefined') {
+      params.append('category', category);
+    }
+    if (subcategory && subcategory !== 'undefined') {
+      params.append('subcategory', subcategory);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/similar?${params.toString()}`);
     if (!response.ok) {
       throw new Error('Failed to fetch similar products');
     }
     return await response.json();
   } catch (error) {
     console.error('Error fetching similar products:', error);
-    return [];
+    return { products: [] }; // Return consistent structure
   }
 };
 
