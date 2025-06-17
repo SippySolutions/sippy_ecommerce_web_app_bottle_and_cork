@@ -23,14 +23,22 @@ function Home() {
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
-  }
-  return (
-    <>      <HeroSection data={getHeroSection()} />
-    <Categories categories={getCategories()} />
-      <BestSellers /> 
-      <div className="container mx-auto px-4">
+  }  return (
+    <>
+      {/* Mobile-optimized promo banner */}
+      <div className="block md:hidden">
+        <PromoBanner type="carousel" />
+      </div>
+      
+      {/* Desktop promo banner */}
+      <div className="hidden md:block container mx-auto px-4">
         <PromoBanner type="horizontal" />
       </div>
+      
+      <HeroSection data={getHeroSection()} />
+    <Categories categories={getCategories()} />
+      <BestSellers /> 
+      
       
       <Exclusive  />
       <Banner data={getBanner()} />

@@ -18,25 +18,23 @@ function HeroSection(data) {
       },
     },
   };
-
   return (
     <motion.div
-      className="grid grid-cols-1 lg:grid-cols-2  min-h-[75vh]"
+      className="grid grid-cols-1 lg:grid-cols-2 lg:min-h-[75vh]"
       style={{ backgroundColor: "var(--color-background)" }}
       initial="hidden"
       animate="visible"
       variants={staggerContainer}
-    >
-      {/* Left Section */}
+    >      {/* Left Section */}
       <motion.div
-        className="relative h-64 sm:h-80 lg:h-full bg-cover bg-center  shadow-lg"
+        className="relative h-64 sm:h-80 lg:h-full bg-cover bg-center lg:rounded-lg shadow-lg"
         style={{
           backgroundImage: `url('${encodeURI(data.data.leftBanner.image)}')`,
         }}
         variants={fadeIn}
       >
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center text-center  p-4 sm:p-6 bg-[var(--color-background)]/50 "
+          className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 sm:p-6 bg-[var(--color-background)]/50 lg:rounded-lg"
          
         >
           <h2
@@ -59,24 +57,21 @@ function HeroSection(data) {
             {data.data.leftBanner.buttonText}
           </button>
         </div>
-      </motion.div>
-
-      {/* Right Section */}
+      </motion.div>      {/* Right Section */}
       <motion.div
-        className="grid grid-rows-2 "
+        className="grid grid-rows-2 gap-0 lg:gap-4"
         variants={staggerContainer}
-      >
-        {data.data.rightBanners.map((banner, index) => (
+      >        {data.data.rightBanners.map((banner, index) => (
           <motion.div
             key={index}
-            className="relative h-40 sm:h-48 lg:h-full bg-cover bg-center rounded-lg shadow-lg"
+            className="relative h-40 sm:h-48 lg:h-full bg-cover bg-center lg:rounded-lg shadow-lg"
             style={{
               backgroundImage: `url('${banner.image}')`,
             }}
             variants={fadeIn}
           >
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center text-center rounded-lg p-3 sm:p-4 bg-[var(--color-background)]/50"
+              className="absolute inset-0 flex flex-col items-center justify-center text-center lg:rounded-lg p-3 sm:p-4 bg-[var(--color-background)]/50"
             >
               <h2
                 className="text-lg sm:text-xl lg:text-2xl font-bold mb-1 sm:mb-2"

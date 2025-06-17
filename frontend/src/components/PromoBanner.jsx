@@ -102,9 +102,7 @@ const PromoBanner = ({
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
             </motion.div>
-          </AnimatePresence>
-
-          {/* Navigation dots */}
+          </AnimatePresence>          {/* Navigation dots */}
           {promoImages.length > 1 && (
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-3 z-10">
               {promoImages.map((_, index) => (
@@ -119,30 +117,6 @@ const PromoBanner = ({
                 />
               ))}
             </div>
-          )}
-
-          {/* Navigation arrows */}
-          {promoImages.length > 1 && (
-            <>
-              <button
-                onClick={() => setCurrentIndex((currentIndex - 1 + promoImages.length) % promoImages.length)}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-3 rounded-full transition-all duration-300 z-10 backdrop-blur-sm"
-                aria-label="Previous banner"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setCurrentIndex((currentIndex + 1) % promoImages.length)}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-3 rounded-full transition-all duration-300 z-10 backdrop-blur-sm"
-                aria-label="Next banner"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </>
           )}
 
           {/* Progress bar */}
