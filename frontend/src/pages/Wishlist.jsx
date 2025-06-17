@@ -6,7 +6,6 @@ import { useContext } from 'react';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
-import PromoBanner from '../components/PromoBanner';
 
 const Wishlist = () => {
   const { wishlistItems, loading, clearWishlist } = useWishlist();
@@ -96,9 +95,6 @@ const Wishlist = () => {
             </a>
           </div>        ) : (
           <>
-            {/* Promotional Banner */}
-            <PromoBanner type="horizontal" className="mb-8" />
-            
             {/* Wishlist Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {wishlistItems.map((product, index) => (
@@ -112,22 +108,7 @@ const Wishlist = () => {
                 </motion.div>
               ))}
             </div>
-            
-            {/* Another Promotional Banner after products */}
-            {wishlistItems.length > 4 && (
-              <PromoBanner type="single" className="mt-8" />
-            )}
           </>
-        )}        {/* Promo Banner - Only show if there are items in the wishlist */}
-        {wishlistItems.length > 0 && cmsData?.promoBanner && (
-          <div className="mt-12">
-            <PromoBanner 
-              title={cmsData.promoBanner.title || 'Special Offers'} 
-              description={cmsData.promoBanner.description || 'Check out our amazing deals!'} 
-              ctaText={cmsData.promoBanner.ctaText || 'Shop Now'} 
-              ctaLink={cmsData.promoBanner.ctaLink || '/products'}
-            />
-          </div>
         )}
       </div>
     </div>

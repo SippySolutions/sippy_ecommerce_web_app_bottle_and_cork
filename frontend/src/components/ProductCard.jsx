@@ -247,7 +247,7 @@ function ProductCard({ product }) {
                                 backgroundColor: `${theme.accent}CC`
                             }}
                             title={`Size: ${product.size}`}>
-                            {product.size}
+                            {product.size} {product.packname!="Single"?product.packname: ''}
                         </div>
                     )
                 }
