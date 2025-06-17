@@ -497,53 +497,7 @@ function Navbar() {
                 >
                   More Departments →
                 </Link>
-              )}
-            </div>            {/* Right side - Store Information */}
-            <div className="flex items-center space-x-6">
-              {/* Store Hours & Status */}
-              <div className="hidden xl:flex items-center space-x-4 text-sm">
-                <div className="flex items-center space-x-2">
-                  <AccessTimeIcon fontSize="small" className="text-gray-500" />
-                  <div className="text-gray-600">
-                    <div className="font-medium">
-                      {storeStatus?.isOpen ? (
-                        <span className="text-green-600">● Open</span>
-                      ) : (
-                        <span className="text-red-600">● Closed</span>
-                      )}
-                    </div>
-                    {getTodaysHours() && (
-                      <div className="text-xs text-gray-500">{getTodaysHours()}</div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Contact Info */}
-                {getStoreInfo() && (
-                  <div className="flex items-center space-x-4 border-l border-gray-200 pl-4">
-                    {getStoreInfo().phone && (
-                      <div className="flex items-center space-x-1">
-                        <PhoneIcon fontSize="small" className="text-gray-500" />
-                        <a 
-                          href={`tel:${getStoreInfo().phone}`} 
-                          className="text-gray-600 hover:text-[var(--color-accent)] transition-colors text-xs font-medium"
-                        >
-                          {formatPhone(getStoreInfo().phone)}
-                        </a>
-                      </div>
-                    )}
-                    {getStoreInfo().address && (
-                      <div className="flex items-center space-x-1">
-                        <LocationOnIcon fontSize="small" className="text-gray-500" />
-                        <span className="text-gray-600 text-xs max-w-32 truncate" title={getStoreInfo().address}>
-                          {getStoreInfo().address.split(',')[0]}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div></div>
+              )}            </div></div>
         </div>
       </div>
       

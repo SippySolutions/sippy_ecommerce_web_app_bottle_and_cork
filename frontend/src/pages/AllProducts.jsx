@@ -4,12 +4,13 @@ import { searchProducts, fetchProducts, fetchDepartments } from '../services/api
 import ProductCard from '../components/ProductCard';
 import PromoBanner from '../components/PromoBanner';
 import { useCMS } from '../Context/CMSContext';
+import Categories from "../components/Categories";
 import { toast } from 'react-toastify';
 
 const AllProducts = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { getTheme, getStoreInfo, loading: cmsLoading } = useCMS();
+  const { getTheme, getStoreInfo, loading: cmsLoading ,getCategories,} = useCMS();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState(null);
@@ -191,6 +192,50 @@ const AllProducts = () => {
       });
     });
     return Array.from(categories);
+  };  // Helper function to get subcategories for the selected category
+  const getSubcategoriesForSelectedCategory = () => {
+    if (!category) return [];
+    
+    const subcategories = new Set();
+    departmentsData.forEach(dept => {
+      dept.categories?.forEach(catData => {
+        if (catData.category === category && catData.subcategories) {
+          catData.subcategories.forEach(subcat => {
+            if (subcat && subcat !== null) {
+              subcategories.add(subcat);
+            }
+          });
+        }
+      });
+    });
+    return Array.from(subcategories);
+  };
+
+  // Helper function to get subcategories for sidebar based on selection
+  const getSubcategoriesForSidebar = () => {
+    // If category is selected, show only its subcategories
+    if (category) {
+      return getSubcategoriesForSelectedCategory();
+    }
+    
+    // If department is selected but no category, show subcategories from that department
+    if (department && !category) {
+      const subcategories = new Set();
+      const selectedDept = departmentsData.find(dept => dept.department === department);
+      if (selectedDept?.categories) {
+        selectedDept.categories.forEach(catData => {
+          catData.subcategories?.forEach(subcat => {
+            if (subcat && subcat !== null) {
+              subcategories.add(subcat);
+            }
+          });
+        });
+      }
+      return Array.from(subcategories);
+    }
+    
+    // If no department or category selected, show all subcategories
+    return getAllSubcategories();
   };
 
   // Helper function to get all unique subcategories from departments data
@@ -228,88 +273,28 @@ const AllProducts = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/10 to-background">
       <div className="container mx-auto px-4 py-8">
-        {/* Enhanced Hero Section */}
-        <div className="mb-12 text-center relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent/10 to-transparent rounded-3xl"></div>
-          <div className="relative max-w-5xl mx-auto py-12 px-6">
-            <div className="mb-6">
-              <h1 
-                className="text-5xl md:text-7xl font-bold mb-4 leading-tight bg-gradient-to-r from-heading-text to-body-text bg-clip-text text-transparent"
-                style={{ 
-                  backgroundImage: `linear-gradient(135deg, ${theme.headingText} 0%, ${theme.accent} 100%)`,
-                  WebkitBackgroundClip: 'text',
-                  backgroundClip: 'text',
-                  color: 'transparent'
-                }}
-              >
-                {getPageTitle()}
-              </h1>
-              <div className="w-24 h-1 mx-auto mb-6" style={{ backgroundColor: theme.accent }}></div>
-            </div>
-            
-            <div className="flex flex-col items-center space-y-4">
-              {pagination && (
-                <div className="flex items-center space-x-4">
-                  {pagination.total > 0 ? (
-                    <>
-                      <div 
-                        className="px-6 py-3 rounded-full text-lg font-bold text-white shadow-lg"
-                        style={{ backgroundColor: theme.accent }}
-                      >
-                        {pagination.total} Products
-                      </div>
-                      {isSearchMode && (
-                        <p className="text-body-text text-lg">
-                          matching your search criteria
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <div className="px-6 py-3 rounded-full text-lg font-medium text-body-text bg-muted/20">
-                      No products found
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {pagination && pagination.totalPages > 1 && (
-                <p className="text-body-text">
-                  Page {pagination.page} of {pagination.totalPages}
-                </p>
-              )}
-              
-              <p className="text-body-text text-lg max-w-2xl leading-relaxed">
-                {isSearchMode ? 
-                  `Discover premium products from ${storeInfo.name}` : 
-                  `Browse our complete collection of premium beverages and spirits`
-                }
-              </p>
-            </div>
-          </div>
-        </div>        {/* Active filters with CMS theme styling */}
-        {(department || category || subcategory) && (
-          <div className="mb-8">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border-2 border-white/20 p-8 ">
-              <div className="flex flex-wrap items-center gap-4">
+<Categories categories={getCategories()} />        {( category || subcategory) && (
+          <div className="mb-4">
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 px-4 py-3">
+              <div className="flex flex-wrap items-center gap-2">
                 <span 
-                  className="text-lg font-bold flex items-center"
-                  style={{ color: theme.headingText }}
+                  className="text-sm font-medium flex items-center text-gray-700"
                 >
                   <div 
-                    className="w-2 h-2 rounded-full mr-3 "
+                    className="w-1.5 h-1.5 rounded-full mr-2"
                     style={{ backgroundColor: theme.accent }}
                   ></div>
-                  <div className='text-black'>Active Filters:</div>
+                  Filters:
                 </span>
                 {department && (
                   <span 
-                    className="inline-flex items-center px-6 py-3 rounded-full text-sm font-bold text-white shadow-lg transform transition-all duration-200 hover:scale-105"
+                    className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium text-white shadow-sm transition-all duration-200"
                     style={{ backgroundColor: theme.primary }}
                   >
-                    Department: {department}
+                    {department}
                     <button
                       onClick={() => clearFilter('department')}
-                      className="ml-3 text-white hover:text-red-300 transition-colors text-lg"
+                      className="ml-2 text-white hover:text-red-300 transition-colors text-sm"
                     >
                       ×
                     </button>
@@ -317,13 +302,13 @@ const AllProducts = () => {
                 )}
                 {category && (
                   <span 
-                    className="inline-flex items-center px-6 py-3 rounded-full text-sm font-bold text-white shadow-lg transform transition-all duration-200 hover:scale-105"
+                    className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium text-white shadow-sm transition-all duration-200"
                     style={{ backgroundColor: theme.secondary }}
                   >
-                    Category: {category}
+                    {category}
                     <button
                       onClick={() => clearFilter('category')}
-                      className="ml-3 text-white hover:text-red-300 transition-colors text-lg"
+                      className="ml-2 text-white hover:text-red-300 transition-colors text-sm"
                     >
                       ×
                     </button>
@@ -331,13 +316,13 @@ const AllProducts = () => {
                 )}
                 {subcategory && (
                   <span 
-                    className="inline-flex items-center px-6 py-3 rounded-full text-sm font-bold text-white shadow-lg transform transition-all duration-200 hover:scale-105"
+                    className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium text-white shadow-sm transition-all duration-200"
                     style={{ backgroundColor: theme.accent }}
                   >
-                    Subcategory: {subcategory}
+                    {subcategory}
                     <button
                       onClick={() => clearFilter('subcategory')}
-                      className="ml-3 text-white hover:text-red-300 transition-colors text-lg"
+                      className="ml-2 text-white hover:text-red-300 transition-colors text-sm"
                     >
                       ×
                     </button>
@@ -346,56 +331,50 @@ const AllProducts = () => {
                 {(department || category || subcategory) && (
                   <button
                     onClick={clearAllFilters}
-                    className="text-sm font-bold underline transition-colors px-4 py-2"
-                    style={{ color: theme.accent }}
+                    className="text-xs font-medium underline transition-colors px-2 py-1 text-gray-600 hover:text-red-600"
                   >
-                    Clear all filters
+                    Clear all
                   </button>
                 )}
               </div>
             </div>
           </div>
-        )}        {/* Sort and view controls with CMS theme */}
-        <div className="mb-8">
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border-2 border-white/20 p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        )}{/* Sort and view controls - Minimal bar */}
+        <div className="mb-6">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-gray-200 px-4 py-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center justify-between w-full sm:w-auto">
                 {/* Mobile Filter Button */}
                 <button
                   onClick={() => setIsMobileFiltersOpen(true)}
-                  className="lg:hidden inline-flex items-center px-4 py-2 rounded-xl font-medium transition-all duration-200 shadow-lg"
+                  className="lg:hidden inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm"
                   style={{ 
                     backgroundColor: theme.primary,
                     color: 'white'
                   }}
                 >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
                   </svg>
                   Filters
                   {(department || category || subcategory) && (
-                    <span className="ml-2 bg-white/20 rounded-full px-2 py-0.5 text-xs">
+                    <span className="ml-2 bg-white/20 rounded-full px-1.5 py-0.5 text-xs">
                       {[department, category, subcategory].filter(Boolean).length}
                     </span>
                   )}
                 </button>
 
-                {/* Sort Dropdown */}
-                <div className="flex items-center space-x-4">
+                {/* Sort Dropdown - Compact */}
+                <div className="flex items-center space-x-3">
                   <label 
-                    className="text-lg font-bold hidden sm:flex items-center"
-                    style={{ color: theme.headingText }}
+                    className="text-sm font-medium hidden sm:block text-gray-700"
                   >
-                    <div 
-                      className="w-2 h-2 rounded-full mr-3"
-                      style={{ backgroundColor: theme.accent }}
-                    ></div>
-                    <div className='text-black'>Sort by:</div>
+                    Sort:
                   </label>
                   <select
                     value={sortOption}
                     onChange={(e) => handleSortChange(e.target.value)}
-                    className="border-2 rounded-xl px-6 py-3 text-sm font-medium focus:outline-none focus:ring-4 bg-white shadow-lg transition-all duration-200"
+                    className="border rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 bg-white shadow-sm transition-all duration-200 min-w-[160px]"
                     style={{ 
                       borderColor: theme.muted,
                       focusRingColor: `${theme.accent}40`
@@ -410,22 +389,9 @@ const AllProducts = () => {
                   </select>
                 </div>
               </div>
-              
-              {/* Results summary with theme colors */}
-              {pagination && (
-                <div 
-                  className="text-sm font-medium px-6 py-3 rounded-xl"
-                  style={{ 
-                    backgroundColor: theme.muted + '40',
-                    color: theme.bodyText
-                  }}
-                >
-                  Showing {Math.min(20, pagination.total)} of {pagination.total} products
-                </div>
-              )}
             </div>
           </div>
-        </div>        <div className="flex flex-col lg:flex-row gap-8">          {/* Mobile Filter Overlay */}
+        </div><div className="flex flex-col lg:flex-row gap-8">          {/* Mobile Filter Overlay */}
           {isMobileFiltersOpen && (
             <div className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={() => setIsMobileFiltersOpen(false)}>
               <div 
@@ -477,138 +443,55 @@ const AllProducts = () => {
                         Clear all filters
                       </button>
                     </div>
-                  )}
-
-                  {/* Filter Content - Mobile */}
+                  )}                  {/* Filter Content - Mobile - Only Subcategories */}
                   <div className="space-y-6">
-                    {/* Departments */}
+                    {/* Subcategories only - responsive to current selection */}
                     <div>
-                      <h4 className="font-semibold text-lg mb-3 text-black">Departments</h4>
-                      <div className="space-y-2">
-                        {suggestions?.departments && suggestions.departments.length > 0 ? (
-                          suggestions.departments.slice(0, 12).map((dept, index) => (
+                      <h4 className="font-semibold text-lg mb-3 text-black">
+                        {category ? `Subcategories in ${category}` : 
+                         department ? `Subcategories in ${department}` : 
+                         'All Subcategories'}
+                      </h4>
+                      <div className="space-y-2 max-h-64 overflow-y-auto">                        {suggestions?.subcategories && suggestions.subcategories.length > 0 ? (
+                          suggestions.subcategories.map((subcat, index) => (
                             <button
                               key={index}
                               onClick={() => {
-                                handleFilterClick('department', dept);
+                                handleFilterClick('subcategory', subcat);
                                 setIsMobileFiltersOpen(false);
                               }}
                               className={`block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-colors ${
-                                department === dept 
-                                  ? 'bg-blue-600 text-white' 
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                subcategory === subcat 
+                                  ? 'bg-purple-600 text-white' 
+                                  : 'bg-gray-100 text-black hover:bg-gray-200'
                               }`}
                             >
-                              {dept}
+                              {subcat}
                             </button>
-                          ))
-                        ) : (
-                          departmentsData.slice(0, 12).map((deptData, index) => (
+                          ))                        ) : (
+                          getSubcategoriesForSidebar().map((subcat, index) => (
                             <button
                               key={index}
                               onClick={() => {
-                                handleFilterClick('department', deptData.department);
+                                handleFilterClick('subcategory', subcat);
                                 setIsMobileFiltersOpen(false);
                               }}
                               className={`block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-colors ${
-                                department === deptData.department 
-                                  ? 'bg-blue-600 text-white' 
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                subcategory === subcat 
+                                  ? 'bg-purple-600 text-white' 
+                                  : 'bg-gray-100 text-black hover:bg-gray-200'
                               }`}
                             >
-                              {deptData.department}
+                              {subcat}
                             </button>
                           ))
+                        )}                        {getSubcategoriesForSidebar().length === 0 && (
+                          <div className="text-center text-gray-500 py-4">
+                            No subcategories available
+                          </div>
                         )}
                       </div>
                     </div>
-
-                    {/* Categories */}
-                    {(suggestions?.categories?.length > 0 || getAllCategories().length > 0) && (
-                      <div>
-                        <h4 className="font-semibold text-lg mb-3 text-black">Categories</h4>
-                        <div className="space-y-2">
-                          {suggestions?.categories && suggestions.categories.length > 0 ? (
-                            suggestions.categories.slice(0, 12).map((cat, index) => (
-                              <button
-                                key={index}
-                                onClick={() => {
-                                  handleFilterClick('category', cat);
-                                  setIsMobileFiltersOpen(false);
-                                }}
-                                className={`block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-colors ${
-                                  category === cat 
-                                    ? 'bg-green-600 text-white' 
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
-                              >
-                                {cat}
-                              </button>
-                            ))                          ) : (
-                            getAllCategories().slice(0, 12).map((cat, index) => (
-                              <button
-                                key={index}
-                                onClick={() => {
-                                  handleFilterClick('category', cat);
-                                  setIsMobileFiltersOpen(false);
-                                }}
-                                className={`block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-colors ${
-                                  category === cat 
-                                    ? 'bg-green-600 text-white' 
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
-                              >
-                                {cat}
-                              </button>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Subcategories */}
-                    {(suggestions?.subcategories?.length > 0 || getAllSubcategories().length > 0) && (
-                      <div>
-                        <h4 className="font-semibold text-lg mb-3 text-black">Subcategories</h4>
-                        <div className="space-y-2">
-                          {suggestions?.subcategories && suggestions.subcategories.length > 0 ? (
-                            suggestions.subcategories.slice(0, 12).map((subcat, index) => (
-                              <button
-                                key={index}
-                                onClick={() => {
-                                  handleFilterClick('subcategory', subcat);
-                                  setIsMobileFiltersOpen(false);
-                                }}
-                                className={`block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-colors ${
-                                  subcategory === subcat 
-                                    ? 'bg-purple-600 text-white' 
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
-                              >
-                                {subcat}
-                              </button>
-                            ))
-                          ) : (
-                            getAllSubcategories().slice(0, 12).map((subcat, index) => (
-                              <button
-                                key={index}
-                                onClick={() => {
-                                  handleFilterClick('subcategory', subcat);
-                                  setIsMobileFiltersOpen(false);
-                                }}
-                                className={`block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-colors ${
-                                  subcategory === subcat 
-                                    ? 'bg-purple-600 text-white' 
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
-                              >
-                                {subcat}
-                              </button>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    )}
 
                     {/* Price Range */}
                     <div>
@@ -648,10 +531,8 @@ const AllProducts = () => {
                   className="w-3 h-3 rounded-full mr-4"
                   style={{ backgroundColor: theme.accent }}
                 ></div>
-             <div className='text-black'>Filter Products</div>   
-              </h3>
-
-              {/* Departments with theme colors */}
+             <div className='text-black'>Filter by Subcategory</div>   
+              </h3>              {/* Subcategories only - responsive to current selection */}
               <div className="mb-8">
                 <h4 
                   className="font-bold text-lg mb-4 flex items-center"
@@ -659,180 +540,64 @@ const AllProducts = () => {
                 >
                   <div 
                     className="w-2 h-2 rounded-full mr-3"
-                    style={{ backgroundColor: theme.primary }}
+                    style={{ backgroundColor: theme.accent }}
                   ></div>
-                 <div className='text-black'>Departments</div> 
+                  <div className='text-black'>
+                    {category ? `Subcategories in ${category}` : 
+                     department ? `Subcategories in ${department}` : 
+                     'All Subcategories'}
+                  </div>
                 </h4>
-                <div className="space-y-3">
-                  {suggestions?.departments && suggestions.departments.length > 0 ? (
-                    suggestions.departments.slice(0, 8).map((dept, index) => (
+                <div className="space-y-3 max-h-96 overflow-y-auto">                  {suggestions?.subcategories && suggestions.subcategories.length > 0 ? (
+                    suggestions.subcategories.map((subcat, index) => (
                       <button
                         key={index}
-                        onClick={() => handleFilterClick('department', dept)}
+                        onClick={() => handleFilterClick('subcategory', subcat)}
                         className={`block w-full text-left text-sm py-3 px-4 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg ${
-                          department === dept 
+                          subcategory === subcat 
                             ? 'text-white shadow-lg' 
                             : 'hover:shadow-md'
                         }`}
-                        style={department === dept ? {
-                          backgroundColor: theme.primary,
+                        style={subcategory === subcat ? {
+                          backgroundColor: theme.accent,
                           color: 'white'
                         } : {
                           backgroundColor: theme.muted + '20',
-                          color: theme.bodyText
+                          color: 'black'
                         }}
                       >
-                        {dept}
+                        {subcat}
                       </button>
-                    ))
-                  ) : (
-                    departmentsData.slice(0, 8).map((deptData, index) => (
+                    ))                  ) : (
+                    getSubcategoriesForSidebar().map((subcat, index) => (
                       <button
                         key={index}
-                        onClick={() => handleFilterClick('department', deptData.department)}
+                        onClick={() => handleFilterClick('subcategory', subcat)}
                         className={`block w-full text-left text-sm py-3 px-4 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg ${
-                          department === deptData.department 
+                          subcategory === subcat 
                             ? 'text-white shadow-lg' 
                             : 'hover:shadow-md'
                         }`}
-                        style={department === deptData.department ? {
-                          backgroundColor: theme.primary,
+                        style={subcategory === subcat ? {
+                          backgroundColor: theme.accent,
                           color: 'white'
                         } : {
                           backgroundColor: theme.muted + '20',
-                          color: theme.bodyText
+                          color: 'black'
                         }}
                       >
-                        {deptData.department}
+                        {subcat}
                       </button>
                     ))
                   )}
-                </div>
+                  {getSubcategoriesForSidebar().length === 0 && (
+                    <div className="text-center text-gray-500 py-4">
+                      No subcategories available
+                    </div>
+                  )}                </div>
               </div>
 
-              {/* Categories with theme colors */}
-              {(suggestions?.categories?.length > 0 || getAllCategories().length > 0) && (
-                <div className="mb-8">
-                  <h4 
-                    className="font-bold text-lg mb-4 flex items-center"
-                    style={{ color: theme.headingText }}
-                  >
-                    <div 
-                      className="w-2 h-2 rounded-full mr-3"
-                      style={{ backgroundColor: theme.secondary }}
-                    ></div>
-                    <div className='text-black'>Categories</div>
-                  </h4>
-                  <div className="space-y-3">
-                    {suggestions?.categories && suggestions.categories.length > 0 ? (
-                      suggestions.categories.slice(0, 8).map((cat, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleFilterClick('category', cat)}
-                          className={`block w-full text-left text-sm py-3 px-4 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg ${
-                            category === cat 
-                              ? 'text-white shadow-lg' 
-                              : 'hover:shadow-md'
-                          }`}
-                          style={category === cat ? {
-                            backgroundColor: theme.secondary,
-                            color: 'white'
-                          } : {
-                            backgroundColor: theme.muted + '20',
-                            color: theme.bodyText
-                          }}
-                        >
-                          {cat}
-                        </button>
-                      ))
-                    ) : (
-                      getAllCategories().slice(0, 8).map((cat, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleFilterClick('category', cat)}
-                          className={`block w-full text-left text-sm py-3 px-4 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg ${
-                            category === cat 
-                              ? 'text-white shadow-lg' 
-                              : 'hover:shadow-md'
-                          }`}
-                          style={category === cat ? {
-                            backgroundColor: theme.secondary,
-                            color: 'white'
-                          } : {
-                            backgroundColor: theme.muted + '20',
-                            color: theme.bodyText
-                          }}
-                        >
-                          {cat}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Subcategories with theme colors */}
-              {(suggestions?.subcategories?.length > 0 || getAllSubcategories().length > 0) && (
-                <div className="mb-8">
-                  <h4 
-                    className="font-bold text-lg mb-4 flex items-center"
-                    style={{ color: theme.headingText }}
-                  >
-                    <div 
-                      className="w-2 h-2 rounded-full mr-3"
-                      style={{ backgroundColor: theme.accent }}
-                    ></div>
-                    <div className='text-black'>Subcategories</div>
-                  </h4>
-                  <div className="space-y-3">
-                    {suggestions?.subcategories && suggestions.subcategories.length > 0 ? (
-                      suggestions.subcategories.slice(0, 8).map((subcat, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleFilterClick('subcategory', subcat)}
-                          className={`block w-full text-left text-sm py-3 px-4 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg ${
-                            subcategory === subcat 
-                              ? 'text-white shadow-lg' 
-                              : 'hover:shadow-md'
-                          }`}
-                          style={subcategory === subcat ? {
-                            backgroundColor: theme.accent,
-                            color: 'white'
-                          } : {
-                            backgroundColor: theme.muted + '20',
-                            color: theme.bodyText
-                          }}
-                        >
-                          {subcat}
-                        </button>
-                      ))
-                    ) : (
-                      getAllSubcategories().slice(0, 8).map((subcat, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleFilterClick('subcategory', subcat)}
-                          className={`block w-full text-left text-sm py-3 px-4 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg ${
-                            subcategory === subcat 
-                              ? 'text-white shadow-lg' 
-                              : 'hover:shadow-md'
-                          }`}
-                          style={subcategory === subcat ? {
-                            backgroundColor: theme.accent,
-                            color: 'white'
-                          } : {
-                            backgroundColor: theme.muted + '20',
-                            color: theme.bodyText
-                          }}
-                        >
-                          {subcat}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Price Range Filter with theme colors */}
+              {/* Price Range Filter */}
               <div className="mb-6">
                 <h4 
                   className="font-bold text-lg mb-4 flex items-center"

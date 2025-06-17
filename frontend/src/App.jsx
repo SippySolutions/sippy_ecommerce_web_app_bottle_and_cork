@@ -73,7 +73,6 @@ function AppContent() {
     }    // Show main app content if age verified
     return (        <>
             <Navbar />
-            <PromoBanner type="carousel" />
             <main className="min-h-screen">
                 <AnimatePresence mode="wait">
                     <Routes location={location} key={location.pathname}>
