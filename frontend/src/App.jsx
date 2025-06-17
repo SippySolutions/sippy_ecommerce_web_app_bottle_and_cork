@@ -21,6 +21,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Profile from './components/Profile';
 import Checkout from './pages/Checkout.jsx';
 import Wishlist from './pages/Wishlist.jsx';
+import OrderTracking from './pages/OrderTracking.jsx';
 
 function AppContent() {
     const location = useLocation();
@@ -152,8 +153,7 @@ function AppContent() {
                                     <Checkout />
                                 </motion.div>
                             }
-                        />
-                        <Route
+                        />                        <Route
                             path="/wishlist"
                             element={
                                 <motion.div
@@ -163,6 +163,19 @@ function AppContent() {
                                     exit="exit"
                                 >
                                     <Wishlist />
+                                </motion.div>
+                            }
+                        />
+                        <Route
+                            path="/orders/:orderId"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
+                                >
+                                    <OrderTracking />
                                 </motion.div>
                             }
                         />

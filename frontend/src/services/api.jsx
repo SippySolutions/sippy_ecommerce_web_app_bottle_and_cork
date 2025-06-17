@@ -337,6 +337,28 @@ export const fetchUserOrders = async () => {
   }
 };
 
+// Fetch order by ID (supports both authenticated and guest orders)
+export const fetchOrderById = async (orderId) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
+      headers: getAuthHeaders()
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching order:', error.response || error);
+    
+    const errorMessage = error.response?.data?.message || 
+                        error.response?.data?.error || 
+                        error.message || 
+                        'Failed to fetch order details';
+    
+    const errorObj = new Error(errorMessage);
+    errorObj.status = error.response?.status;
+    errorObj.data = error.response?.data;
+    throw errorObj;
+  }
+};
+
 // Search products
 export const searchProducts = async (query, filters = {}, page = 1, limit = 20) => {
   try {

@@ -39,12 +39,24 @@ exports.getUserOrders = async (req, res) => {
 exports.getOrderById = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const userId = req.user.id;
+    
+    let query = { _id: orderId };
+    
+    // If user is authenticated, check if they own the order
+    if (req.user) {
+      const userId = req.user.id;
+      query = { 
+        _id: orderId, 
+        $or: [
+          { customer: userId },
+          { customerType: 'guest' } // Allow authenticated users to view guest orders if they have the link
+        ]
+      };
+    }
+    // For non-authenticated requests, allow guest orders to be viewed
+    // This allows order tracking links to work for guest users
 
-    const order = await Order.findOne({ 
-      _id: orderId, 
-      customer: userId 
-    }).populate('items.product', 'name price productimg');
+    const order = await Order.findOne(query).populate('items.product', 'name price productimg');
 
     if (!order) {
       return res.status(404).json({ 

@@ -54,30 +54,7 @@ function Footer() {
 
         {/* Footer Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-center lg:text-left">
-          {/* Stay Connected */}
-          <div>
-            <h3 className="text-lg font-bold text-[var(--color-foreground)] mb-4">Stay Connected</h3>
-            <div className="flex justify-center lg:justify-start space-x-4 mb-4">
-              <a href="#" className="text-[var(--color-muted-foreground)] hover:text-[var(--color-primary)]">
-                <i className="fab fa-facebook-f"></i>
-              </a>
-              <a href="#" className="text-[var(--color-muted-foreground)] hover:text-[var(--color-primary)]">
-                <i className="fab fa-twitter"></i>
-              </a>
-              <a href="#" className="text-[var(--color-muted-foreground)] hover:text-[var(--color-primary)]">
-                <i className="fab fa-instagram"></i>
-              </a>
-            </div>
-            <h4 className="text-sm font-bold text-[var(--color-foreground)] mb-2">We Accept</h4>
-            <div className="flex justify-center lg:justify-start space-x-2">
-              <img src={Visa} alt="Visa" className="h-6" />
-              <img src={MasterCard} alt="MasterCard" className="h-6" />
-              <img src={Amex} alt="Amex" className="h-6" />
-              <img src={Discover} alt="Discover" className="h-6" />
-            </div>
-          </div>
-
-          {/* Store Information */}
+                  {/* Store Information */}
           <div>
             <img src={logo} alt="Store Logo" className="h-16 mx-auto lg:mx-0 mb-4" />
             <div className="text-sm text-[var(--color-muted-foreground)] font-bold">
@@ -105,6 +82,31 @@ function Footer() {
               </a>
             </p>
           </div>
+          
+          {/* Stay Connected */}
+          <div>
+            <h3 className="text-lg font-bold text-[var(--color-foreground)] mb-4">Stay Connected</h3>
+            <div className="flex justify-center lg:justify-start space-x-4 mb-4">
+              <a href="#" className="text-[var(--color-muted-foreground)] hover:text-[var(--color-primary)]">
+                <i className="fab fa-facebook-f"></i>
+              </a>
+              <a href="#" className="text-[var(--color-muted-foreground)] hover:text-[var(--color-primary)]">
+                <i className="fab fa-twitter"></i>
+              </a>
+              <a href="#" className="text-[var(--color-muted-foreground)] hover:text-[var(--color-primary)]">
+                <i className="fab fa-instagram"></i>
+              </a>
+            </div>
+            <h4 className="text-sm font-bold text-[var(--color-foreground)] mb-2">We Accept</h4>
+            <div className="flex justify-center lg:justify-start space-x-2">
+              <img src={Visa} alt="Visa" className="h-6" />
+              <img src={MasterCard} alt="MasterCard" className="h-6" />
+              <img src={Amex} alt="Amex" className="h-6" />
+              <img src={Discover} alt="Discover" className="h-6" />
+            </div>
+          </div>
+
+  
 
           {/* Mobile Shopping Apps */}
           <div>

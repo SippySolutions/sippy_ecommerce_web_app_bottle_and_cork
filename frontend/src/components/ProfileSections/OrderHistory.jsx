@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchUserOrders } from '../../services/api';
 import { toast } from 'react-toastify';
 
 const OrderHistory = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -115,14 +117,21 @@ const OrderHistory = () => {
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-600">{order.items.length} Items</p>
-                <p className="text-lg font-bold text-gray-800">${order.total.toFixed(2)}</p>
-                {order.paymentInfo?.method && (
+                <p className="text-lg font-bold text-gray-800">${order.total.toFixed(2)}</p>                {order.paymentInfo?.method && (
                   <p className="text-xs text-gray-500">
                     {order.paymentInfo.method === 'card' ? 'Credit Card' : 
                      order.paymentInfo.method === 'saved_card' ? 'Saved Card' : 'Payment'}
                     {order.paymentInfo.lastFour && ` ****${order.paymentInfo.lastFour}`}
                   </p>
                 )}
+              </div>
+              <div className="mt-2">
+                <button
+                  onClick={() => navigate(`/orders/${order._id}`)}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Track Order
+                </button>
               </div>
             </div>
 

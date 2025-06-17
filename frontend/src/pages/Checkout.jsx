@@ -298,14 +298,12 @@ const Checkout = () => {
               phone: guestInfo.phone
             }
           })
-        };
-
-        const response = await processGuestCheckout(orderData);
+        };        const response = await processGuestCheckout(orderData);
 
         if (response.success) {
           toast.success('Order placed successfully!');
           clearCart();
-          navigate('/'); // Redirect to home for guest users
+          navigate(`/orders/${response.order._id}`);
         } else {
           throw new Error(response.message);
         }
