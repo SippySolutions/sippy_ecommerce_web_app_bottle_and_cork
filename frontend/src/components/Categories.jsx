@@ -40,16 +40,9 @@ function Categories() {
 
   if (error) {
     return <div className="text-center py-12 text-red-500">{error}</div>;
-  }
-  return (
+  }  return (
     <section className="bg-[var(--color-muted)] py-6">
-      <div className="container mx-auto px-2 text-center"> {/* Back to all departments button */}
-            <button
-              onClick={() => navigate('/products')}
-              className="mt-4 text-sm text-[var(--color-accent)] hover:underline font-medium"
-            >
-              ← Back to All Departments
-            </button>
+      <div className="container mx-auto px-2 text-center">
         {/* Show department hero title if department is selected */}
         {selectedDepartment && (
           <div className="mb-4">
@@ -84,6 +77,13 @@ function Categories() {
               ))}
             </div>
            
+            {/* Back to all departments button - only show when department is selected */}
+            <button
+              onClick={() => navigate('/products')}
+              className="mt-4 text-sm text-[var(--color-accent)] hover:underline font-medium"
+            >
+              ← Back to All Departments
+            </button>
           </div>
         ) : (
           // Departments Section (default)
