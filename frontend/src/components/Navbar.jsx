@@ -15,70 +15,53 @@ import CreditCardIcon from '@mui/icons-material/CreditCard';
 import ListIcon from '@mui/icons-material/List';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import ViewListIcon from '@mui/icons-material/ViewList';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import PhoneIcon from '@mui/icons-material/Phone';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { fetchDepartments } from '../services/api.jsx'; // Import your API function
 
 function Navbar() {
-  const { user, logout } = useContext(AuthContext); // Use user and logout from AuthContext
-  const { cartItems } = useCart(); // Access cartItems from CartContext
-  const { getWishlistCount } = useWishlist(); // Access wishlist count from WishlistContext
+  // All hooks must be called at the top level before any conditional logic
+  const { user, logout } = useContext(AuthContext);
+  const { cartItems } = useCart();
+  const { getWishlistCount } = useWishlist();
   const { 
     cmsData, 
     loading: cmsLoading, 
     getLogo, 
     getStoreInfo, 
     getCurrentStoreStatus 
-  } = useCMS(); // Use CMS context
+  } = useCMS();
   
-  const wishlistCount = getWishlistCount(); // Get dynamic wishlist count
+  const wishlistCount = getWishlistCount();
   
-  // Initialize departments as empty array to prevent undefined errors
+  // State hooks
   const [departments, setDepartments] = useState([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(true);
-  const [dropdownOpen, setDropdownOpen] = useState(false); // State to toggle dropdown
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // State for mobile menu
-  const [hoveredDepartment, setHoveredDepartment] = useState(null); // Track hovered department
-  const navigate = useNavigate();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [hoveredDepartment, setHoveredDepartment] = useState(null);
   
-  // Get store status
-  const storeStatus = getCurrentStoreStatus();  // Ensure departments is always an array
+  const navigate = useNavigate();
+    // Derived values (computed after all hooks)
+  const storeStatus = getCurrentStoreStatus();
   const safeDepartments = Array.isArray(departments) ? departments : [];
 
-  // Debug log to track rendering
-  console.log('Navbar render - departments:', departments, 'safeDepartments:', safeDepartments, 'loading:', departmentsLoading);
-
-  // Early return with loading state if CMS is loading
-  if (cmsLoading) {
-    return (
-      <nav className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-4">
-          <div className="animate-pulse bg-gray-200 h-24 w-24 rounded"></div>
-          <div className="animate-pulse bg-gray-200 h-8 w-64 rounded"></div>
-          <div className="flex space-x-4">
-            <div className="animate-pulse bg-gray-200 h-8 w-8 rounded-full"></div>
-            <div className="animate-pulse bg-gray-200 h-8 w-8 rounded-full"></div>
-            <div className="animate-pulse bg-gray-200 h-8 w-8 rounded-full"></div>
-          </div>
-        </div>
-      </nav>
-    );
-  }useEffect(() => {
+  // useEffect must be called before any conditional returns (Rules of Hooks)
+  useEffect(() => {
     const getDepartments = async () => {
       try {
         setDepartmentsLoading(true);
-        console.log('Fetching departments...');
         const data = await fetchDepartments();
-        console.log('Fetched departments data:', data); // Debug log
         
         if (data && data.departments) {
           setDepartments(data.departments);
-          console.log('Set departments state:', data.departments);
         } else {
-          console.warn('No departments found in response:', data);
           setDepartments([]);
         }
       } catch (error) {
         console.error('Failed to fetch departments:', error);
-        setDepartments([]); // Set empty array on error
+        setDepartments([]);
       } finally {
         setDepartmentsLoading(false);
       }
@@ -87,8 +70,99 @@ function Navbar() {
     getDepartments();
   }, []);
 
+  // Helper functions defined after hooks
+  const getTodaysHours = () => {
+    const storeInfo = getStoreInfo();
+    if (!storeInfo?.storeHours) return null;
+    
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const today = days[new Date().getDay()];
+    const todayHours = storeInfo.storeHours[today];
+    
+    if (todayHours && todayHours.open && todayHours.close) {
+      return `${todayHours.open} - ${todayHours.close}`;
+    }
+    return null;
+  };
+
+  const formatPhone = (phone) => {
+    if (!phone) return null;
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length === 10) {
+      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+    }
+    return phone;
+  };
+
   return (
-    <nav className="bg-white shadow-md">
+    <>
+      {/* Show loading state if CMS is loading */}
+      {cmsLoading ? (
+        <nav className="bg-white shadow-md">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-4">
+            <div className="animate-pulse bg-gray-200 h-24 w-24 rounded"></div>
+            <div className="animate-pulse bg-gray-200 h-8 w-64 rounded"></div>
+            <div className="flex space-x-4">
+              <div className="animate-pulse bg-gray-200 h-8 w-8 rounded-full"></div>
+              <div className="animate-pulse bg-gray-200 h-8 w-8 rounded-full"></div>
+              <div className="animate-pulse bg-gray-200 h-8 w-8 rounded-full"></div>
+            </div>
+          </div>
+        </nav>
+      ) : (
+        <>
+          {/* Top Info Bar - Brief Store Information */}
+          <div className="hidden md:block bg-gray-900 text-white text-xs py-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <div className="flex items-center space-x-4 lg:space-x-6">
+            {/* Store Hours */}
+            {getTodaysHours() && (
+              <div className="flex items-center space-x-1">
+                <AccessTimeIcon fontSize="small" />
+                <span className="hidden lg:inline">Today: </span>
+                <span>{getTodaysHours()}</span>
+              </div>
+            )}
+            
+            {/* Phone */}
+            {getStoreInfo()?.phone && (
+              <a 
+                href={`tel:${getStoreInfo().phone}`} 
+                className="flex items-center space-x-1 hover:text-yellow-400 transition-colors"
+              >
+                <PhoneIcon fontSize="small" />
+                <span>{formatPhone(getStoreInfo().phone)}</span>
+              </a>
+            )}
+          </div>
+          
+          <div className="flex items-center space-x-4 lg:space-x-6">
+            {/* Location - More abbreviated on medium screens */}
+            {getStoreInfo()?.address && (
+              <div className="flex items-center space-x-1">
+                <LocationOnIcon fontSize="small" />
+                <span className="max-w-32 lg:max-w-64 truncate">
+                  {window.innerWidth >= 1024 
+                    ? getStoreInfo().address 
+                    : getStoreInfo().address.split(',')[0]
+                  }
+                </span>
+              </div>
+            )}
+            
+            {/* Status */}
+            <div className="flex items-center space-x-1">
+              {storeStatus?.isOpen ? (
+                <span className="text-green-400 font-medium">● OPEN</span>
+              ) : (
+                <span className="text-red-400 font-medium">● CLOSED</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <nav className="bg-white shadow-md">
       {/* Top Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-4">        {/* Logo */}
         <Link to="/" className="flex items-center text-4xl font-bold text-[var(--color-accent)]">
@@ -267,17 +341,46 @@ function Navbar() {
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Store Status */}
-            <div className="border-t border-gray-200 pt-4">
-              <div className="text-sm text-center">
-                Store Status: {storeStatus?.isOpen ? (
-                  <span className="text-green-600 font-medium">Open Now</span>
-                ) : (
-                  <span className="text-red-600 font-medium">Closed</span>
-                )}
+            </div>            {/* Store Information */}
+            <div className="border-t border-gray-200 pt-4 space-y-3">
+              <div className="text-center">
+                <div className="text-sm font-medium text-gray-700">
+                  {getStoreInfo()?.name || 'Store'}
+                </div>
+                <div className="text-xs text-gray-600 flex items-center justify-center space-x-1">
+                  {storeStatus?.isOpen ? (
+                    <span className="text-green-600 font-medium">● Open</span>
+                  ) : (
+                    <span className="text-red-600 font-medium">● Closed</span>
+                  )}
+                  {getTodaysHours() && (
+                    <span>• {getTodaysHours()}</span>
+                  )}
+                </div>
               </div>
+              
+              {/* Contact info for mobile */}
+              {getStoreInfo() && (
+                <div className="flex justify-center space-x-4 text-xs text-gray-600">
+                  {getStoreInfo().phone && (
+                    <a 
+                      href={`tel:${getStoreInfo().phone}`} 
+                      className="flex items-center space-x-1 hover:text-[var(--color-accent)] transition-colors"
+                    >
+                      <PhoneIcon fontSize="small" />
+                      <span>{formatPhone(getStoreInfo().phone)}</span>
+                    </a>
+                  )}
+                  {getStoreInfo().address && (
+                    <div className="flex items-center space-x-1">
+                      <LocationOnIcon fontSize="small" />
+                      <span className="truncate max-w-32" title={getStoreInfo().address}>
+                        {getStoreInfo().address.split(',')[0]}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -395,19 +498,52 @@ function Navbar() {
                   More Departments →
                 </Link>
               )}
-            </div>
+            </div>            {/* Right side - Store Information */}
+            <div className="flex items-center space-x-6">
+              {/* Store Hours & Status */}
+              <div className="hidden xl:flex items-center space-x-4 text-sm">
+                <div className="flex items-center space-x-2">
+                  <AccessTimeIcon fontSize="small" className="text-gray-500" />
+                  <div className="text-gray-600">
+                    <div className="font-medium">
+                      {storeStatus?.isOpen ? (
+                        <span className="text-green-600">● Open</span>
+                      ) : (
+                        <span className="text-red-600">● Closed</span>
+                      )}
+                    </div>
+                    {getTodaysHours() && (
+                      <div className="text-xs text-gray-500">{getTodaysHours()}</div>
+                    )}
+                  </div>
+                </div>
 
-            {/* Right side - Additional navigation */}
-            <div className="flex items-center space-x-4">
-              {/* Featured/Special links could go here */}
-              <div className="text-sm text-gray-500">
-                {storeStatus?.isOpen ? (
-                  <span className="text-green-600 font-medium">● Open Now</span>
-                ) : (
-                  <span className="text-red-600 font-medium">● Closed</span>
+                {/* Contact Info */}
+                {getStoreInfo() && (
+                  <div className="flex items-center space-x-4 border-l border-gray-200 pl-4">
+                    {getStoreInfo().phone && (
+                      <div className="flex items-center space-x-1">
+                        <PhoneIcon fontSize="small" className="text-gray-500" />
+                        <a 
+                          href={`tel:${getStoreInfo().phone}`} 
+                          className="text-gray-600 hover:text-[var(--color-accent)] transition-colors text-xs font-medium"
+                        >
+                          {formatPhone(getStoreInfo().phone)}
+                        </a>
+                      </div>
+                    )}
+                    {getStoreInfo().address && (
+                      <div className="flex items-center space-x-1">
+                        <LocationOnIcon fontSize="small" className="text-gray-500" />
+                        <span className="text-gray-600 text-xs max-w-32 truncate" title={getStoreInfo().address}>
+                          {getStoreInfo().address.split(',')[0]}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
-            </div>          </div>
+            </div></div>
         </div>
       </div>
       
@@ -435,10 +571,11 @@ function Navbar() {
         @media (max-width: 1024px) {
           .department-dropdown {
             display: none;
-          }
-        }
-      `}</style>
-    </nav>
+          }        }      `}</style>
+          </nav>
+        </>
+      )}
+    </>
   );
 }
 
