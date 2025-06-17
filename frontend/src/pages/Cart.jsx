@@ -146,7 +146,6 @@ const Cart = () => {
         </button>
       </div>      {/* Bottom Section: Promotional Banner and Recommendations */}
       <div className="lg:col-span-3 mt-8">
-        <PromoBanner type="horizontal" />
         <SimilarProducts department="WINE" priceRange="10-50" />
       </div>
 

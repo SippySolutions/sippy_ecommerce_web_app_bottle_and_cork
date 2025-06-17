@@ -163,13 +163,12 @@ function Navbar() {
                 <span className="text-red-400 font-medium">● CLOSED</span>
               )}
             </div>
-          </div>
-        </div>
+          </div>        </div>
       </div>
 
-      <nav className="bg-white shadow-md">
+      <nav className="bg-white shadow-md sticky top-0 z-40">
       {/* Top Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-4">        {/* Logo */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-4">{/* Logo */}
         <Link to="/" className="flex items-center text-4xl font-bold text-[var(--color-accent)]">
           {!cmsLoading && getLogo() ? (
             <img

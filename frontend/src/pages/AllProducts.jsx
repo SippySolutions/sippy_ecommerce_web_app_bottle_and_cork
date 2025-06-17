@@ -635,11 +635,10 @@ const AllProducts = () => {
 
           {/* Main content */}
           <div className="flex-1">            {products.length > 0 ? (
-              <>
-                {/* Products grid with enhanced styling and promotional banners */}
+              <>                {/* Products grid with enhanced styling and promotional banners */}
                 <div className="space-y-8">
                   {/* First promotional banner after 4 products */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
                     {products.slice(0, 8).map((product) => (
                       <div key={product._id} className="transform hover:scale-105 transition-transform duration-200">
                         <ProductCard product={product} />
@@ -652,7 +651,7 @@ const AllProducts = () => {
                   
                   {/* Remaining products with promotional banners every 12 products */}
                   {products.length > 8 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
                       {products.slice(8, 20).map((product) => (
                         <div key={product._id} className="transform hover:scale-105 transition-transform duration-200">
                           <ProductCard product={product} />
@@ -666,14 +665,14 @@ const AllProducts = () => {
                   
                   {/* Continue with remaining products */}
                   {products.length > 20 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
                       {products.slice(20).map((product) => (
                         <div key={product._id} className="transform hover:scale-105 transition-transform duration-200">
                           <ProductCard product={product} />
                         </div>
                       ))}
                     </div>
-                  )}                </div>
+                  )}</div>
                 
                 {/* Enhanced Pagination with CMS theme */}
                 {pagination && pagination.totalPages > 1 && (

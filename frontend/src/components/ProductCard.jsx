@@ -123,57 +123,58 @@ function ProductCard({ product }) {
                 minimumFractionDigits: 2
             })
             .format(price);
-    };
-    return (
+    };    return (
         <div
-            className="group relative bg-white rounded-lg border border-gray-200 hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden w-full h-[400px] flex flex-col"
-            onClick={handleCardClick}>
-            {/* Top Right Badges */}
-            <div className="absolute top-2 right-2 z-10">
-                <div className="flex flex-col gap-1">
+            className="group relative bg-white rounded-lg border border-gray-200 hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden w-full h-[280px] sm:h-[400px] flex flex-col"
+            onClick={handleCardClick}>            {/* Top Right Badges - Compact */}
+            <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10">
+                <div className="flex flex-col gap-0.5 sm:gap-1">
 
                     {
                         product.bestseller && (
                             <span
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-accent/10 text-accent border border-accent/20">
-                                <StarIcon className="w-3 h-3"/>
-                                Best Seller
+                                className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-accent/10 text-accent border border-accent/20">
+                                <StarIcon className="w-2 h-2 sm:w-3 sm:h-3"/>
+                                <span className="hidden sm:inline">Best Seller</span>
+                                <span className="sm:hidden">Best</span>
                             </span>
                         )
                     }
                     {
                         product.exclusive && (
                             <span
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                                <DiamondIcon className="w-3 h-3"/>
-                                Exclusive
+                                className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                                <DiamondIcon className="w-2 h-2 sm:w-3 sm:h-3"/>
+                                <span className="hidden sm:inline">Exclusive</span>
+                                <span className="sm:hidden">Exc</span>
                             </span>
                         )
                     }
                     {
                         product.staffpick && (
                             <span
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-secondary/10 text-secondary border border-secondary/20">
-                                <UserGroupIcon className="w-3 h-3"/>
-                                Staff Pick
+                                className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-secondary/10 text-secondary border border-secondary/20">
+                                <UserGroupIcon className="w-2 h-2 sm:w-3 sm:h-3"/>
+                                <span className="hidden sm:inline">Staff Pick</span>
+                                <span className="sm:hidden">Staff</span>
                             </span>
                         )
                     }
 
                 </div>
-            </div>{/* Left Floating Icons for Extra Info */}
-            <div className="absolute top-2 left-2 z-10">
-                <div className="flex flex-col gap-1">
+            </div>            {/* Left Floating Icons for Extra Info - Compact */}
+            <div className="absolute top-1 sm:top-2 left-1 sm:left-2 z-10">
+                <div className="flex flex-col gap-0.5 sm:gap-1">
                     {/* Vintage Icon */}
                     {
                         product.vintage && product.vintage !== "No Vintage" && (
                             <div
-                                className="w-6 h-6 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-sm border border-white/20 hover:scale-110 transition-all duration-200"
+                                className="w-4 h-4 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-sm border border-white/20 hover:scale-110 transition-all duration-200"
                                 style={{
                                     backgroundColor: `${theme.primary}CC`
                                 }}
                                 title={`Vintage: ${product.vintage}`}>
-                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className="w-2 h-2 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
                                     <path
                                         d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zM4 7h12v9H4V7z"/>
                                     <path d="M10 8a1 1 0 011 1v2a1 1 0 11-2 0V9a1 1 0 011-1z"/>
@@ -186,12 +187,12 @@ function ProductCard({ product }) {
                     {
                         product.abv && (
                             <div
-                                className="w-6 h-6 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-sm border border-white/20 hover:scale-110 transition-all duration-200"
+                                className="w-4 h-4 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-sm border border-white/20 hover:scale-110 transition-all duration-200"
                                 style={{
                                     backgroundColor: `${theme.accent}CC`
                                 }}
                                 title={`ABV: ${product.abv}%`}>
-                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className="w-2 h-2 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
                                     <path
                                         d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
                                 </svg>
@@ -203,12 +204,12 @@ function ProductCard({ product }) {
                     {
                         product.country && product.country !== "NAN" && (
                             <div
-                                className="w-6 h-6 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-sm border border-white/20 hover:scale-110 transition-all duration-200"
+                                className="w-4 h-4 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-sm border border-white/20 hover:scale-110 transition-all duration-200"
                                 style={{
                                     backgroundColor: `${theme.secondary}CC`
                                 }}
                                 title={`Origin: ${product.country}`}>
-                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className="w-2 h-2 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
                                     <path
                                         fillRule="evenodd"
                                         d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z"
@@ -218,10 +219,9 @@ function ProductCard({ product }) {
                         )
                     }
                 </div>
-            </div>
-            {/* Product Image */}
+            </div>            {/* Product Image - Compact */}
             <div
-                className="relative h-52 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-3">
+                className="relative h-32 sm:h-52 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-2 sm:p-3">
                 <img
                     src={product.productimg || '/placeholder-image.png'}
                     alt={product.name}
@@ -233,37 +233,37 @@ function ProductCard({ product }) {
                     loading="lazy"/> {
                     !imageLoaded && (
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="animate-pulse bg-gray-300 rounded w-12 h-16"></div>
+                            <div className="animate-pulse bg-gray-300 rounded w-8 h-12 sm:w-12 sm:h-16"></div>
                         </div>
                     )
                 }
 
-                {/* Size Floating Badge - Bottom Right */}
+                {/* Size Floating Badge - Bottom Right - Compact */}
                 {
                     product.size && (
                         <div
-                            className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-white text-xs font-semibold shadow-lg backdrop-blur-sm border border-white/20"
+                            className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 px-1 py-0.5 sm:px-2 sm:py-1 rounded-full text-white text-xs font-semibold shadow-lg backdrop-blur-sm border border-white/20"
                             style={{
                                 backgroundColor: `${theme.accent}CC`
                             }}
                             title={`Size: ${product.size}`}>
-                            {product.size} {product.packname!="Single"?product.packname: ''}
+                            <span className="hidden sm:inline">{product.size} {product.packname!="Single"?product.packname: ''}</span>
+                            <span className="sm:hidden">{product.size}</span>
                         </div>
                     )
                 }
-            </div>
-            {/* Product Information */}
-            <div className="p-3 flex-1 flex flex-col min-h-0">
-                {/* Product Name and Category Row */}
-                <div className="flex items-start justify-between gap-2 mb-2 flex-shrink-0">                    <h3
-                        className="font-semibold text-base text-gray-900 line-clamp-2 group-hover:text-primary transition-colors flex-1">
+            </div>            {/* Product Information - Compact */}
+            <div className="p-2 sm:p-3 flex-1 flex flex-col min-h-0">
+                {/* Product Name and Category Row - Compact */}
+                <div className="flex items-start justify-between gap-1 sm:gap-2 mb-1 sm:mb-2 flex-shrink-0">                    <h3
+                        className="font-semibold text-xs sm:text-base text-gray-900 line-clamp-2 group-hover:text-primary transition-colors flex-1">
                         {product.name || 'Unnamed Product'}
                     </h3>
-                    <div className="flex flex-col gap-1 flex-shrink-0">
+                    <div className="flex flex-col gap-0.5 sm:gap-1 flex-shrink-0">
                         {
                             product.category && (
                                 <span
-                                    className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md whitespace-nowrap">
+                                    className="text-xs text-gray-600 bg-gray-100 px-1 py-0.5 sm:px-2 sm:py-1 rounded-md whitespace-nowrap hidden sm:inline-block">
                                     {product.category}
                                 </span>
                             )
@@ -271,7 +271,7 @@ function ProductCard({ product }) {
                         {
                             product.subcategory && (
                                 <span
-                                    className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md border whitespace-nowrap">
+                                    className="text-xs text-gray-600 bg-gray-50 px-1 py-0.5 sm:px-2 sm:py-1 rounded-md border whitespace-nowrap hidden sm:inline-block">
                                     {product.subcategory}
                                 </span>
                             )
@@ -279,7 +279,7 @@ function ProductCard({ product }) {
                         {
                             !product.category && !product.subcategory && product.department && (
                                 <span
-                                    className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md whitespace-nowrap">
+                                    className="text-xs text-gray-600 bg-gray-100 px-1 py-0.5 sm:px-2 sm:py-1 rounded-md whitespace-nowrap hidden sm:inline-block">
                                     {product.department}
                                 </span>
                             )
@@ -287,22 +287,22 @@ function ProductCard({ product }) {
                     </div>
                 </div>
 
-                {/* Price Section */}
-                <div className="mb-2 flex-shrink-0">
+                {/* Price Section - Compact */}
+                <div className="mb-1 sm:mb-2 flex-shrink-0">
                     {
                         product.saleprice > 0
                             ? (
-                                <div className="flex items-center gap-2">
-                                    <div className="text-xl font-bold text-accent">
+                                <div className="flex items-center gap-1 sm:gap-2">
+                                    <div className="text-sm sm:text-xl font-bold text-accent">
                                         {formatPrice(product.saleprice)}
                                     </div>
-                                    <div className="text-sm text-gray-500 line-through">
+                                    <div className="text-xs sm:text-sm text-gray-500 line-through">
                                         {formatPrice(product.price)}
                                     </div>
                                 </div>
                             )
                             : (
-                                <div className="text-xl font-bold text-gray-900">
+                                <div className="text-sm sm:text-xl font-bold text-gray-900">
                                     {formatPrice(product.price)}
                                 </div>
                             )
@@ -311,21 +311,22 @@ function ProductCard({ product }) {
 
                 {/* Flexible space */}
                 <div className="flex-1 min-h-0"></div>
-                {/* Bottom Section - Action Buttons */}
-                <div className="space-y-2 flex-shrink-0">
-                    <div className='flex items-center justify-between mt-2 gap-2'>
-                        {/* Add to Cart Button */}
+                {/* Bottom Section - Action Buttons - Compact */}
+                <div className="space-y-1 sm:space-y-2 flex-shrink-0">
+                    <div className='flex items-center justify-between mt-1 sm:mt-2 gap-1 sm:gap-2'>
+                        {/* Add to Cart Button - Compact */}
                         <button
                             onClick={handleAddToCart}
                             disabled={product.totalqty <= 0}
-                            className={`w-full py-2.5 px-4 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg ${
+                            className={`w-full py-1.5 sm:py-2.5 px-2 sm:px-4 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 shadow-md hover:shadow-lg ${
                             'text-white hover:opacity-90 transform hover:scale-105'}`}
                             style={{
                                 backgroundColor: theme.accent
                             }}>
 
-                            <> <ShoppingCartIcon className="w-4 h-4"/>
-                            Add to Cart
+                            <> <ShoppingCartIcon className="w-3 h-3 sm:w-4 sm:h-4"/>
+                            <span className="hidden sm:inline">Add to Cart</span>
+                            <span className="sm:hidden">Add</span>
                         </>
 
                     </button>

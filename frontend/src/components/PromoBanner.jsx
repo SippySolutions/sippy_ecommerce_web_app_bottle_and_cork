@@ -59,23 +59,20 @@ const PromoBanner = ({
       }
     }
   };
-
   const slideVariants = {
     enter: (direction) => ({
       x: direction > 0 ? 1000 : -1000,
       opacity: 0
     }),
     center: {
-      zIndex: 1,
       x: 0,
       opacity: 1
     },
     exit: (direction) => ({
-      zIndex: 0,
       x: direction < 0 ? 1000 : -1000,
       opacity: 0
     })
-  };  if (type === 'carousel') {
+  };if (type === 'carousel') {
     // Full-width carousel - for under navbar
     return (
       <div className={`full-width bg-gray-100 ${className}`}>

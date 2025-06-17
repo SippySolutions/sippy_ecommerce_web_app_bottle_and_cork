@@ -26,12 +26,12 @@ function Home() {
   }  return (
     <>
       {/* Mobile-optimized promo banner */}
-      <div className="block md:hidden">
+      <div className="block md:hidden relative z-0">
         <PromoBanner type="carousel" />
       </div>
       
       {/* Desktop promo banner */}
-      <div className="hidden md:block container mx-auto px-4">
+      <div className="hidden md:block container mx-auto px-4 relative z-0">
         <PromoBanner type="horizontal" />
       </div>
       
