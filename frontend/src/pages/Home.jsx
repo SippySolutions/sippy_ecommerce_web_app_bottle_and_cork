@@ -26,16 +26,17 @@ function Home() {
   }
   return (
     <>      <HeroSection data={getHeroSection()} />
+    <Categories categories={getCategories()} />
       <BestSellers /> 
       <div className="container mx-auto px-4">
         <PromoBanner type="horizontal" />
       </div>
-      <Categories categories={getCategories()} />
+      
       <Exclusive  />
       <Banner data={getBanner()} />
       <StaffPick />
       <div className="container mx-auto px-4">
-        <PromoBanner type="grid" />
+      
       </div>
       <BrandBanner brands={getBrandBanner()} />
     </>
