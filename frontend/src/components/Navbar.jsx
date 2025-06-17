@@ -112,7 +112,7 @@ function Navbar() {
       ) : (
         <>
           {/* Top Info Bar - Brief Store Information */}
-          <div className="hidden md:block bg-gray-900 text-white text-xs py-2">
+          <div className="hidden md:block bg-[var(--color-accent)]  text-white text-xs py-2">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center space-x-4 lg:space-x-6">
             {/* Store Hours */}
@@ -151,7 +151,7 @@ function Navbar() {
             )}
             
             {/* Status */}
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-1 bg-white p-2 rounded-2xl">
               {storeStatus?.isOpen ? (
                 <span className="text-green-400 font-medium">● OPEN</span>
               ) : (

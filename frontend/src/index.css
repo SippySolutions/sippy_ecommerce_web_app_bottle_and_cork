@@ -1,16 +1,5 @@
 @import "tailwindcss";
 
-/* CSS Custom Properties for Theme Colors */
-:root {
-  --color-primary: #1E1E1E;
-  --color-secondary: #373737;
-  --color-accent: #FF5722;
-  --color-muted: #F2F2F2;
-  --color-background: #121212;
-  --color-heading-text: #FFFFFF;
-  --color-body-text: #CCCCCC;
-  --color-link-text: #FF5722;
-}
 
 /* Line clamp utilities */
 .line-clamp-1 {
