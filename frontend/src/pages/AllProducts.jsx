@@ -673,57 +673,108 @@ const AllProducts = () => {
                       ))}
                     </div>
                   )}</div>
-                
-                {/* Enhanced Pagination with CMS theme */}
+                  {/* Modern Responsive Pagination */}
                 {pagination && pagination.totalPages > 1 && (
-                  <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border-2 border-white/20 p-8 mt-8">
-                    <div className="flex justify-center items-center space-x-4">
+                  <div className="flex justify-center mt-8 sm:mt-12">
+                    <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-200 p-1 sm:p-2">
+                      {/* Previous Button */}
                       <button
                         onClick={() => handlePageChange(pagination.page - 1)}
                         disabled={pagination.page <= 1}
-                        className="flex items-center px-6 py-3 text-sm font-bold rounded-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
+                        className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-md sm:rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
-                          backgroundColor: pagination.page <= 1 ? theme.muted + '40' : theme.secondary,
-                          color: pagination.page <= 1 ? theme.bodyText : 'white'
+                          backgroundColor: pagination.page <= 1 ? 'transparent' : theme.primary + '10',
+                          color: pagination.page <= 1 ? theme.bodyText + '60' : theme.primary
                         }}
+                        title="Previous page"
                       >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
-                        Previous
                       </button>
                       
-                      {/* Page numbers with theme colors */}
-                      {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                        const pageNumber = Math.max(1, pagination.page - 2) + i;
-                        if (pageNumber > pagination.totalPages) return null;
-                        
-                        return (
-                          <button
-                            key={pageNumber}
-                            onClick={() => handlePageChange(pageNumber)}
-                            className="px-6 py-3 text-sm font-bold rounded-xl transition-all duration-200 transform hover:scale-110 shadow-lg"
-                            style={{
-                              backgroundColor: pageNumber === pagination.page ? theme.accent : theme.muted + '40',
-                              color: pageNumber === pagination.page ? 'white' : theme.bodyText
-                            }}
-                          >
-                            {pageNumber}
-                          </button>
-                        );
-                      })}
+                      {/* Mobile: Show only current page info */}
+                      <div className="sm:hidden flex items-center px-3 py-2 text-sm font-medium text-gray-600">
+                        <span style={{ color: theme.primary }}>{pagination.page}</span>
+                        <span className="mx-1">/</span>
+                        <span>{pagination.totalPages}</span>
+                      </div>
                       
+                      {/* Desktop: Show page numbers */}
+                      <div className="hidden sm:flex items-center gap-1">
+                        {/* First page (if not in range) */}
+                        {pagination.page > 3 && (
+                          <>
+                            <button
+                              onClick={() => handlePageChange(1)}
+                              className="flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                              style={{
+                                backgroundColor: theme.primary + '10',
+                                color: theme.primary
+                              }}
+                            >
+                              1
+                            </button>
+                            {pagination.page > 4 && (
+                              <span className="flex items-center justify-center w-10 h-10 text-gray-400">...</span>
+                            )}
+                          </>
+                        )}
+                        
+                        {/* Page numbers around current page */}
+                        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                          const pageNumber = Math.max(1, pagination.page - 2) + i;
+                          if (pageNumber > pagination.totalPages) return null;
+                          
+                          const isActive = pageNumber === pagination.page;
+                          
+                          return (
+                            <button
+                              key={pageNumber}
+                              onClick={() => handlePageChange(pageNumber)}
+                              className="flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                              style={{
+                                backgroundColor: isActive ? theme.accent : 'transparent',
+                                color: isActive ? 'white' : theme.bodyText
+                              }}
+                            >
+                              {pageNumber}
+                            </button>
+                          );
+                        })}
+                        
+                        {/* Last page (if not in range) */}
+                        {pagination.page < pagination.totalPages - 2 && (
+                          <>
+                            {pagination.page < pagination.totalPages - 3 && (
+                              <span className="flex items-center justify-center w-10 h-10 text-gray-400">...</span>
+                            )}
+                            <button
+                              onClick={() => handlePageChange(pagination.totalPages)}
+                              className="flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                              style={{
+                                backgroundColor: theme.primary + '10',
+                                color: theme.primary
+                              }}
+                            >
+                              {pagination.totalPages}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Next Button */}
                       <button
                         onClick={() => handlePageChange(pagination.page + 1)}
                         disabled={pagination.page >= pagination.totalPages}
-                        className="flex items-center px-6 py-3 text-sm font-bold rounded-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
+                        className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-md sm:rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
-                          backgroundColor: pagination.page >= pagination.totalPages ? theme.muted + '40' : theme.secondary,
-                          color: pagination.page >= pagination.totalPages ? theme.bodyText : 'white'
+                          backgroundColor: pagination.page >= pagination.totalPages ? 'transparent' : theme.primary + '10',
+                          color: pagination.page >= pagination.totalPages ? theme.bodyText + '60' : theme.primary
                         }}
+                        title="Next page"
                       >
-                        Next
-                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </button>
