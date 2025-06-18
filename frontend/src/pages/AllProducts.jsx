@@ -45,8 +45,7 @@ const AllProducts = () => {
       }
     };
     loadDepartments();
-  }, []);
-  useEffect(() => {
+  }, []);  useEffect(() => {
     // Determine if we're in search mode or showing all products
     const hasSearchParams = query || department || category || subcategory;
     setIsSearchMode(hasSearchParams);
@@ -58,6 +57,9 @@ const AllProducts = () => {
     }
     // Reset page when search parameters change
     setCurrentPage(1);
+    
+    // Always scroll to top when filters, departments, or search parameters change
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [query, department, category, subcategory, sortOption, priceRange, stockFilter, quickSearchQuery]);
   const loadAllProducts = async (page = 1) => {
     try {
@@ -209,11 +211,12 @@ const AllProducts = () => {
   const handleSortChange = (newSortOption) => {
     setSortOption(newSortOption);
   };
-
   const handleFilterClick = (filterType, value) => {
     const params = new URLSearchParams(searchParams);
     params.set(filterType, value);
     navigate(`/products?${params.toString()}`);
+    // Immediately scroll to top when filter is applied
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const clearFilter = (filterType) => {
