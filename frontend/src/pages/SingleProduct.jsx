@@ -455,10 +455,7 @@ function SingleProduct() {
               </div>
             )}
           </div>
-        </div>        {/* Promotional Banner - Compact */}
-        <div className="mt-4 sm:mt-8">
-          <PromoBanner type="grid" />
-        </div>        {/* Similar Products Section - Compact */}
+        </div>             {/* Similar Products Section - Compact */}
         <div className="mt-6 sm:mt-12">
           <SimilarProducts
             department={product.department}
@@ -467,6 +464,10 @@ function SingleProduct() {
             priceRange={`${Math.max(0, (product.price || 0) - 50)}-${(product.price || 0) + 50}`}
           />
         </div>
+         {/* Promotional Banner - Compact */}
+        <div className="mt-4 sm:mt-8">
+          <PromoBanner type="grid" />
+        </div>  
       </div>
     </div>
   );
