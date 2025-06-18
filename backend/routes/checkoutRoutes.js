@@ -8,9 +8,11 @@ const {
   validatePaymentMethods,
   syncPaymentMethods,
   getPaymentHistory,
-  refundTransaction
+  refundTransaction,
+  authorizePayment
 } = require('../controllers/checkoutController');
 const authMiddleware = require('../middleware/authMiddleware');
+const { optionalAuth } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -40,5 +42,9 @@ router.get('/payment-history', authMiddleware, getPaymentHistory);
 
 // POST /api/checkout/refund - Refund transaction
 router.post('/refund', authMiddleware, refundTransaction);
+
+// Authorization workflow endpoints
+// POST /api/checkout/authorize - Authorize payment (put on hold) - supports both logged in and guest users
+router.post('/authorize', optionalAuth, authorizePayment);
 
 module.exports = router;

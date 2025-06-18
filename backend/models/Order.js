@@ -19,10 +19,9 @@ const orderSchema = new mongoose.Schema({
   items: [orderItemSchema],
   subtotal: { type: Number, required: true },
   tax: { type: Number, default: 0 },
-  total: { type: Number, required: true },
-  status: { 
+  total: { type: Number, required: true },  status: { 
     type: String, 
-    enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'], 
+    enum: ['pending', 'processing', 'completed', 'shipped', 'delivered', 'cancelled'], 
     default: 'pending' 
   },
   shippingAddress: {
@@ -43,13 +42,37 @@ const orderSchema = new mongoose.Schema({
     zip: String,
     country: String
   },  paymentInfo: {
-    transactionId: { type: String, required: true },
-    method: { type: String, required: true }, // 'card', 'saved_card', 'tokenized'
+    transactionId: String, // Made optional for authorization workflow
+    method: String, // 'card', 'saved_card', 'tokenized'
     lastFour: String,
     cardType: String,
-    amount: { type: Number, required: true }
-  },  orderNumber: { type: String, unique: true },
-  orderType: { type: String, enum: ['pickup', 'delivery'], default: 'delivery' },
+    amount: Number
+  },
+  // Authorization workflow fields
+  paymentStatus: { 
+    type: String, 
+    enum: ['pending', 'authorized', 'partially_captured', 'paid', 'voided', 'refunded'], 
+    default: 'pending' 
+  },
+  transactionId: String, // Main transaction ID for authorization
+  authorizationCode: String, // Auth code from payment processor
+  captureTransactionId: String, // Transaction ID for capture
+  capturedAmount: Number, // Amount actually captured (for partial captures)
+  capturedAt: Date, // When payment was captured
+  voidedAt: Date, // When authorization was voided
+  customerProfileId: String, // Authorize.Net customer profile ID  customerPaymentProfileId: String, // Authorize.Net payment profile ID
+
+  orderNumber: { type: String, unique: true },
+  orderType: { type: String, enum: ['pickup', 'delivery', 'scheduled'], default: 'delivery' },
+  
+  // Scheduled delivery fields
+  scheduledDelivery: {
+    date: { type: Date }, // Scheduled delivery date
+    timeSlot: { type: String }, // e.g., "10:00 AM - 12:00 PM"
+    instructions: { type: String }, // Special delivery instructions
+    isScheduled: { type: Boolean, default: false }
+  },
+  
   tip: { type: Number, default: 0 },
   bagFee: { type: Number, default: 0 },
   deliveryFee: { type: Number, default: 0 },

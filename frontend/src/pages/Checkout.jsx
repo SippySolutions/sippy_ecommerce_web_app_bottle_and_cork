@@ -7,6 +7,7 @@ import { AuthContext } from '../components/AuthContext';
 import { useCMS } from '../Context/CMSContext';
 import { useAgeVerification } from '../Context/AgeVerificationContext';
 import AcceptJSForm from '../components/Payment/AcceptJSForm';
+import AuthorizationOnlyPaymentForm from '../components/Payment/AuthorizationOnlyPaymentForm';
 import axios from 'axios';
 import { processCheckout, processSavedCardCheckout, processGuestCheckout } from '../services/api';
 
@@ -96,11 +97,19 @@ const Checkout = () => {
   const { user, isAuthenticated } = useContext(AuthContext);
   const { cmsData } = useCMS();
   const { getAgeVerificationStatus } = useAgeVerification();
-
   const [loading, setLoading] = useState(false);
   const [orderType, setOrderType] = useState('delivery');
   const [step, setStep] = useState(1); // 1: Addresses, 2: Payment, 3: Review
-  const [tip, setTip] = useState(0);  const [paymentMethod, setPaymentMethod] = useState('new'); // 'new' or 'saved'
+  const [tip, setTip] = useState(0);
+  
+  // Scheduled delivery state
+  const [scheduledDelivery, setScheduledDelivery] = useState({
+    date: '',
+    timeSlot: '',
+    instructions: ''
+  });
+  
+  const [paymentMethod, setPaymentMethod] = useState('new'); // 'new' or 'saved'
   const [selectedCard, setSelectedCard] = useState(null);
   const [saveCard, setSaveCard] = useState(false);
   
@@ -173,14 +182,22 @@ const Checkout = () => {
 
   // Helper function to round to 2 decimal places
   const roundToTwo = (num) => Math.round((num + Number.EPSILON) * 100) / 100;
-
   const subtotal = roundToTwo(getTotalPrice());
   const tax = roundToTwo(subtotal * 0.08); // 8% tax
   
   // Calculate conditional delivery fee
-  const deliveryFee = (orderType === 'delivery' && subtotal < deliveryMinimum) ? roundToTwo(deliveryFeeAmount) : 0;
+  const deliveryFee = (() => {
+    if (orderType === 'delivery' && subtotal < deliveryMinimum) {
+      return roundToTwo(deliveryFeeAmount);
+    } else if (orderType === 'scheduled') {
+      // Scheduled delivery always has a fee (could be different rate)
+      const scheduledDeliveryFee = cmsData?.storeInfo?.delivery?.scheduledFee || deliveryFeeAmount + 2; // $2 extra for scheduling
+      return roundToTwo(scheduledDeliveryFee);
+    }
+    return 0;
+  })();
   
-  const total = roundToTwo(subtotal + tax + tip + (orderType === 'delivery' ? roundToTwo(bagFee) + deliveryFee : 0));
+  const total = roundToTwo(subtotal + tax + tip + ((orderType === 'delivery' || orderType === 'scheduled') ? roundToTwo(bagFee) + deliveryFee : 0));
 
   const handleAddressChange = (type, field, value) => {
     if (type === 'shipping') {
@@ -213,6 +230,30 @@ const Checkout = () => {
         toast.error('Please fill in all shipping address fields');
         return;
       }
+      
+      // Validate scheduled delivery
+      if (orderType === 'scheduled') {
+        if (!validateAddress(shippingAddress)) {
+          toast.error('Please fill in all delivery address fields');
+          return;
+        }
+        if (!scheduledDelivery.date) {
+          toast.error('Please select a delivery date');
+          return;
+        }
+        if (!scheduledDelivery.timeSlot) {
+          toast.error('Please select a delivery time slot');
+          return;
+        }
+        // Validate date is at least 24 hours in advance
+        const selectedDate = new Date(scheduledDelivery.date + 'T' + scheduledDelivery.timeSlot.split(' - ')[0]);
+        const minDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        if (selectedDate < minDate) {
+          toast.error('Scheduled delivery must be at least 24 hours in advance');
+          return;
+        }
+      }
+      
       // Only require billing address for authenticated users
       if (isAuthenticated && !validateAddress(billingAddress)) {
         toast.error('Please fill in all billing address fields');
@@ -221,10 +262,34 @@ const Checkout = () => {
     }
     setStep(prev => prev + 1);
   };
-
   const handlePrevStep = () => {
     setStep(prev => prev - 1);
-  };  const handleAcceptJSToken = async (tokenData) => {
+  };
+
+  // Handle authorization completion (new payment workflow)
+  const handleAuthorizationComplete = (authResult) => {
+    console.log('Authorization completed:', authResult);
+    
+    if (authResult.success) {
+      toast.success('Order placed successfully! Payment is authorized and will be charged when ready for delivery.');
+      clearCart();
+      
+      // Navigate to order success page or order details
+      if (authResult.orderId) {
+        navigate(`/orders/${authResult.orderId}`);
+      } else {
+        navigate('/orders');
+      }
+    } else {
+      toast.error(authResult.message || 'Payment authorization failed. Please try again.');
+    }
+  };
+
+  // Handle payment authorization errors
+  const handlePaymentError = (error) => {
+    console.error('Payment authorization error:', error);
+    toast.error(error.message || 'Payment authorization failed. Please try again.');
+  };const handleAcceptJSToken = async (tokenData) => {
     if (loading) return; // Prevent double submission
     setLoading(true);
     try {
@@ -314,8 +379,7 @@ const Checkout = () => {
     } finally {
       setLoading(false);
     }
-  };
-  const handleSavedCardPayment = async () => {
+  };  const handleSavedCardPayment = async () => {
     if (!selectedCard) {
       toast.error('Please select a payment method');
       return;
@@ -327,33 +391,80 @@ const Checkout = () => {
       // Get age verification data
       const ageVerificationData = getAgeVerificationStatus();
       const ageVerified = Boolean(ageVerificationData);
-      const ageVerifiedAt = ageVerified ? new Date(ageVerificationData) : null;      const orderData = {
+      const ageVerifiedAt = ageVerified ? new Date(ageVerificationData) : null;      // Create complete order request for saved card authorization
+      const authorizationRequest = {
+        // Payment information
         paymentMethodId: selectedCard.id,
+        paymentMethod: 'saved_card',
+        transactionType: 'auth_only',
         amount: total,
+        
+        // Customer information
+        customerType: 'user',
+          // Order information
         cartItems: cartItems.map(item => ({
           product: item._id,
           quantity: item.quantity
         })),
-        shippingAddress: orderType === 'delivery' ? shippingAddress : null,
-        billingAddress: billingAddress, // For authenticated users, always include billing address
+        shippingAddress: (orderType === 'delivery' || orderType === 'scheduled') ? shippingAddress : null,
         orderType: orderType,
+        scheduledDelivery: orderType === 'scheduled' ? {
+          date: scheduledDelivery.date,
+          timeSlot: scheduledDelivery.timeSlot,
+          instructions: scheduledDelivery.instructions,
+          isScheduled: true
+        } : null,
         tip: tip,
-        bagFee: orderType === 'delivery' ? bagFee : 0,
-        deliveryFee: orderType === 'delivery' ? deliveryFee : 0,
+        bagFee: (orderType === 'delivery' || orderType === 'scheduled') ? bagFee : 0,
+        deliveryFee: (orderType === 'delivery' || orderType === 'scheduled') ? deliveryFee : 0,
         ageVerified: ageVerified,
         ageVerifiedAt: ageVerifiedAt
-      };const response = await processSavedCardCheckout(orderData);
+      };
 
-      if (response.success) {
-        toast.success('Order placed successfully!');
-        clearCart();
-        navigate(`/orders/${response.order._id}`);
-      } else {
-        throw new Error(response.message);
+      console.log('Sending authorization request:', authorizationRequest);
+
+      // Use the authorization API endpoint
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api'}/checkout/authorize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(authorizationRequest)      });
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
+      // Check if HTTP request was successful
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('HTTP Error Response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
-    } catch (error) {
-      console.error('Checkout error:', error);
-      toast.error(error?.message || 'Payment failed');
+
+      const result = await response.json();
+      console.log('Authorization response:', result);
+
+      if (result.success) {
+        toast.success('Order placed successfully! Payment is authorized and will be charged when ready for delivery.');
+        clearCart();
+        navigate(`/orders/${result.order._id}`);
+      } else {
+        throw new Error(result.message || result.error || 'Authorization failed');
+      }    } catch (error) {
+      console.error('Authorization error:', error);
+      
+      // Provide more specific error messages
+      if (error.message.includes('HTTP 500')) {
+        toast.error('Server error during authorization. Please check with support if your payment was processed.');
+      } else if (error.name === 'SyntaxError') {
+        toast.error('Server returned invalid response. Please try again.');
+      } else if (error.message.includes('Payment Error: E00027')) {
+        // This specific error but payment went through - likely authorization worked
+        toast.warning('Payment was processed but there may have been a communication issue. Please check your order status.');
+      } else {
+        toast.error(error?.message || 'Payment authorization failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -403,11 +514,10 @@ const Checkout = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-6"
-                >
-                  {/* Order Type */}
+                >                  {/* Order Type */}
                   <div className="bg-white p-6 rounded-lg shadow-md">
                     <h3 className="text-lg font-semibold mb-4">Order Type</h3>
-                    <div className="flex space-x-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <button
                         onClick={() => setOrderType('delivery')}
                         className={`px-6 py-3 rounded-md font-medium transition-colors ${
@@ -416,7 +526,8 @@ const Checkout = () => {
                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                         }`}
                       >
-                        Delivery
+                        🚚 Delivery
+                        <div className="text-xs mt-1 opacity-75">ASAP delivery</div>
                       </button>
                       <button
                         onClick={() => setOrderType('pickup')}
@@ -426,8 +537,21 @@ const Checkout = () => {
                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                         }`}
                       >
-                        Pickup
-                      </button>                    </div>
+                        🏪 Pickup
+                        <div className="text-xs mt-1 opacity-75">In-store pickup</div>
+                      </button>
+                      <button
+                        onClick={() => setOrderType('scheduled')}
+                        className={`px-6 py-3 rounded-md font-medium transition-colors ${
+                          orderType === 'scheduled'
+                            ? 'bg-green-600 text-white'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        📅 Scheduled
+                        <div className="text-xs mt-1 opacity-75">Pick date & time</div>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Guest Information */}                  {/* Guest Information - Show for non-authenticated users */}
@@ -477,16 +601,102 @@ const Checkout = () => {
                         </p>
                       </div>
                     </div>
-                  )}
-
-                  {/* Shipping Address - Only for delivery orders */}
+                  )}                  {/* Shipping Address - Only for delivery orders */}
                   {orderType === 'delivery' && (
                     <AddressForm
                       address={shippingAddress}
                       onChange={handleAddressChange}
                       title="Shipping Address"
                       type="shipping"
-                    />                  )}
+                    />
+                  )}
+
+                  {/* Scheduled Delivery Form - Only for scheduled orders */}
+                  {orderType === 'scheduled' && (
+                    <div className="bg-white p-6 rounded-lg shadow-md">
+                      <h3 className="text-lg font-semibold mb-4">📅 Schedule Your Delivery</h3>
+                      
+                      {/* Shipping Address for Scheduled Delivery */}
+                      <div className="mb-6">
+                        <AddressForm
+                          address={shippingAddress}
+                          onChange={handleAddressChange}
+                          title="Delivery Address"
+                          type="shipping"
+                        />
+                      </div>
+
+                      {/* Date and Time Selection */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Delivery Date *
+                          </label>
+                          <input
+                            type="date"
+                            value={scheduledDelivery.date}
+                            onChange={(e) => setScheduledDelivery(prev => ({ ...prev, date: e.target.value }))}
+                            min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]} // Tomorrow minimum
+                            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            required
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Minimum 24 hours in advance</p>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Time Slot *
+                          </label>
+                          <select
+                            value={scheduledDelivery.timeSlot}
+                            onChange={(e) => setScheduledDelivery(prev => ({ ...prev, timeSlot: e.target.value }))}
+                            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            required
+                          >
+                            <option value="">Select a time slot</option>
+                            <option value="9:00 AM - 11:00 AM">9:00 AM - 11:00 AM</option>
+                            <option value="11:00 AM - 1:00 PM">11:00 AM - 1:00 PM</option>
+                            <option value="1:00 PM - 3:00 PM">1:00 PM - 3:00 PM</option>
+                            <option value="3:00 PM - 5:00 PM">3:00 PM - 5:00 PM</option>
+                            <option value="5:00 PM - 7:00 PM">5:00 PM - 7:00 PM</option>
+                            <option value="7:00 PM - 9:00 PM">7:00 PM - 9:00 PM</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Special Instructions */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Special Delivery Instructions (Optional)
+                        </label>
+                        <textarea
+                          value={scheduledDelivery.instructions}
+                          onChange={(e) => setScheduledDelivery(prev => ({ ...prev, instructions: e.target.value }))}
+                          className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          rows="3"
+                          placeholder="e.g., Leave at front door, Ring doorbell, etc."
+                        />
+                      </div>
+
+                      {/* Scheduled Delivery Info */}
+                      <div className="bg-green-50 border border-green-200 rounded-md p-4">
+                        <div className="flex items-start">
+                          <div className="flex-shrink-0">
+                            <span className="text-green-500 text-xl">ℹ️</span>
+                          </div>
+                          <div className="ml-3">
+                            <h4 className="text-sm font-medium text-green-800">Scheduled Delivery Information</h4>
+                            <ul className="text-sm text-green-700 mt-2 space-y-1">
+                              <li>• Delivery scheduled at least 24 hours in advance</li>
+                              <li>• Additional delivery fee may apply for scheduled deliveries</li>
+                              <li>• We'll send you a confirmation with delivery details</li>
+                              <li>• You can reschedule up to 2 hours before your time slot</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Billing Address - Only show for authenticated users */}
                   {isAuthenticated && (
@@ -614,7 +824,17 @@ const Checkout = () => {
                         </button>
                       ))}                    </div>
                   </div>
+                </motion.div>
+              )}
 
+              {step === 2 && (
+                <motion.div
+                  key="step2"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-6"
+                >
                   {/* Payment Method Selection */}
                   <div className="bg-white p-6 rounded-lg shadow-md">
                     <h3 className="text-lg font-semibold mb-4">Payment Method</h3>
@@ -705,15 +925,37 @@ const Checkout = () => {
                           </div>
                         )}
                       </div>
-                    )}
-
-                    {paymentMethod === 'new' && (
+                    )}                    {paymentMethod === 'new' && (
                       <div>
-                        <AcceptJSForm
+                        <AuthorizationOnlyPaymentForm
                           amount={total}
-                          onTokenReceived={handleAcceptJSToken}
+                          onAuthorizationComplete={handleAuthorizationComplete}
+                          onPaymentError={handlePaymentError}
                           disabled={loading}
-                          billingAddress={billingAddress}                        />
+                          billingAddress={billingAddress}                          orderData={{
+                            customerType: isAuthenticated ? 'user' : 'guest',
+                            cartItems: cartItems.map(item => ({
+                              product: item._id,
+                              quantity: item.quantity
+                            })),
+                            shippingAddress: (orderType === 'delivery' || orderType === 'scheduled') ? shippingAddress : null,
+                            billingAddress: billingAddress,
+                            orderType: orderType,
+                            scheduledDelivery: orderType === 'scheduled' ? {
+                              date: scheduledDelivery.date,
+                              timeSlot: scheduledDelivery.timeSlot,
+                              instructions: scheduledDelivery.instructions,
+                              isScheduled: true
+                            } : null,
+                            tip: tip,
+                            bagFee: (orderType === 'delivery' || orderType === 'scheduled') ? bagFee : 0,
+                            deliveryFee: (orderType === 'delivery' || orderType === 'scheduled') ? deliveryFee : 0,
+                            saveCard: isAuthenticated ? saveCard && user?.billing?.length < 3 : false,
+                            guestInfo: !isAuthenticated ? guestInfo : null,
+                            ageVerified: Boolean(getAgeVerificationStatus()),
+                            ageVerifiedAt: getAgeVerificationStatus() ? new Date(getAgeVerificationStatus()) : null
+                          }}
+                        />
 
                         {isAuthenticated && (
                           <div className="mt-4">
@@ -742,8 +984,7 @@ const Checkout = () => {
                                 </p>
                               </div>
                             )}
-                          </div>
-                        )}
+                          </div>                        )}
                       </div>
                     )}
                   </div>
@@ -833,21 +1074,21 @@ const Checkout = () => {
                           </div>
                         </div>
                       )}
-                    </div>
-
-                    {/* Place Order Button */}
+                    </div>                    {/* Place Order Button */}
                     <div className="mt-6">
-                      {paymentMethod === 'saved' ? (
-                        <button
+                      {paymentMethod === 'saved' ? (                        <button
                           onClick={handleSavedCardPayment}
                           disabled={loading || !selectedCard}
                           className="w-full bg-green-600 text-white py-3 px-6 rounded-md font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                          {loading ? 'Processing...' : `Place Order - $${total.toFixed(2)}`}
+                          {loading ? 'Authorizing Payment...' : `Authorize Payment - $${total.toFixed(2)}`}
                         </button>
                       ) : (
-                        <div className="text-center text-gray-600">
-                          Use the payment form above to complete your order
+                        <div className="text-center text-gray-600 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                          <p className="text-sm">
+                            💡 Complete the payment authorization form above to place your order. 
+                            Your card will only be charged when your order is ready for delivery.
+                          </p>
                         </div>
                       )}
                     </div>
@@ -903,15 +1144,16 @@ const Checkout = () => {
                     <span>Tip</span>
                     <span>${tip.toFixed(2)}</span>
                   </div>                )}
-                {orderType === 'delivery' && (
+                {(orderType === 'delivery' || orderType === 'scheduled') && (
                   <>
                     <div className="flex justify-between">
                       <span>Bag Fee</span>
-                      <span>${bagFee.toFixed(2)}</span>                    </div>
+                      <span>${bagFee.toFixed(2)}</span>
+                    </div>
                     <div className="flex justify-between">
                       <span>
-                        Delivery Fee
-                        {subtotal >= deliveryMinimum && (
+                        {orderType === 'scheduled' ? 'Scheduled Delivery Fee' : 'Delivery Fee'}
+                        {orderType === 'delivery' && subtotal >= deliveryMinimum && (
                           <span className="text-green-600 text-xs ml-1">(Free over ${deliveryMinimum})</span>
                         )}
                       </span>
@@ -919,6 +1161,18 @@ const Checkout = () => {
                         {deliveryFee === 0 ? 'FREE' : `$${deliveryFee.toFixed(2)}`}
                       </span>
                     </div>
+                    {orderType === 'scheduled' && scheduledDelivery.date && scheduledDelivery.timeSlot && (
+                      <div className="bg-green-50 p-3 rounded-md mt-2">
+                        <div className="text-sm text-green-800">
+                          <div className="font-medium">📅 Scheduled For:</div>
+                          <div>{new Date(scheduledDelivery.date).toLocaleDateString()}</div>
+                          <div>{scheduledDelivery.timeSlot}</div>
+                          {scheduledDelivery.instructions && (
+                            <div className="text-xs mt-1">Note: {scheduledDelivery.instructions}</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
                 <div className="flex justify-between text-lg font-semibold border-t pt-2">

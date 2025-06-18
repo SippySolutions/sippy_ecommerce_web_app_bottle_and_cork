@@ -694,9 +694,8 @@ function Navbar() {
           )}
         </div>
       </div>
-      
-      {/* Custom styles for enhanced dropdown animations and responsive design */}
-      <style jsx>{`
+        {/* Custom styles for enhanced dropdown animations and responsive design */}
+      <style jsx="true">{`
         .dropdown-menu {
           animation: slideDown 0.2s ease-out;
         }

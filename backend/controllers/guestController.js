@@ -208,9 +208,8 @@ exports.processGuestPayment = async (req, res) => {
       },
       items: validatedItems,
       subtotal: roundToTwo(subtotal),
-      tax: roundToTwo(tax),
-      total: roundToTwo(total),
-      shippingAddress: orderType === 'delivery' ? shippingAddress : null,
+      tax: roundToTwo(tax),      total: roundToTwo(total),
+      shippingAddress: (orderType === 'delivery' || orderType === 'scheduled') ? shippingAddress : null,
       billingAddress: billingAddress,
       paymentInfo: {
         transactionId: paymentResult.transactionId,
