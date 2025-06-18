@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import useOrderPaymentWorkflow from '../hooks/useOrderPaymentWorkflow';
+import { useCMS } from '../Context/CMSContext';
 
 const PaymentStatusIndicator = ({ orderId, orderStatus, onStatusChange }) => {
   const { getOrderPaymentStatus, loading, error } = useOrderPaymentWorkflow();
+  const { getTheme } = useCMS();
+  const theme = getTheme();
   const [paymentDetails, setPaymentDetails] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -22,61 +25,60 @@ const PaymentStatusIndicator = ({ orderId, orderStatus, onStatusChange }) => {
       }
     }
   };
-
   const getStatusConfig = (status) => {
     const configs = {
       pending: {
-        color: 'bg-gray-500',
-        textColor: 'text-gray-700',
-        bgColor: 'bg-gray-100',
+        color: theme.secondary,
+        textColor: theme.bodyText,
+        bgColor: `${theme.muted}80`,
         icon: '⏳',
         label: 'Payment Pending',
         description: 'Waiting for payment processing'
       },
       authorized: {
-        color: 'bg-yellow-500',
-        textColor: 'text-yellow-700',
-        bgColor: 'bg-yellow-100',
+        color: theme.accent,
+        textColor: theme.accent,
+        bgColor: `${theme.accent}20`,
         icon: '🔒',
         label: 'Payment Authorized',
         description: 'Funds are held, ready to capture when order is completed'
       },
       captured: {
-        color: 'bg-green-500',
-        textColor: 'text-green-700',
-        bgColor: 'bg-green-100',
+        color: '#10B981',
+        textColor: '#065F46',
+        bgColor: '#D1FAE5',
         icon: '✅',
         label: 'Payment Captured',
         description: 'Payment completed successfully'
       },
       partially_captured: {
-        color: 'bg-blue-500',
-        textColor: 'text-blue-700',
-        bgColor: 'bg-blue-100',
+        color: theme.primary,
+        textColor: theme.primary,
+        bgColor: `${theme.primary}20`,
         icon: '⚡',
         label: 'Partially Captured',
         description: 'Partial payment captured due to order changes'
       },
       voided: {
-        color: 'bg-red-500',
-        textColor: 'text-red-700',
-        bgColor: 'bg-red-100',
+        color: '#EF4444',
+        textColor: '#991B1B',
+        bgColor: '#FEE2E2',
         icon: '❌',
         label: 'Payment Voided',
         description: 'Authorization cancelled, funds released'
       },
       refunded: {
-        color: 'bg-purple-500',
-        textColor: 'text-purple-700',
-        bgColor: 'bg-purple-100',
+        color: '#8B5CF6',
+        textColor: '#5B21B6',
+        bgColor: '#EDE9FE',
         icon: '↩️',
         label: 'Payment Refunded',
         description: 'Payment has been refunded to customer'
       },
       failed: {
-        color: 'bg-red-500',
-        textColor: 'text-red-700',
-        bgColor: 'bg-red-100',
+        color: '#EF4444',
+        textColor: '#991B1B',
+        bgColor: '#FEE2E2',
         icon: '⚠️',
         label: 'Payment Failed',
         description: 'Payment processing failed'
@@ -107,12 +109,11 @@ const PaymentStatusIndicator = ({ orderId, orderStatus, onStatusChange }) => {
     if (daysLeft === 1) return 'Expires tomorrow';
     return `Expires in ${daysLeft} days`;
   };
-
   if (loading) {
     return (
-      <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
-        <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-600"></div>
-        <span className="text-sm text-gray-600">Loading payment status...</span>
+      <div className="flex items-center space-x-2 p-3 rounded-lg" style={{ backgroundColor: theme.muted }}>
+        <div className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent" style={{ borderColor: `${theme.secondary} ${theme.secondary} transparent ${theme.secondary}` }}></div>
+        <span className="text-sm" style={{ color: theme.bodyText }}>Loading payment status...</span>
       </div>
     );
   }
@@ -133,11 +134,10 @@ const PaymentStatusIndicator = ({ orderId, orderStatus, onStatusChange }) => {
       </div>
     );
   }
-
   if (!paymentDetails) {
     return (
-      <div className="p-3 bg-gray-50 rounded-lg">
-        <span className="text-sm text-gray-600">No payment information available</span>
+      <div className="p-3 rounded-lg" style={{ backgroundColor: theme.muted }}>
+        <span className="text-sm" style={{ color: theme.bodyText }}>No payment information available</span>
       </div>
     );
   }
@@ -151,24 +151,34 @@ const PaymentStatusIndicator = ({ orderId, orderStatus, onStatusChange }) => {
       className="space-y-3"
     >
       {/* Main Status */}
-      <div className={`p-4 rounded-lg ${statusConfig.bgColor} border-2 border-transparent hover:border-gray-200 transition-colors`}>
+      <div className="p-4 rounded-lg border-2 border-transparent hover:border-opacity-30 transition-colors" 
+           style={{ 
+             backgroundColor: statusConfig.bgColor,
+             borderColor: 'transparent'
+           }}
+           onMouseEnter={(e) => e.target.style.borderColor = `${theme.secondary}50`}
+           onMouseLeave={(e) => e.target.style.borderColor = 'transparent'}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className={`w-8 h-8 rounded-full ${statusConfig.color} flex items-center justify-center text-white font-bold text-sm`}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm" 
+                 style={{ backgroundColor: statusConfig.color }}>
               {statusConfig.icon}
             </div>
             <div>
-              <h3 className={`font-semibold ${statusConfig.textColor}`}>
+              <h3 className="font-semibold" style={{ color: statusConfig.textColor }}>
                 {statusConfig.label}
               </h3>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm mt-1" style={{ color: theme.bodyText }}>
                 {statusConfig.description}
               </p>
             </div>
-          </div>
-          <button 
+          </div>          <button
             onClick={() => setRefreshKey(prev => prev + 1)}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="transition-colors"
+            style={{ color: theme.secondary }}
+            onMouseEnter={(e) => e.target.style.color = theme.accent}
+            onMouseLeave={(e) => e.target.style.color = theme.secondary}
             title="Refresh status"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,7 +189,7 @@ const PaymentStatusIndicator = ({ orderId, orderStatus, onStatusChange }) => {
       </div>
 
       {/* Payment Details */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+      <div className="bg-white border rounded-lg p-4 space-y-3" style={{ borderColor: theme.secondary }}>
         <h4 className="font-medium text-gray-800">Payment Details</h4>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">

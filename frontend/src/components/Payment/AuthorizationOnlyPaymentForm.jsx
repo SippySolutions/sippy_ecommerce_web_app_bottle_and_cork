@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import useOrderPaymentWorkflow from '../../hooks/useOrderPaymentWorkflow';
+import { useCMS } from '../../Context/CMSContext'; 
 
 const AuthorizationOnlyPaymentForm = ({ 
   onAuthorizationComplete, 
@@ -25,6 +26,8 @@ const AuthorizationOnlyPaymentForm = ({
   });
 
   const { authorizeOrderPayment, loading: paymentLoading, error: paymentError } = useOrderPaymentWorkflow();
+  const { getTheme } = useCMS();
+  const theme = getTheme();
   // Production mode detection
   const isProduction = import.meta.env.VITE_MODE === 'production';
   const isHttps = window.location.protocol === 'https:';
@@ -259,19 +262,18 @@ const AuthorizationOnlyPaymentForm = ({
   };
 
   const isFormDisabled = disabled || loading || paymentLoading || !acceptJSLoaded;
-
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Payment Authorization</h3>
-        <p className="text-sm text-blue-600 mt-1">
+        <h3 className="text-lg font-semibold" style={{ color: theme.headingText }}>Payment Authorization</h3>
+        <p className="text-sm mt-1" style={{ color: theme.accent }}>
           💡 We'll authorize your payment now and charge your card only when your order is ready for delivery
         </p>
       </div>
 
       {!acceptJSLoaded && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-          <p className="text-yellow-700 text-sm">Loading secure payment system...</p>
+        <div className="mb-4 p-3 rounded-md" style={{ backgroundColor: theme.muted, borderColor: theme.secondary, border: '1px solid' }}>
+          <p className="text-sm" style={{ color: theme.bodyText }}>Loading secure payment system...</p>
         </div>
       )}
 
@@ -281,17 +283,29 @@ const AuthorizationOnlyPaymentForm = ({
         </div>
       )}
 
-      <form onSubmit={handlePaymentSubmit} className="space-y-4">
-        {/* Cardholder Name */}
+      <form onSubmit={handlePaymentSubmit} className="space-y-4">        {/* Cardholder Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium mb-1" style={{ color: theme.bodyText }}>
             Cardholder Name *
           </label>
           <input
             type="text"
             value={formData.fullName}
             onChange={(e) => handleInputChange('fullName', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-3 border rounded-md focus:ring-2 focus:border-transparent"
+            style={{ 
+              borderColor: theme.secondary,
+              color: theme.bodyText,
+              backgroundColor: 'white'
+            }}
+            onFocus={(e) => {
+              e.target.style.boxShadow = `0 0 0 2px ${theme.accent}40`;
+              e.target.style.borderColor = theme.accent;
+            }}
+            onBlur={(e) => {
+              e.target.style.boxShadow = 'none';
+              e.target.style.borderColor = theme.secondary;
+            }}
             placeholder="John Doe"
             disabled={isFormDisabled}
             required
@@ -300,32 +314,56 @@ const AuthorizationOnlyPaymentForm = ({
 
         {/* Card Number */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium mb-1" style={{ color: theme.bodyText }}>
             Card Number *
           </label>
           <input
             type="text"
             value={formData.cardNumber}
             onChange={(e) => handleInputChange('cardNumber', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-3 border rounded-md focus:ring-2 focus:border-transparent"
+            style={{ 
+              borderColor: theme.secondary,
+              color: theme.bodyText,
+              backgroundColor: 'white'
+            }}
+            onFocus={(e) => {
+              e.target.style.boxShadow = `0 0 0 2px ${theme.accent}40`;
+              e.target.style.borderColor = theme.accent;
+            }}
+            onBlur={(e) => {
+              e.target.style.boxShadow = 'none';
+              e.target.style.borderColor = theme.secondary;
+            }}
             placeholder="1234 5678 9012 3456"
             disabled={isFormDisabled}
             maxLength="19"
             required
           />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
+        </div>        <div className="grid grid-cols-2 gap-4">
           {/* Expiration Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium mb-1" style={{ color: theme.bodyText }}>
               MM/YY *
             </label>
             <input
               type="text"
               value={formData.expirationDate}
               onChange={handleExpirationChange}
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-3 border rounded-md focus:ring-2 focus:border-transparent"
+              style={{ 
+                borderColor: theme.secondary,
+                color: theme.bodyText,
+                backgroundColor: 'white'
+              }}
+              onFocus={(e) => {
+                e.target.style.boxShadow = `0 0 0 2px ${theme.accent}40`;
+                e.target.style.borderColor = theme.accent;
+              }}
+              onBlur={(e) => {
+                e.target.style.boxShadow = 'none';
+                e.target.style.borderColor = theme.secondary;
+              }}
               placeholder="12/25"
               disabled={isFormDisabled}
               maxLength="5"
@@ -335,26 +373,37 @@ const AuthorizationOnlyPaymentForm = ({
 
           {/* Security Code */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium mb-1" style={{ color: theme.bodyText }}>
               CVV *
             </label>
             <input
               type="text"
               value={formData.securityCode}
               onChange={(e) => handleInputChange('securityCode', e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-3 border rounded-md focus:ring-2 focus:border-transparent"
+              style={{ 
+                borderColor: theme.secondary,
+                color: theme.bodyText,
+                backgroundColor: 'white'
+              }}
+              onFocus={(e) => {
+                e.target.style.boxShadow = `0 0 0 2px ${theme.accent}40`;
+                e.target.style.borderColor = theme.accent;
+              }}
+              onBlur={(e) => {
+                e.target.style.boxShadow = 'none';
+                e.target.style.borderColor = theme.secondary;
+              }}
               placeholder="123"
               disabled={isFormDisabled}
               maxLength="4"
               required
             />
           </div>
-        </div>
-
-        {/* Authorization Info */}
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-          <h4 className="font-medium text-blue-800 mb-2">Authorization Process</h4>
-          <ul className="text-sm text-blue-700 space-y-1">
+        </div>        {/* Authorization Info */}
+        <div className="border rounded-md p-4" style={{ backgroundColor: `${theme.accent}10`, borderColor: `${theme.accent}30` }}>
+          <h4 className="font-medium mb-2" style={{ color: theme.accent }}>Authorization Process</h4>
+          <ul className="text-sm space-y-1" style={{ color: theme.bodyText }}>
             <li>• We'll place a temporary hold on ${amount?.toFixed(2)} from your card</li>
             <li>• Your card will not be charged until your order is ready for delivery</li>
             <li>• You can cancel your order anytime before delivery without being charged</li>
@@ -366,11 +415,25 @@ const AuthorizationOnlyPaymentForm = ({
         <button
           type="submit"
           disabled={isFormDisabled}
-          className={`w-full py-3 px-4 rounded-md font-medium transition-colors ${
-            isFormDisabled
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
+          className="w-full py-3 px-4 rounded-md font-medium transition-all duration-200 hover:transform hover:scale-[1.02]"
+          style={{
+            backgroundColor: isFormDisabled ? theme.muted : theme.accent,
+            color: isFormDisabled ? theme.bodyText : 'white',
+            cursor: isFormDisabled ? 'not-allowed' : 'pointer',
+            opacity: isFormDisabled ? 0.6 : 1
+          }}
+          onMouseEnter={(e) => {
+            if (!isFormDisabled) {
+              e.target.style.backgroundColor = `${theme.accent}dd`;
+              e.target.style.boxShadow = `0 4px 12px ${theme.accent}30`;
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isFormDisabled) {
+              e.target.style.backgroundColor = theme.accent;
+              e.target.style.boxShadow = 'none';
+            }
+          }}
         >
           {loading || paymentLoading ? (
             <div className="flex items-center justify-center space-x-2">
@@ -381,10 +444,8 @@ const AuthorizationOnlyPaymentForm = ({
             buttonText
           )}
         </button>
-      </form>
-
-      {/* Security Notice */}
-      <div className="mt-4 text-xs text-gray-500 text-center">
+      </form>      {/* Security Notice */}
+      <div className="mt-4 text-xs text-center" style={{ color: theme.bodyText }}>
         🔒 Your payment information is encrypted and secure. We use Authorize.Net for payment processing.
       </div>
     </div>

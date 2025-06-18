@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import PaymentStatusIndicator from './PaymentStatusIndicator';
 import useOrderPaymentWorkflow from '../hooks/useOrderPaymentWorkflow';
+import { useCMS } from '../Context/CMSContext';
 
 const OrderPaymentManagement = ({ orderId, orderData, onPaymentUpdate, isStoreOwner = false }) => {
   const [order, setOrder] = useState(orderData);
@@ -10,6 +11,9 @@ const OrderPaymentManagement = ({ orderId, orderData, onPaymentUpdate, isStoreOw
   const [confirmAction, setConfirmAction] = useState(null);
   const [modificationAmount, setModificationAmount] = useState('');
   const [modificationReason, setModificationReason] = useState('');
+
+  const { getTheme } = useCMS();
+  const theme = getTheme();
 
   const {
     captureOrderPayment,
@@ -87,15 +91,16 @@ const OrderPaymentManagement = ({ orderId, orderData, onPaymentUpdate, isStoreOw
       return null;
     }
 
-    const buttons = [];
-
-    // Capture full payment
+    const buttons = [];    // Capture full payment
     if (paymentStatus === 'authorized' && orderStatus === 'completed') {
       buttons.push(
         <button
           key="capture"
           onClick={() => setConfirmAction('capture')}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+          className="px-4 py-2 rounded-md font-medium transition-all duration-200 text-white hover:transform hover:scale-105"
+          style={{ backgroundColor: '#10B981' }}
+          onMouseEnter={(e) => e.target.style.backgroundColor = '#059669'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = '#10B981'}
           disabled={loading}
         >
           💰 Capture Payment
@@ -109,7 +114,10 @@ const OrderPaymentManagement = ({ orderId, orderData, onPaymentUpdate, isStoreOw
         <button
           key="partial-capture"
           onClick={() => setConfirmAction('partial-capture')}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+          className="px-4 py-2 rounded-md font-medium transition-all duration-200 text-white hover:transform hover:scale-105"
+          style={{ backgroundColor: theme.primary }}
+          onMouseEnter={(e) => e.target.style.backgroundColor = `${theme.primary}dd`}
+          onMouseLeave={(e) => e.target.style.backgroundColor = theme.primary}
           disabled={loading}
         >
           ⚡ Partial Capture
@@ -123,7 +131,10 @@ const OrderPaymentManagement = ({ orderId, orderData, onPaymentUpdate, isStoreOw
         <button
           key="void"
           onClick={() => setConfirmAction('void')}
-          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+          className="px-4 py-2 rounded-md font-medium transition-all duration-200 text-white hover:transform hover:scale-105"
+          style={{ backgroundColor: '#EF4444' }}
+          onMouseEnter={(e) => e.target.style.backgroundColor = '#DC2626'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = '#EF4444'}
           disabled={loading}
         >
           ❌ Void Authorization
@@ -163,32 +174,42 @@ const OrderPaymentManagement = ({ orderId, orderData, onPaymentUpdate, isStoreOw
 
     const config = modalContent[confirmAction];
 
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    return (      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-white rounded-lg p-6 max-w-md w-full"
+          className="bg-white rounded-lg p-6 max-w-md w-full border"
+          style={{ borderColor: theme.secondary }}
         >
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
+          <h3 className="text-lg font-semibold mb-3" style={{ color: theme.headingText }}>
             {config.title}
           </h3>
           
-          <p className="text-gray-600 mb-4">
+          <p className="mb-4" style={{ color: theme.bodyText }}>
             {config.description}
-          </p>
-
-          {confirmAction === 'partial-capture' && (
+          </p>          {confirmAction === 'partial-capture' && (
             <div className="space-y-3 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium mb-1" style={{ color: theme.bodyText }}>
                   Capture Amount *
                 </label>
                 <input
                   type="number"
                   value={modificationAmount}
                   onChange={(e) => setModificationAmount(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:border-transparent"
+                  style={{ 
+                    borderColor: theme.secondary,
+                    color: theme.bodyText
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.boxShadow = `0 0 0 2px ${theme.accent}40`;
+                    e.target.style.borderColor = theme.accent;
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.boxShadow = 'none';
+                    e.target.style.borderColor = theme.secondary;
+                  }}
                   placeholder="0.00"
                   step="0.01"
                   min="0.01"
@@ -196,46 +217,83 @@ const OrderPaymentManagement = ({ orderId, orderData, onPaymentUpdate, isStoreOw
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium mb-1" style={{ color: theme.bodyText }}>
                   Reason for Partial Capture
                 </label>
                 <input
                   type="text"
                   value={modificationReason}
                   onChange={(e) => setModificationReason(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:border-transparent"
+                  style={{ 
+                    borderColor: theme.secondary,
+                    color: theme.bodyText
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.boxShadow = `0 0 0 2px ${theme.accent}40`;
+                    e.target.style.borderColor = theme.accent;
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.boxShadow = 'none';
+                    e.target.style.borderColor = theme.secondary;
+                  }}
                   placeholder="e.g., Item removed, discount applied"
                 />
               </div>
             </div>
-          )}
-
-          {confirmAction === 'void' && (
+          )}          {confirmAction === 'void' && (
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: theme.bodyText }}>
                 Reason for Void
               </label>
               <input
                 type="text"
                 value={modificationReason}
                 onChange={(e) => setModificationReason(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-2 border rounded-md focus:ring-2 focus:border-transparent"
+                style={{ 
+                  borderColor: theme.secondary,
+                  color: theme.bodyText
+                }}
+                onFocus={(e) => {
+                  e.target.style.boxShadow = `0 0 0 2px ${theme.accent}40`;
+                  e.target.style.borderColor = theme.accent;
+                }}
+                onBlur={(e) => {
+                  e.target.style.boxShadow = 'none';
+                  e.target.style.borderColor = theme.secondary;
+                }}
                 placeholder="e.g., Order cancelled, out of stock"
               />
             </div>
-          )}
-
-          <div className="flex space-x-3">
+          )}          <div className="flex space-x-3">
             <button
               onClick={() => setConfirmAction(null)}
-              className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md font-medium transition-colors"
+              className="flex-1 px-4 py-2 rounded-md font-medium transition-colors text-white"
+              style={{ backgroundColor: theme.secondary }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = `${theme.secondary}dd`}
+              onMouseLeave={(e) => e.target.style.backgroundColor = theme.secondary}
               disabled={loading}
             >
               Cancel
             </button>
             <button
               onClick={config.action}
-              className={`flex-1 text-white px-4 py-2 rounded-md font-medium transition-colors ${config.buttonClass}`}
+              className="flex-1 text-white px-4 py-2 rounded-md font-medium transition-colors"
+              style={{ 
+                backgroundColor: confirmAction === 'capture' ? '#10B981' : 
+                                confirmAction === 'partial-capture' ? theme.primary : '#EF4444'
+              }}
+              onMouseEnter={(e) => {
+                const color = confirmAction === 'capture' ? '#059669' : 
+                             confirmAction === 'partial-capture' ? `${theme.primary}dd` : '#DC2626';
+                e.target.style.backgroundColor = color;
+              }}
+              onMouseLeave={(e) => {
+                const color = confirmAction === 'capture' ? '#10B981' : 
+                             confirmAction === 'partial-capture' ? theme.primary : '#EF4444';
+                e.target.style.backgroundColor = color;
+              }}
               disabled={loading}
             >
               {loading ? (

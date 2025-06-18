@@ -95,8 +95,9 @@ const AddressForm = ({ address, onChange, title, type }) => (
 const Checkout = () => {
   const navigate = useNavigate();  const { cartItems, getTotalPrice, clearCart } = useContext(CartContext);
   const { user, isAuthenticated } = useContext(AuthContext);
-  const { cmsData } = useCMS();
+  const { cmsData, getTheme } = useCMS();
   const { getAgeVerificationStatus } = useAgeVerification();
+  const theme = getTheme();
   const [loading, setLoading] = useState(false);
   const [orderType, setOrderType] = useState('delivery');
   const [step, setStep] = useState(1); // 1: Addresses, 2: Payment, 3: Review
@@ -482,15 +483,15 @@ const Checkout = () => {
       <div className="container mx-auto px-4 max-w-6xl">
         {/* Progress Bar */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            {[1, 2, 3].map((stepNumber) => (
+          <div className="flex items-center justify-between mb-4">            {[1, 2, 3].map((stepNumber) => (
               <div
                 key={stepNumber}
                 className={`flex items-center justify-center w-10 h-10 rounded-full ${
                   step >= stepNumber
-                    ? 'bg-blue-600 text-white'
+                    ? 'text-white'
                     : 'bg-gray-300 text-gray-600'
                 }`}
+                style={step >= stepNumber ? { backgroundColor: theme.primary } : {}}
               >
                 {stepNumber}
               </div>
@@ -517,14 +518,14 @@ const Checkout = () => {
                 >                  {/* Order Type */}
                   <div className="bg-white p-6 rounded-lg shadow-md">
                     <h3 className="text-lg font-semibold mb-4">Order Type</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <button
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">                      <button
                         onClick={() => setOrderType('delivery')}
                         className={`px-6 py-3 rounded-md font-medium transition-colors ${
                           orderType === 'delivery'
-                            ? 'bg-blue-600 text-white'
+                            ? 'text-white'
                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                         }`}
+                        style={orderType === 'delivery' ? { backgroundColor: theme.primary } : {}}
                       >
                         🚚 Delivery
                         <div className="text-xs mt-1 opacity-75">ASAP delivery</div>
@@ -533,9 +534,10 @@ const Checkout = () => {
                         onClick={() => setOrderType('pickup')}
                         className={`px-6 py-3 rounded-md font-medium transition-colors ${
                           orderType === 'pickup'
-                            ? 'bg-blue-600 text-white'
+                            ? 'text-white'
                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                         }`}
+                        style={orderType === 'pickup' ? { backgroundColor: theme.primary } : {}}
                       >
                         🏪 Pickup
                         <div className="text-xs mt-1 opacity-75">In-store pickup</div>
@@ -840,55 +842,84 @@ const Checkout = () => {
                     <h3 className="text-lg font-semibold mb-4">Payment Method</h3>
                     
                     {isAuthenticated && user?.billing?.length > 0 && (
-                      <div className="mb-6">
-                        <div className="flex space-x-4 mb-4">
+                      <div className="mb-6">                        <div className="flex space-x-4 mb-4">
                           <button
                             onClick={() => setPaymentMethod('saved')}
-                            className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                              paymentMethod === 'saved'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
+                            className="px-4 py-2 rounded-md font-medium transition-all duration-200"
+                            style={{
+                              backgroundColor: paymentMethod === 'saved' ? theme.accent : theme.muted,
+                              color: paymentMethod === 'saved' ? 'white' : theme.bodyText
+                            }}
+                            onMouseEnter={(e) => {
+                              if (paymentMethod !== 'saved') {
+                                e.target.style.backgroundColor = `${theme.secondary}50`;
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (paymentMethod !== 'saved') {
+                                e.target.style.backgroundColor = theme.muted;
+                              }
+                            }}
                           >
                             Saved Cards
                           </button>
                           <button
                             onClick={() => setPaymentMethod('new')}
-                            className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                              paymentMethod === 'new'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
+                            className="px-4 py-2 rounded-md font-medium transition-all duration-200"
+                            style={{
+                              backgroundColor: paymentMethod === 'new' ? theme.accent : theme.muted,
+                              color: paymentMethod === 'new' ? 'white' : theme.bodyText
+                            }}
+                            onMouseEnter={(e) => {
+                              if (paymentMethod !== 'new') {
+                                e.target.style.backgroundColor = `${theme.secondary}50`;
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (paymentMethod !== 'new') {
+                                e.target.style.backgroundColor = theme.muted;
+                              }
+                            }}
                           >
                             New Card
                           </button>
-                        </div>                        {paymentMethod === 'saved' && (
+                        </div>{paymentMethod === 'saved' && (
                           <div className="space-y-3">
                             {user.billing && user.billing.length > 0 ? (
-                              user.billing.map((card) => (
-                                <div
+                              user.billing.map((card) => (                                <div
                                   key={card.id}
                                   onClick={() => setSelectedCard(card)}
-                                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                                    selectedCard?.id === card.id
-                                      ? 'border-blue-500 bg-blue-50'
-                                      : 'border-gray-300 hover:border-gray-400'
-                                  }`}
+                                  className="p-4 border rounded-lg cursor-pointer transition-all duration-200 hover:transform hover:scale-[1.02]"
+                                  style={{
+                                    borderColor: selectedCard?.id === card.id ? theme.accent : theme.secondary,
+                                    backgroundColor: selectedCard?.id === card.id ? `${theme.accent}10` : 'white'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (selectedCard?.id !== card.id) {
+                                      e.target.style.borderColor = `${theme.accent}50`;
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (selectedCard?.id !== card.id) {
+                                      e.target.style.borderColor = theme.secondary;
+                                    }
+                                  }}
                                 >
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-3">
-                                      <div className="w-12 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded flex items-center justify-center text-xs font-medium text-white">
+                                      <div className="w-12 h-8 rounded flex items-center justify-center text-xs font-medium text-white" 
+                                           style={{ background: `linear-gradient(135deg, ${theme.accent}, ${theme.primary})` }}>
                                         {card.cardType?.substring(0, 4) || 'CARD'}
                                       </div>
                                       <div>
-                                        <div className="font-medium">
+                                        <div className="font-medium" style={{ color: theme.headingText }}>
                                           {card.cardType || 'Card'} ending in {card.lastFour || '****'}
                                         </div>
-                                        <div className="text-sm text-gray-600">
+                                        <div className="text-sm" style={{ color: theme.bodyText }}>
                                           Expires {card.expiryMonth}/{card.expiryYear}
                                         </div>
                                         {card.billingAddress && (
-                                          <div className="text-xs text-gray-500">
+                                          <div className="text-xs" style={{ color: theme.bodyText }}>
                                             {card.billingAddress.city}, {card.billingAddress.state}
                                           </div>
                                         )}
@@ -896,12 +927,12 @@ const Checkout = () => {
                                     </div>
                                     <div className="flex items-center space-x-2">
                                       {card.isDefault && (
-                                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                        <span className="text-xs px-2 py-1 rounded-full text-white" style={{ backgroundColor: '#10B981' }}>
                                           Default
                                         </span>
                                       )}
                                       {selectedCard?.id === card.id && (
-                                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.accent }}>
                                           <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                           </svg>
@@ -1059,12 +1090,10 @@ const Checkout = () => {
                           <span>Total</span>
                           <span>${total.toFixed(2)}</span>
                         </div>
-                      </div>
-
-                      {/* Free Delivery Incentive */}
+                      </div>                      {/* Free Delivery Incentive */}
                       {orderType === 'delivery' && subtotal < deliveryMinimum && (
-                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <div className="flex items-center gap-2 text-blue-800">
+                        <div className="mt-4 p-3 rounded-lg border" style={{ backgroundColor: `${theme.accent}10`, borderColor: `${theme.accent}30` }}>
+                          <div className="flex items-center gap-2" style={{ color: theme.accent }}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
@@ -1076,15 +1105,33 @@ const Checkout = () => {
                       )}
                     </div>                    {/* Place Order Button */}
                     <div className="mt-6">
-                      {paymentMethod === 'saved' ? (                        <button
+                      {paymentMethod === 'saved' ? (
+                        <button
                           onClick={handleSavedCardPayment}
                           disabled={loading || !selectedCard}
-                          className="w-full bg-green-600 text-white py-3 px-6 rounded-md font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="w-full py-3 px-6 rounded-md font-semibold transition-all duration-200 text-white hover:transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ backgroundColor: loading ? theme.secondary : '#10B981' }}
+                          onMouseEnter={(e) => {
+                            if (!loading && selectedCard) {
+                              e.target.style.backgroundColor = '#059669';
+                              e.target.style.boxShadow = `0 4px 12px #10B98130`;
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!loading && selectedCard) {
+                              e.target.style.backgroundColor = '#10B981';
+                              e.target.style.boxShadow = 'none';
+                            }
+                          }}
                         >
                           {loading ? 'Authorizing Payment...' : `Authorize Payment - $${total.toFixed(2)}`}
                         </button>
                       ) : (
-                        <div className="text-center text-gray-600 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                        <div className="text-center p-4 rounded-md border" style={{ 
+                          color: theme.bodyText, 
+                          backgroundColor: `${theme.accent}10`, 
+                          borderColor: `${theme.accent}30` 
+                        }}>
                           <p className="text-sm">
                             💡 Complete the payment authorization form above to place your order. 
                             Your card will only be charged when your order is ready for delivery.
@@ -1095,21 +1142,43 @@ const Checkout = () => {
                   </div>
                 </motion.div>
               )}
-            </AnimatePresence>
-
-            {/* Navigation Buttons */}
+            </AnimatePresence>            {/* Navigation Buttons */}
             <div className="flex justify-between mt-8">
               <button
                 onClick={handlePrevStep}
                 disabled={step === 1}
-                className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 border rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:transform hover:scale-105"
+                style={{ 
+                  borderColor: theme.secondary,
+                  color: step === 1 ? theme.secondary : theme.bodyText,
+                  backgroundColor: 'white'
+                }}
+                onMouseEnter={(e) => {
+                  if (step !== 1) {
+                    e.target.style.backgroundColor = theme.muted;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (step !== 1) {
+                    e.target.style.backgroundColor = 'white';
+                  }
+                }}
               >
                 Previous
               </button>
               {step < 3 && (
                 <button
                   onClick={handleNextStep}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="px-6 py-2 rounded-md text-white font-medium transition-all duration-200 hover:transform hover:scale-105"
+                  style={{ backgroundColor: theme.accent }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = `${theme.accent}dd`;
+                    e.target.style.boxShadow = `0 4px 12px ${theme.accent}30`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = theme.accent;
+                    e.target.style.boxShadow = 'none';
+                  }}
                 >
                   Next
                 </button>
