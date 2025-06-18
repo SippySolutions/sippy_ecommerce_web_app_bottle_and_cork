@@ -22,6 +22,7 @@ import Profile from './components/Profile';
 import Checkout from './pages/Checkout.jsx';
 import Wishlist from './pages/Wishlist.jsx';
 import OrderTracking from './pages/OrderTracking.jsx';
+import NetworkStatus from './components/NetworkStatus.jsx';
 
 function AppContent() {
     const location = useLocation();
@@ -71,7 +72,8 @@ function AppContent() {
     if (!isVerified) {
         return <AgeVerification onVerified={handleVerified} onDenied={handleDenied}/>;
     }    // Show main app content if age verified
-    return (        <>
+    return (
+        <NetworkStatus>
             <Navbar />
             <main className="min-h-screen">
                 <AnimatePresence mode="wait">
@@ -194,11 +196,10 @@ function AppContent() {
                             }
                         />
                     </Routes>
-                </AnimatePresence>
-            </main>
+                </AnimatePresence>            </main>
             <Footer />
             <ToastContainer />
-        </>
+        </NetworkStatus>
     );
 }
 
@@ -209,7 +210,9 @@ function App() {
                 <CartProvider>
                     <WishlistProvider>
                         <AgeVerificationProvider>
-                            <AppContent />
+                            <NetworkStatus>
+                                <AppContent />
+                            </NetworkStatus>
                         </AgeVerificationProvider>
                     </WishlistProvider>
                 </CartProvider>
