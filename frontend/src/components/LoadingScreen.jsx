@@ -123,20 +123,15 @@ const LoadingScreen = ({ onLoadingComplete, cmsData = null, serverHealthCheck = 
 
   return (
     <AnimatePresence>
-      {isVisible && (        <motion.div
+      {isVisible && (
+        <motion.div
           className="fixed inset-0 z-50 flex items-center justify-center bg-white"
           variants={containerVariants}
           initial="initial"
           animate="animate"
           exit="exit"
         >
-          {/* Subtle background pattern */}
-          <div className="absolute inset-0 opacity-5">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `radial-gradient(circle at 50% 50%, #e5e7eb 1px, transparent 1px)`,
-              backgroundSize: '30px 30px'
-            }} />
-          </div>
+          {/* Removed subtle background pattern for solid white background */}
 
           <div className="relative z-10 text-center px-6 max-w-sm w-full">
             {/* Minimalistic Store Logo */}
@@ -213,7 +208,8 @@ const LoadingScreen = ({ onLoadingComplete, cmsData = null, serverHealthCheck = 
                   }}
                 />
               ))}
-            </div>            {/* Customer-friendly status indicator */}
+            </div>
+            {/* Customer-friendly status indicator */}
             {serverStatus === 'error' ? (
               <motion.div
                 className="mt-4 text-center"
