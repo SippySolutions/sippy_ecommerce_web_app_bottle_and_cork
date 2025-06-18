@@ -2,18 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const LoadingScreen = ({ onLoadingComplete, cmsData = null, serverHealthCheck = null, error = null }) => {
-  const [progress, setProgress] = useState(0);
-  const [loadingText, setLoadingText] = useState('Initializing...');
+  const [progress, setProgress] = useState(0);  const [loadingText, setLoadingText] = useState('Loading...');
   const [isVisible, setIsVisible] = useState(true);
   const [serverStatus, setServerStatus] = useState('connecting');
   const [retryCount, setRetryCount] = useState(0);
 
-  // Loading phases with different messages
+  // Faster loading phases - minimal and customer-focused
   const loadingPhases = [
-    { progress: 20, text: 'Connecting to server...' },
-    { progress: 40, text: 'Loading store data...' },
-    { progress: 60, text: 'Preparing your experience...' },
-    { progress: 80, text: 'Almost ready...' },
+    { progress: 30, text: 'Opening store...' },
+    { progress: 60, text: 'Preparing products...' },
+    { progress: 90, text: 'Almost ready...' },
     { progress: 100, text: 'Welcome!' }
   ];
   useEffect(() => {
@@ -57,34 +55,32 @@ const LoadingScreen = ({ onLoadingComplete, cmsData = null, serverHealthCheck = 
       const updateProgress = () => {
         if (currentPhase < loadingPhases.length) {
           const phase = loadingPhases[currentPhase];
-          
-          // Smoothly animate to next progress point
+            // Smoothly animate to next progress point
           progressInterval = setInterval(() => {
             setProgress(prev => {
               if (prev >= phase.progress) {
                 clearInterval(progressInterval);
                 return phase.progress;
               }
-              return prev + 2;
+              return prev + 3;
             });
-          }, 50);
+          }, 30);
 
           // Update loading text
           setLoadingText(phase.text);
 
-          // Move to next phase after a delay
+          // Move to next phase after a shorter delay
           phaseTimeout = setTimeout(() => {
             currentPhase++;
             updateProgress();
-          }, 1500 + Math.random() * 1000); // Random delay between 1.5-2.5s
-        } else {
-          // Loading complete
+          }, 600 + Math.random() * 400); // Random delay between 0.6-1s        } else {
+          // Loading complete - faster completion
           setTimeout(() => {
             setIsVisible(false);
             setTimeout(() => {
               onLoadingComplete();
-            }, 500);
-          }, 800);
+            }, 200);
+          }, 300);
         }
       };
 
@@ -97,26 +93,25 @@ const LoadingScreen = ({ onLoadingComplete, cmsData = null, serverHealthCheck = 
       };
     }
   }, [onLoadingComplete, serverHealthCheck, error, retryCount]);
-
   const containerVariants = {
     initial: { opacity: 0 },
-    animate: { opacity: 1 },
+    animate: { opacity: 1, transition: { duration: 0.3 } },
     exit: { 
       opacity: 0,
-      scale: 0.95,
-      transition: { duration: 0.5 }
+      transition: { duration: 0.3 }
     }
   };
 
   const logoVariants = {
-    initial: { scale: 0.5, opacity: 0 },
+    initial: { scale: 0.8, opacity: 0 },
     animate: { 
       scale: 1, 
       opacity: 1,
       transition: {
         type: "spring",
-        stiffness: 200,
-        damping: 20
+        stiffness: 300,
+        damping: 25,
+        duration: 0.4
       }
     }
   };
@@ -128,31 +123,25 @@ const LoadingScreen = ({ onLoadingComplete, cmsData = null, serverHealthCheck = 
 
   return (
     <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            backdropFilter: 'blur(10px)'
-          }}
+      {isVisible && (        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-white"
           variants={containerVariants}
           initial="initial"
           animate="animate"
           exit="exit"
         >
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
+          {/* Subtle background pattern */}
+          <div className="absolute inset-0 opacity-5">
             <div className="absolute inset-0" style={{
-              backgroundImage: `radial-gradient(circle at 25% 25%, white 2px, transparent 2px),
-                               radial-gradient(circle at 75% 75%, white 2px, transparent 2px)`,
-              backgroundSize: '50px 50px'
+              backgroundImage: `radial-gradient(circle at 50% 50%, #e5e7eb 1px, transparent 1px)`,
+              backgroundSize: '30px 30px'
             }} />
           </div>
 
-          <div className="relative z-10 text-center px-6 max-w-md w-full">
-            {/* Store Logo */}
+          <div className="relative z-10 text-center px-6 max-w-sm w-full">
+            {/* Minimalistic Store Logo */}
             <motion.div
-              className="mb-8"
+              className="mb-6"
               variants={logoVariants}
               initial="initial"
               animate="animate"
@@ -160,24 +149,24 @@ const LoadingScreen = ({ onLoadingComplete, cmsData = null, serverHealthCheck = 
               {cmsData?.logo ? (
                 <img
                   src={cmsData.logo}
-                  alt="Store Logo"
-                  className="h-24 w-auto mx-auto drop-shadow-2xl"
-                  style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))' }}
+                  alt={cmsData?.storeInfo?.name || "Store Logo"}
+                  className="h-16 w-auto mx-auto"
+                  style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.1))' }}
                 />
               ) : (
-                <div className="h-24 w-24 mx-auto bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                  <div className="text-4xl font-bold text-white">🏪</div>
+                <div className="h-16 w-16 mx-auto bg-gray-100 rounded-lg flex items-center justify-center">
+                  <div className="text-2xl text-gray-600">🏪</div>
                 </div>
               )}
             </motion.div>
 
-            {/* Store Name */}
+            {/* Store Name - Only if available */}
             {cmsData?.storeInfo?.name && (
               <motion.h1
-                className="text-2xl font-bold text-white mb-2 drop-shadow-lg"
-                initial={{ opacity: 0, y: 20 }}
+                className="text-xl font-semibold text-gray-800 mb-4"
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.2 }}
               >
                 {cmsData.storeInfo.name}
               </motion.h1>
@@ -185,113 +174,84 @@ const LoadingScreen = ({ onLoadingComplete, cmsData = null, serverHealthCheck = 
 
             {/* Loading Text */}
             <motion.p
-              className="text-white/90 text-lg mb-8 font-medium"
+              className="text-gray-600 text-sm mb-6 font-medium"
               key={loadingText}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
               {loadingText}
             </motion.p>
 
-            {/* Progress Bar Container */}
-            <div className="relative">
-              {/* Background Bar */}
-              <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
-                {/* Progress Fill */}
+            {/* Simple Progress Bar */}
+            <div className="relative mb-4">
+              <div className="w-full h-1 bg-gray-200 rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full rounded-full"
-                  style={{
-                    background: 'linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3)',
-                    backgroundSize: '200% 100%'
-                  }}
+                  className="h-full bg-gray-800 rounded-full"
                   variants={progressBarVariants}
                   initial="initial"
                   animate="animate"
-                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
                 />
               </div>
-
-              {/* Progress Percentage */}
-              <motion.div
-                className="mt-3 text-white/80 text-sm font-semibold"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                {progress}%
-              </motion.div>
             </div>
 
-            {/* Animated Loading Dots */}
-            <div className="flex justify-center space-x-2 mt-6">
+            {/* Simple loading dots */}
+            <div className="flex justify-center space-x-1">
               {[0, 1, 2].map((i) => (
                 <motion.div
                   key={i}
-                  className="w-2 h-2 bg-white/60 rounded-full"
+                  className="w-1.5 h-1.5 bg-gray-400 rounded-full"
                   animate={{
-                    scale: [1, 1.5, 1],
+                    scale: [1, 1.2, 1],
                     opacity: [0.5, 1, 0.5]
                   }}
                   transition={{
-                    duration: 1.5,
+                    duration: 1,
                     repeat: Infinity,
                     delay: i * 0.2
                   }}
                 />
               ))}
-            </div>            {/* Server Status Indicator */}
-            <motion.div
-              className="mt-6 text-xs text-white/70"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-            >
-              {serverStatus === 'error' ? (
-                <div className="text-center">
-                  <span className="flex items-center justify-center space-x-2 text-red-300 mb-3">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                    </svg>
-                    <span>Server connection failed</span>
-                  </span>
-                  {retryCount < 3 && (
-                    <div className="text-yellow-300 text-xs mb-2">
-                      Retrying... ({retryCount + 1}/3)
-                    </div>
-                  )}
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-white text-sm transition-colors backdrop-blur-sm border border-white/30"
-                  >
-                    Refresh Page
-                  </button>
-                  <div className="mt-2 text-xs text-white/50">
-                    Free tier servers may take time to start up
-                  </div>
+            </div>            {/* Customer-friendly status indicator */}
+            {serverStatus === 'error' ? (
+              <motion.div
+                className="mt-4 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <div className="text-red-500 text-sm mb-3 flex items-center justify-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Having trouble connecting</span>
                 </div>
-              ) : serverStatus === 'connecting' ? (
-                <span className="flex items-center justify-center space-x-2">
-                  <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-                  <span>Waking up server...</span>
-                </span>
-              ) : progress < 40 ? (
-                <span className="flex items-center justify-center space-x-2">
-                  <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-                  <span>Server starting...</span>
-                </span>
-              ) : progress < 80 ? (
-                <span className="flex items-center justify-center space-x-2">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                  <span>Server responding...</span>
-                </span>
-              ) : (
-                <span className="flex items-center justify-center space-x-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full" />
-                  <span>Ready to serve!</span>
-                </span>
-              )}
-            </motion.div>
+                {retryCount < 3 && (
+                  <div className="text-gray-500 text-xs mb-3">
+                    Retrying... ({retryCount + 1}/3)
+                  </div>
+                )}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => window.location.reload()}
+                  className="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors"
+                >
+                  Retry
+                </motion.button>
+                <div className="mt-2 text-xs text-gray-500">
+                  Store may be starting up
+                </div>
+              </motion.div>
+            ) : (
+              <div className="mt-4">
+                {progress < 100 && (
+                  <div className="text-xs text-gray-500">
+                    {cmsData?.storeInfo?.tagline || 'Getting everything ready for you...'}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </motion.div>
       )}

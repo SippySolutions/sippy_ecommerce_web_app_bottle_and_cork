@@ -15,11 +15,16 @@ const AllProducts = () => {
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState(null);
   const [suggestions, setSuggestions] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortOption, setSortOption] = useState('default');
+  const [currentPage, setCurrentPage] = useState(1);  const [sortOption, setSortOption] = useState('default');
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [departmentsData, setDepartmentsData] = useState([]);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  
+  // Advanced filter states
+  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [stockFilter, setStockFilter] = useState('all'); // all, inStock, lowStock
+  const [quickSearchQuery, setQuickSearchQuery] = useState('');
   const query = searchParams.get('q') || '';
   const department = searchParams.get('department') || '';
   const category = searchParams.get('category') || '';
@@ -41,7 +46,6 @@ const AllProducts = () => {
     };
     loadDepartments();
   }, []);
-
   useEffect(() => {
     // Determine if we're in search mode or showing all products
     const hasSearchParams = query || department || category || subcategory;
@@ -54,29 +58,30 @@ const AllProducts = () => {
     }
     // Reset page when search parameters change
     setCurrentPage(1);
-  }, [query, department, category, subcategory, sortOption]);
-
+  }, [query, department, category, subcategory, sortOption, priceRange, stockFilter, quickSearchQuery]);
   const loadAllProducts = async (page = 1) => {
     try {
       setLoading(true);
       const productList = await fetchProducts();
       
+      // Apply advanced filters first
+      let filteredProducts = applyAdvancedFilters(productList);
+      
       // Apply sorting
-      let sortedProducts = [...productList];
-      applySorting(sortedProducts);
+      applySorting(filteredProducts);
       
       // Manual pagination for all products
       const limit = 20;
       const startIndex = (page - 1) * limit;
       const endIndex = startIndex + limit;
-      const paginatedProducts = sortedProducts.slice(startIndex, endIndex);
+      const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
       
       setProducts(paginatedProducts);
       setPagination({
         page,
         limit,
-        total: sortedProducts.length,
-        totalPages: Math.ceil(sortedProducts.length / limit)
+        total: filteredProducts.length,
+        totalPages: Math.ceil(filteredProducts.length / limit)
       });
       setSuggestions(null);
     } catch (error) {
@@ -118,7 +123,6 @@ const AllProducts = () => {
       setLoading(false);
     }
   };
-
   const applySorting = (productList) => {
     switch (sortOption) {
       case 'price-asc':
@@ -136,10 +140,60 @@ const AllProducts = () => {
       case 'newest':
         productList.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         break;
+      case 'popularity':
+        productList.sort((a, b) => (b.purchaseCount || 0) - (a.purchaseCount || 0));
+        break;
+      case 'rating':
+        productList.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
       default:
         // Keep original order
         break;
     }
+  };
+
+  // Advanced filtering function
+  const applyAdvancedFilters = (productList) => {
+    let filtered = [...productList];
+
+    // Price range filter
+    if (priceRange.min !== '' || priceRange.max !== '') {
+      filtered = filtered.filter(product => {
+        const price = product.price;
+        const min = priceRange.min !== '' ? parseFloat(priceRange.min) : 0;
+        const max = priceRange.max !== '' ? parseFloat(priceRange.max) : Infinity;
+        return price >= min && price <= max;
+      });
+    }
+
+    // Stock filter
+    if (stockFilter !== 'all') {
+      filtered = filtered.filter(product => {
+        const stock = product.stock || 0;
+        switch (stockFilter) {
+          case 'inStock':
+            return stock > 0;
+          case 'lowStock':
+            return stock > 0 && stock <= 10;
+          case 'outOfStock':
+            return stock === 0;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Quick search within results
+    if (quickSearchQuery) {
+      const searchTerm = quickSearchQuery.toLowerCase();
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchTerm) ||
+        product.description?.toLowerCase().includes(searchTerm) ||
+        product.brand?.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    return filtered;
   };
 
   const handlePageChange = (page) => {
@@ -251,20 +305,38 @@ const AllProducts = () => {
       });
     });
     return Array.from(subcategories);
-  };
-  // Loading state
+  };  // Enhanced Loading state
   if (loading && products.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+      <div className="min-h-screen bg-white">
         <div className="container mx-auto px-4 py-8">
-          {/* Loading */}
+          {/* Minimalistic Loading Screen */}
           <div className="flex flex-col justify-center items-center py-20">
-            <div 
-              className="animate-spin rounded-full h-16 w-16 border-b-4 mb-6"
-              style={{ borderColor: theme.accent }}
-            ></div>
-            <p className="text-heading-text text-xl font-medium">Loading products...</p>
-            <p className="text-body-text text-sm mt-2">Please wait while we fetch the latest inventory</p>
+            {/* Simple spinner */}
+            <div className="relative mb-6">
+              <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-gray-800"></div>
+            </div>
+            
+            {/* Clean loading text */}
+            <div className="text-center space-y-2">
+              <h2 className="text-gray-800 text-lg font-medium">
+                {isSearchMode ? 'Searching products...' : 'Loading products...'}
+              </h2>
+              <p className="text-gray-500 text-sm max-w-md mx-auto">
+                {query ? `Finding "${query}"` : 'Getting the latest products ready for you'}
+              </p>
+              
+              {/* Simple dots */}
+              <div className="flex justify-center space-x-1 mt-4">
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-pulse"
+                    style={{ animationDelay: `${i * 0.2}s` }}
+                  ></div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -370,8 +442,7 @@ const AllProducts = () => {
                     className="text-sm font-medium hidden sm:block text-gray-700"
                   >
                     Sort:
-                  </label>
-                  <select
+                  </label>                  <select
                     value={sortOption}
                     onChange={(e) => handleSortChange(e.target.value)}
                     className="border rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 bg-white shadow-sm transition-all duration-200 min-w-[160px]"
@@ -386,12 +457,129 @@ const AllProducts = () => {
                     <option value="price-asc">Price (Low to High)</option>
                     <option value="price-desc">Price (High to Low)</option>
                     <option value="newest">Newest First</option>
+                    <option value="popularity">Most Popular</option>
+                    <option value="rating">Highest Rated</option>
                   </select>
                 </div>
               </div>
+
+              {/* Advanced Filters Toggle */}
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  className="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm border"
+                  style={{ 
+                    backgroundColor: showAdvancedFilters ? theme.accent : 'white',
+                    color: showAdvancedFilters ? 'white' : theme.accent,
+                    borderColor: theme.accent
+                  }}
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                  </svg>
+                  Advanced Filters
+                </button>
+              </div>
             </div>
+
+            {/* Advanced Filters Panel */}
+            {showAdvancedFilters && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Quick Search */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Quick Search
+                    </label>
+                    <input
+                      type="text"
+                      value={quickSearchQuery}
+                      onChange={(e) => setQuickSearchQuery(e.target.value)}
+                      placeholder="Search in results..."
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2"
+                      style={{ 
+                        borderColor: theme.muted,
+                        focusRingColor: `${theme.accent}40`
+                      }}
+                    />
+                  </div>
+
+                  {/* Price Range */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Price Range
+                    </label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="number"
+                        value={priceRange.min}
+                        onChange={(e) => setPriceRange({...priceRange, min: e.target.value})}
+                        placeholder="Min"
+                        className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2"
+                        style={{ 
+                          borderColor: theme.muted,
+                          focusRingColor: `${theme.accent}40`
+                        }}
+                      />
+                      <input
+                        type="number"
+                        value={priceRange.max}
+                        onChange={(e) => setPriceRange({...priceRange, max: e.target.value})}
+                        placeholder="Max"
+                        className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2"
+                        style={{ 
+                          borderColor: theme.muted,
+                          focusRingColor: `${theme.accent}40`
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Stock Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Stock Status
+                    </label>
+                    <select
+                      value={stockFilter}
+                      onChange={(e) => setStockFilter(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2"
+                      style={{ 
+                        borderColor: theme.muted,
+                        focusRingColor: `${theme.accent}40`
+                      }}
+                    >
+                      <option value="all">All Products</option>
+                      <option value="inStock">In Stock</option>
+                      <option value="lowStock">Low Stock</option>
+                      <option value="outOfStock">Out of Stock</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Filter Actions */}
+                <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+                  <div className="text-sm text-gray-600">
+                    {products.length} products found
+                  </div>
+                  <div className="flex space-x-2">                    <button
+                      onClick={() => {
+                        setPriceRange({ min: '', max: '' });
+                        setStockFilter('all');
+                        setQuickSearchQuery('');
+                      }}
+                      className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </div><div className="flex flex-col lg:flex-row gap-8">          {/* Mobile Filter Overlay */}
+        </div>
+        
+        <div className="flex flex-col lg:flex-row gap-8">{/* Mobile Filter Overlay */}
           {isMobileFiltersOpen && (
             <div className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={() => setIsMobileFiltersOpen(false)}>
               <div 
