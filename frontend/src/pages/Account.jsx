@@ -4,6 +4,7 @@ import LoginForm from '../components/LoginForm';
 import SignupForm from '../components/SignupForm';
 import Profile from '../components/Profile'; // Import Profile component
 import { AuthContext } from '../components/AuthContext'; // Import AuthContext as named export
+import InlineLoader from '../components/InlineLoader'; // Import branded loader
 
 const Account = () => {
     const context = useContext(AuthContext);
@@ -53,16 +54,14 @@ const Account = () => {
     const handleLoginSuccess = (userData, token) => {
         login(userData, token); // Call login function from AuthContext
         setIsLoading(false);
-    };
-
-    // Show loading state while checking authentication
+    };    // Show loading state while checking authentication
     if (isLoading) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-gray-100">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading...</p>
-                </div>
+                <InlineLoader 
+                  text="Loading..." 
+                  size="large"
+                />
             </div>
         );
     }return (

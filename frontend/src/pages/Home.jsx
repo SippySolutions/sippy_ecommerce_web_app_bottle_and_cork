@@ -8,23 +8,18 @@ import StaffPick from "../components/StaffPick";
 import PromoBanner from "../components/PromoBanner";
 import { useCMS } from "../Context/CMSContext";
 
-function Home() {
-  const { 
+function Home() {  const { 
     getHeroSection, 
     getBanner, 
     getBrandBanner, 
     getCategories,
+    getTheme,
     loading 
   } = useCMS();
+    const theme = getTheme();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }  return (
-    <>
+  return (
+    <div className="min-h-screen bg-gray-50" style={{ backgroundColor: theme.muted || '#F5F5F5' }}>
       {/* Mobile-optimized promo banner */}
       <div className="block md:hidden relative z-0">
         <PromoBanner type="carousel" />
@@ -44,10 +39,9 @@ function Home() {
        <PromoBanner type="carousel" />
       <StaffPick />
       <div className="container mx-auto px-4">
-      
-      </div>
+        </div>
       <BrandBanner brands={getBrandBanner()} />
-    </>
+    </div>
   );
 }
 

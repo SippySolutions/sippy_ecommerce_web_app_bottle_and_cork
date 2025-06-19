@@ -7,6 +7,7 @@ import MasterCard from "../assets/Master.png";
 import Amex from "../assets/Amex.png";
 import Discover from "../assets/Discover.png";
 import { fetchCMSData } from "../services/api"; // <-- Import from api.jsx
+import InlineLoader from "./InlineLoader"; // Import branded loader
 
 function Footer() {
   const [cmsData, setCmsData] = useState(null);
@@ -25,9 +26,15 @@ function Footer() {
 
     getCMSData();
   }, []);
-
   if (!cmsData) {
-    return <div>Loading...</div>;
+    return (
+      <div className="bg-gray-100 p-8 text-center">
+        <InlineLoader 
+          text="Loading footer..." 
+          size="small"
+        />
+      </div>
+    );
   }
 
   const { storeInfo, logo } = cmsData;

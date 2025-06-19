@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import ProductCard from './ProductCard';
 import { fetchfeturedProducts } from '../services/api';
 import { motion } from 'framer-motion';
+import InlineLoader from './InlineLoader'; // Import branded loader
 
 function Exclusive() {
   const [products, setProducts] = useState([]);
@@ -26,9 +27,15 @@ function Exclusive() {
 
     fetchExclusives();
   }, []);
-
   if (loading) {
-    return <div className="text-center py-12">Loading...</div>;
+    return (
+      <div className="text-center py-12">
+        <InlineLoader 
+          text="Loading exclusive products..." 
+          size="medium"
+        />
+      </div>
+    );
   }
 
   if (error) {

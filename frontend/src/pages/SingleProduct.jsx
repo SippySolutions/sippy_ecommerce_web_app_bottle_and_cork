@@ -6,6 +6,7 @@ import { useCMS } from '../Context/CMSContext';
 import SimilarProducts from '../components/SimilarProducts';
 import PromoBanner from '../components/PromoBanner';
 import { toast } from 'react-toastify';
+import InlineLoader from '../components/InlineLoader'; // Import branded loader
 
 function SingleProduct() {
   const { id } = useParams();
@@ -83,14 +84,13 @@ function SingleProduct() {
     }
     return 0;
   };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: theme.primary }}></div>
-          <p className="text-gray-600">Loading product details...</p>
-        </div>
+        <InlineLoader 
+          text="Loading product details..." 
+          size="large"
+        />
       </div>
     );
   }
@@ -265,8 +265,7 @@ function SingleProduct() {
                     </span>
                     <span className="text-sm sm:text-base text-gray-500 line-through">
                       {formatPrice(product.price)}
-                    </span>
-                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold">
+                    </span>                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold">
                       Save {formatPrice(product.price - product.saleprice)}
                     </span>
                   </div>

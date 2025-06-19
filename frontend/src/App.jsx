@@ -24,42 +24,38 @@ import OrderTracking from './pages/OrderTracking.jsx';
 import NetworkStatus from './components/NetworkStatus.jsx';
 import StatusBarManager from './components/StatusBarManager.jsx';
 import BottomNavigation from './components/BottomNavigation.jsx';
+import InlineLoader from './components/InlineLoader.jsx';
 
 function AppContent() {
     const location = useLocation();
-    const {isVerified, isDenied, isLoading, handleVerified, handleDenied} = useAgeVerification();
-
-    // Animation variants for route transitions
+    const {isVerified, isDenied, isLoading, handleVerified, handleDenied} = useAgeVerification();    // Animation variants for route transitions - Faster animations
     const pageVariants = {
         initial: {
             opacity: 0,
-            y: 20
+            y: 10
         },
         animate: {
             opacity: 1,
             y: 0,
             transition: {
-                duration: 0.3
+                duration: 0.15
             }
         },
         exit: {
             opacity: 0,
-            y: -20,
+            y: -10,
             transition: {
-                duration: 0.3
+                duration: 0.15
             }
         }
-    };
-
-    // Show loading state
+    };    // Show loading state - Use branded loading
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-100">
-                <div className="text-center">
-                    <div
-                        className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading...</p>
-                </div>
+            <div className="min-h-screen flex items-center justify-center bg-white">
+                <InlineLoader 
+                    text="Initializing Universal Liquors..." 
+                    size="lg"
+                />
             </div>
         );
     }

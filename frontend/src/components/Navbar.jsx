@@ -6,6 +6,7 @@ import { useCart } from '../Context/CartContext'; // Import CartContext
 import { useWishlist } from '../Context/WishlistContext'; // Import WishlistContext
 import { useCMS } from '../Context/CMSContext'; // Import CMS Context
 import SearchBar from './SearchBar'; // Import SearchBar component
+import InlineLoader from './InlineLoader'; // Import branded loader
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -293,10 +294,13 @@ function Navbar() {
                     }}
                   >
                     {department.department.charAt(0).toUpperCase() + department.department.slice(1).toLowerCase()}
-                  </button>
-                )) : (
-                  <div className="col-span-2 text-center text-gray-500 py-4">
-                    Loading departments...
+                  </button>                )) : (
+                  <div className="col-span-2 py-4">
+                    <InlineLoader 
+                      size="small" 
+                      text="Loading departments..." 
+                      className="justify-center"
+                    />
                   </div>
                 )}
               </div>
@@ -365,16 +369,15 @@ function Navbar() {
                     className="flex items-center text-gray-700 hover:text-[var(--color-accent)] font-bold transition-colors duration-200 px-4 py-2 rounded-md hover:bg-gray-100"
                   >
                
-                    All Products
-                  </Link>
+                    All Products                  </Link>
                 </motion.div>
                 
                 {departmentsLoading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-                    <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-                    <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-                  </div>
+                  <InlineLoader 
+                    size="small" 
+                    text="Loading departments..." 
+                    className="flex items-center space-x-2"
+                  />
                 ) : safeDepartments && safeDepartments.length > 0 ? (
                   <AnimatePresence>
                     {safeDepartments.map((department, deptIndex) => (
@@ -507,14 +510,13 @@ function Navbar() {
                 className="flex items-center space-x-1"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-              >
+                transition={{ duration: 0.3, delay: 0.1 }}              >
                 {departmentsLoading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-                    <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-                    <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-                  </div>
+                  <InlineLoader 
+                    size="small" 
+                    text="Loading departments..." 
+                    className="flex items-center space-x-2"
+                  />
                 ) : safeDepartments && safeDepartments.length > 0 ? (
                   <>
                     {safeDepartments.slice(0, 6).map((department, deptIndex) => (

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { useCMS } from '../Context/CMSContext';
 import { fetchOrderById } from '../services/api';
+import InlineLoader from '../components/InlineLoader'; // Import branded loader
 
 const OrderTracking = () => {
   const { orderId } = useParams();
@@ -117,17 +118,13 @@ const OrderTracking = () => {
       minute: '2-digit'
     });
   };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div 
-            className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
-            style={{ borderColor: theme.accent }}
-          />
-          <p className="text-gray-600">Loading order details...</p>
-        </div>
+        <InlineLoader 
+          text="Loading order details..." 
+          size="large"
+        />
       </div>
     );
   }

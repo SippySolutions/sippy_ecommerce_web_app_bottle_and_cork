@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion'; // Import framer-motion
 import ProductCard from './ProductCard'; // Import the ProductCard component
 import { fetchfeturedProducts } from '../services/api'; // Import the API function
+import InlineLoader from './InlineLoader'; // Import branded loader
 
 function BestSellers() {
   const [products, setProducts] = useState([]);
@@ -24,9 +25,15 @@ function BestSellers() {
 
     fetchBestSellers();
   }, []);
-
   if (loading) {
-    return <div className="text-center py-12">Loading...</div>;
+    return (
+      <div className="text-center py-12">
+        <InlineLoader 
+          text="Loading best sellers..." 
+          size="medium"
+        />
+      </div>
+    );
   }
 
   if (error) {
