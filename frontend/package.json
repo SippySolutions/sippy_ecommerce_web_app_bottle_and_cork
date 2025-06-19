@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --port 3003",
     "dev:https": "vite --port 3003 --https",
-    "dev:http": "vite --port 3003",    "build": "vite build",
+    "dev:http": "vite --port 3003",
+    "build": "vite build",
     "build:mobile": "vite build --config vite.config.mobile.js --mode production",
     "build:mobile-dev": "vite build --config vite.config.mobile.js --mode development",
     "lint": "eslint .",
@@ -28,7 +29,8 @@
     "ios:release": "npm run cap:build && cd ios && xcodebuild archive -workspace App.xcworkspace -scheme App -archivePath ./build/App.xcarchive",
     "mobile:setup": "npx cap add android && npx cap add ios && npm run cap:sync",
     "mobile:clean": "npx cap sync --clean"
-  },  "dependencies": {
+  },
+  "dependencies": {
     "@capacitor/android": "^7.3.0",
     "@capacitor/app": "^7.0.1",
     "@capacitor/cli": "^7.3.0",

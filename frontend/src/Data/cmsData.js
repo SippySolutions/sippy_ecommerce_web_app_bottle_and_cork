@@ -1,13 +1,13 @@
-// Default CMS Data - fallback values
+// Default CMS Data - fallback values (Light Theme)
 const defaultCmsData = {
   theme: {
     primary: '#1E1E1E',
     secondary: '#373737',
     accent: '#FF5722',
-    muted: '#F2F2F2',
-    background: '#121212',
-    headingText: '#FFFFFF',
-    bodyText: '#CCCCCC',
+    muted: '#F5F5F5',
+    background: '#FFFFFF',
+    headingText: '#1E1E1E',
+    bodyText: '#374151',
     linkText: '#FF5722',
   },
   storeInfo: {

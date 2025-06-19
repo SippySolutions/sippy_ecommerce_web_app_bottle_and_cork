@@ -10,6 +10,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import MenuIcon from '@mui/icons-material/Menu';
+import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import HomeIcon from '@mui/icons-material/Home';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
@@ -164,20 +165,17 @@ function Navbar() {
               )}
             </div>
           </div>        </div>
-      </div>
-
-      <nav className="bg-white shadow-md sticky top-0 z-40">
-      {/* Top Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-4">{/* Logo */}
-        <Link to="/" className="flex items-center text-4xl font-bold text-[var(--color-accent)]">
+      </div>      <nav className="bg-white shadow-md sticky top-0 z-40">
+      {/* Top Section with safe area padding */}      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-2 mobile-safe-top md:py-3">{/* Logo */}
+        <Link to="/" className="flex items-center text-3xl font-bold text-[var(--color-accent)]">
           {!cmsLoading && getLogo() ? (
             <img
               src={getLogo()}
               alt="Store Logo"
-              className="h-24 w-auto mr-2"
+              className="h-16 w-auto mr-2"
             />
           ) : (
-            <div className="h-24 w-24 bg-gray-200 animate-pulse rounded mr-2"></div>
+            <div className="h-16 w-16 bg-gray-200 animate-pulse rounded mr-2"></div>
           )}
         </Link>
 
@@ -186,7 +184,7 @@ function Navbar() {
           className="lg:hidden text-gray-600 hover:text-[var(--color-accent)]"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
-          {mobileMenuOpen ? <CloseIcon fontSize="large" /> : <MenuIcon fontSize="large" />}
+          {mobileMenuOpen ? <CloseIcon fontSize="large" /> : <SearchIcon fontSize="large" />}
         </button>        {/* Desktop Search Bar */}
         <div className="hidden lg:flex items-center w-full max-w-2xl mx-4">
           <SearchBar className="w-full" placeholder="Search products, brands, categories..." />
@@ -275,58 +273,9 @@ function Navbar() {
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white shadow-md border-t border-gray-200">
           <div className="flex flex-col space-y-4 px-4 py-6">
-            
-            {/* Search Bar */}
+              {/* Search Bar */}
             <div className="w-full">
               <SearchBar className="w-full" placeholder="Search products, brands, categories..." />
-            </div>
-
-            {/* Main Navigation Links */}
-            <div className="border-b border-gray-200 pb-4">
-              <Link 
-                to="/" 
-                className="flex items-center text-gray-600 hover:text-[var(--color-accent)] py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <HomeIcon className="mr-3" />
-                Home
-              </Link>
-              <Link 
-                to="/products" 
-                className="flex items-center text-gray-600 hover:text-[var(--color-accent)] py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <ViewListIcon className="mr-3" />
-                View All Products
-              </Link>
-            </div>
-
-            {/* Account Links */}
-            <div className="border-b border-gray-200 pb-4">
-              <Link 
-                to="/account/myDetails" 
-                className="text-gray-600 hover:text-[var(--color-accent)] flex items-center py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <AccountCircleIcon className="mr-3" />
-                Account
-              </Link>
-              <Link 
-                to="/wishlist" 
-                className="text-gray-600 hover:text-[var(--color-accent)] flex items-center py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <FavoriteIcon className="mr-3" />
-                Wishlist ({wishlistCount})
-              </Link>
-              <Link 
-                to="/cart" 
-                className="text-gray-600 hover:text-[var(--color-accent)] flex items-center py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <ShoppingCartIcon className="mr-3" />
-                Cart ({cartItems.length})
-              </Link>
             </div>
 
             {/* Departments */}

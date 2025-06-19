@@ -5,7 +5,6 @@ import AllProducts from './pages/AllProducts';
 import SingleProduct from './pages/SingleProduct';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import PromoBanner from './components/PromoBanner';
 import Account from './pages/Account.jsx';
 import AuthProvider from './components/AuthContext.jsx';
 import Cart from './pages/Cart.jsx';
@@ -23,6 +22,8 @@ import Checkout from './pages/Checkout.jsx';
 import Wishlist from './pages/Wishlist.jsx';
 import OrderTracking from './pages/OrderTracking.jsx';
 import NetworkStatus from './components/NetworkStatus.jsx';
+import StatusBarManager from './components/StatusBarManager.jsx';
+import BottomNavigation from './components/BottomNavigation.jsx';
 
 function AppContent() {
     const location = useLocation();
@@ -74,8 +75,9 @@ function AppContent() {
     }    // Show main app content if age verified
     return (
         <NetworkStatus>
+            <StatusBarManager />
             <Navbar />
-            <main className="min-h-screen">
+            <main className="min-h-screen pb-16 md:pb-0">
                 <AnimatePresence mode="wait">
                     <Routes location={location} key={location.pathname}>
                         <Route
@@ -195,8 +197,8 @@ function AppContent() {
                                 </motion.div>
                             }
                         />
-                    </Routes>
-                </AnimatePresence>            </main>
+                    </Routes>                </AnimatePresence>            </main>
+            <BottomNavigation />
             <Footer />
             <ToastContainer />
         </NetworkStatus>
