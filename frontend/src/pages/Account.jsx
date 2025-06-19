@@ -70,13 +70,24 @@ const Account = () => {
                 // Show Profile component if logged in
                 <Profile />
             ) : (
-                <>
-                    {/* Left Section: Form */}
-                    <div className="w-full lg:w-1/2 flex items-center justify-center bg-gray-100 p-8">
+                <>                    {/* Left Section: Form */}
+                    <div className="w-full lg:w-1/2 flex items-center justify-center bg-gray-100 p-4 sm:p-8 min-h-screen lg:min-h-0">
                         <div className="w-full max-w-md">
-                            <h1 className="text-3xl font-bold text-gray-800 text-center mb-6">
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-4 sm:mb-6">
                                 {isLogin ? 'Welcome Back!' : 'Create an Account'}
-                            </h1>
+                            </h1>                            {/* Mobile Toggle Button - Only visible on mobile */}
+                            <div className="lg:hidden text-center mb-4 sm:mb-6 p-4 bg-white rounded-lg shadow-sm">
+                                <p className="text-gray-600 mb-3 text-sm sm:text-base">
+                                    {isLogin ? "Don't have an account?" : 'Already have an account?'}
+                                </p>
+                                <button
+                                    onClick={toggleForm}
+                                    className="bg-[var(--color-accent)] text-white font-bold py-3 px-8 rounded-md shadow-md hover:bg-opacity-90 transition-all duration-200 text-sm sm:text-base min-h-[44px] min-w-[120px]"
+                                >
+                                    {isLogin ? 'Sign Up Instead' : 'Log In Instead'}
+                                </button>
+                            </div>
+                            
                             <AnimatePresence mode="wait">
                                 {isLogin ? (
                                     <motion.div
@@ -99,8 +110,7 @@ const Account = () => {
                                         transition={{ duration: 0.5 }}
                                     >
                                         <SignupForm />
-                                    </motion.div>
-                                )}
+                                    </motion.div>                                )}
                             </AnimatePresence>
                         </div>
                     </div>

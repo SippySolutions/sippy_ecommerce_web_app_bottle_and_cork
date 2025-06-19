@@ -73,7 +73,7 @@ function AppContent() {
         <NetworkStatus>
             <StatusBarManager />
             <Navbar />
-            <main className="min-h-screen pb-16 md:pb-0">
+            <main className="min-h-screen  md:pb-0">
                 <AnimatePresence mode="wait">
                     <Routes location={location} key={location.pathname}>
                         <Route

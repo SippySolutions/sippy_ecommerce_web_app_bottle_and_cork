@@ -7,6 +7,9 @@
 
 html {
   color-scheme: light;
+  /* Enable native browser behaviors for mobile */
+  overscroll-behavior: auto;
+  touch-action: manipulation;
 }
 
 /* Ensure consistent light theme across all elements */
@@ -14,6 +17,21 @@ html {
   color-scheme: light;
 }
 
+/* Allow text selection and context menus for mobile browser experience */
+body {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+  overscroll-behavior: auto;
+}
+
+/* Enable zoom and pan for mobile browsers */
+#root {
+  touch-action: manipulation;
+  overscroll-behavior: auto;
+}
 
 /* Line clamp utilities */
 .line-clamp-1 {
@@ -100,9 +118,18 @@ body {
     min-height: 100dvh; /* Dynamic viewport height for mobile */
   }
   
-  .h-screen {
-    height: 100vh;
-    height: 100dvh;
+  /* Mobile browser experience optimizations */
+  body {
+    /* Prevent elastic scrolling on iOS Safari */
+    overscroll-behavior-y: contain;
+    /* Allow pinch to zoom in mobile browsers */
+    touch-action: manipulation;
+  }
+  
+  /* Ensure browser chrome doesn't interfere */
+  .mobile-browser-friendly {
+    /* Account for mobile browser address bar */
+    min-height: calc(100vh - env(keyboard-inset-height, 0px));
   }
   
   /* Compact mobile navbar */

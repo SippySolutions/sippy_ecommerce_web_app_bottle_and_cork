@@ -28,12 +28,10 @@ const LoginForm = () => {
       setError(err.response?.data?.message || 'Something went wrong. Please try again.');
     }
   };
-
   return (
-    <div className="flex items-center justify-center min-h-[75vh] bg-gray-100">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-8">
-        <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">Login</h2>
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+    <div className="w-full bg-white rounded-lg shadow-md p-6 sm:p-8">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-800 text-center mb-4 sm:mb-6">Login</h2>
+      {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label
@@ -73,13 +71,11 @@ const LoginForm = () => {
           </div>
           <button
             type="submit"
-            className="w-full bg-[var(--color-accent)] text-white py-2 px-4 rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
+            className="w-full bg-[var(--color-accent)] text-white py-2 px-4 rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"          >
             Login
           </button>
         </form>
       </div>
-    </div>
   );
 };
 
