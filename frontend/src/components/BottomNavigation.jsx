@@ -61,7 +61,7 @@ const BottomNavigation = () => {
     return location.pathname.startsWith(path);
   };  return (
     <div 
-      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden mobile-safe-bottom"
+      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden mobile-safe-bottom pb-1"
       style={{ 
         backgroundColor: '#ffffff',
         borderTopColor: theme.muted || '#e5e7eb'

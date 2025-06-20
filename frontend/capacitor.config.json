@@ -37,8 +37,8 @@
       "splashFullScreen": false,
       "splashImmersive": false
     },    "StatusBar": {
-      "style": "DARK",
-      "backgroundColor": "#1E1E1E",
+      "style": "LIGHT",
+      "backgroundColor": "#ffffffff",
       "overlaysWebView": false
     },
     "Keyboard": {

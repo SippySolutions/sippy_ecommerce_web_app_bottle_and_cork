@@ -27,10 +27,11 @@ const StatusBarManager = () => {
         const theme = getTheme();
         console.log('StatusBar: Theme data:', theme);
         
-        // Convert hex color to proper format for status bar
-        const statusBarColor = theme.primary || '#1E1E1E';
+        // Use white background for status bar (consistent with capacitor config)
+        const statusBarColor = '#ffffffff'; // Include alpha channel
         console.log('StatusBar: Using color:', statusBarColor);
-          // Ensure status bar is visible and overlay is disabled first
+        
+        // Ensure status bar is visible and overlay is disabled first
         await StatusBar.setOverlaysWebView({ overlay: false });
         console.log('StatusBar: Overlay disabled');
         
@@ -38,15 +39,14 @@ const StatusBarManager = () => {
         await StatusBar.setBackgroundColor({ color: statusBarColor });
         console.log('StatusBar: Background color set');
         
-        // Determine if we should use light or dark content based on background color
-        const isDark = isColorDark(statusBarColor);
-        console.log('StatusBar: Is dark background:', isDark);
+        // Use LIGHT style for dark text on white background (consistent with capacitor config)
+        const contentStyle = 'LIGHT';
         
-        // Set status bar style (light content for dark backgrounds, dark content for light backgrounds)
+        // Set status bar style (LIGHT = dark content on light background)
         await StatusBar.setStyle({ 
-          style: isDark ? 'LIGHT' : 'DARK' 
+          style: contentStyle
         });
-        console.log('StatusBar: Style set to:', isDark ? 'LIGHT' : 'DARK');
+        console.log('StatusBar: Style set to:', contentStyle);
         
         // Double-check that status bar is shown
         await StatusBar.show();
@@ -57,12 +57,8 @@ const StatusBarManager = () => {
       }
     };
 
-    // Add a small delay to ensure the app has fully loaded
-    const timer = setTimeout(() => {
-      setupStatusBar();
-    }, 100);
-
-    return () => clearTimeout(timer);
+    // Setup status bar immediately when component mounts
+    setupStatusBar();
   }, [cmsData, getTheme]);
 
   // Helper function to determine if a color is dark
