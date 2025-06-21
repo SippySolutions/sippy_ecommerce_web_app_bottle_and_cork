@@ -1,6 +1,6 @@
 
 const express = require("express");
-const CMSData = require("../models/CMSData"); // Correctly import the model
+const CMSData = require("../models/CMSdata"); // Fix case sensitivity - 'CMSdata' not 'CMSData'
 
 const router = express.Router();
 
