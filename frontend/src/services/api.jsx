@@ -472,6 +472,43 @@ export const isInWishlist = async (productId) => {
   }
 };
 
+// Product Groups API
+export const fetchProductGroups = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/product-groups`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching product groups:', error);
+    throw error;
+  }
+};
+
+export const fetchProductGroupById = async (id) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/product-groups/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching product group:', error);
+    throw error;
+  }
+};
+
+export const fetchProductsByGroupId = async (id, page = 1, limit = 20, sort = 'createdAt', order = 'desc') => {
+  try {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      sort,
+      order
+    });
+    const response = await axios.get(`${API_BASE_URL}/product-groups/${id}/products?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching products by group:', error);
+    throw error;
+  }
+};
+
 // Create axios instance as default export
 const api = axios.create({
   baseURL: API_BASE_URL,

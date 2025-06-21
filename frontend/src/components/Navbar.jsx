@@ -279,6 +279,24 @@ function Navbar() {
               <SearchBar className="w-full" placeholder="Search products, brands, categories..." />
             </div>
 
+            {/* Quick Links */}
+            <div className="flex space-x-2">
+              <Link
+                to="/products"
+                className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                All Products
+              </Link>
+              <Link
+                to="/collections"
+                className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Collections
+              </Link>
+            </div>
+
             {/* Departments */}
             <div>
               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
@@ -370,6 +388,18 @@ function Navbar() {
                   >
                
                     All Products                  </Link>
+                </motion.div>
+                
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Link 
+                    to="/collections" 
+                    className="flex items-center text-gray-700 hover:text-[var(--color-accent)] font-bold transition-colors duration-200 px-4 py-2 rounded-md hover:bg-gray-100"
+                  >
+                    Collections
+                  </Link>
                 </motion.div>
                 
                 {departmentsLoading ? (

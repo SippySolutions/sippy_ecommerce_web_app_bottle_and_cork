@@ -3,6 +3,8 @@ import {AnimatePresence, motion} from 'framer-motion'; // Import framer-motion c
 import Home from './pages/Home.jsx';
 import AllProducts from './pages/AllProducts';
 import SingleProduct from './pages/SingleProduct';
+import Collections from './pages/Collections';
+import AllCollections from './pages/AllCollections';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Account from './pages/Account.jsx';
@@ -116,6 +118,19 @@ function AppContent() {
                             }
                         />
                         <Route
+                            path="/collections/:groupId"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
+                                >
+                                    <Collections />
+                                </motion.div>
+                            }
+                        />
+                        <Route
                             path="/cart"
                             element={
                                 <motion.div
@@ -190,6 +205,19 @@ function AppContent() {
                                     <ProtectedRoute>
                                         <Profile />
                                     </ProtectedRoute>
+                                </motion.div>
+                            }
+                        />
+                        <Route
+                            path="/collections"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
+                                >
+                                    <AllCollections />
                                 </motion.div>
                             }
                         />

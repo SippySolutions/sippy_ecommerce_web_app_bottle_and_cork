@@ -15,6 +15,7 @@ const orderRoutes = require('./routes/orderRoutes'); // Import order routes
 const checkoutRoutes = require('./routes/checkoutRoutes'); // Import checkout routes
 const wishlistRoutes = require('./routes/wishlistRoutes'); // Import wishlist routes
 const guestRoutes = require('./routes/guestRoutes'); // Import guest routes
+const productGroupRoutes = require('./routes/productGroupRoutes'); // Import product group routes
 
 dotenv.config();
 connectDB();
@@ -42,6 +43,7 @@ app.use('/api/orders', orderRoutes); // Register order routes
 app.use('/api/checkout', checkoutRoutes); // Register checkout routes
 app.use('/api/wishlist', wishlistRoutes); // Register wishlist routes
 app.use('/api/guest', guestRoutes); // Register guest routes
+app.use('/api/product-groups', productGroupRoutes); // Register product group routes
 const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
