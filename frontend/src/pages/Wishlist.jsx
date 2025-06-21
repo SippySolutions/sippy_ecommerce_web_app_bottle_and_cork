@@ -6,6 +6,7 @@ import { useContext } from 'react';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
+import InlineLoader from '../components/InlineLoader'; // Import branded loader
 
 const Wishlist = () => {
   const { wishlistItems, loading, clearWishlist } = useWishlist();
@@ -41,13 +42,7 @@ const Wishlist = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div 
-            className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
-            style={{ borderColor: theme.accent }}
-          />
-          <p className="text-gray-600">Loading your wishlist...</p>
-        </div>
+        <InlineLoader /> {/* Use branded loader here */}
       </div>
     );
   }

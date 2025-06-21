@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom"; // Import useSearchParams
+import { useNavigate, useSearchParams } from "react-router-dom"; 
 import { fetchDepartments } from "../services/api";
+import InlineLoader from "./InlineLoader";
 
 function Categories() {
   const [departments, setDepartments] = useState([]);
@@ -32,10 +33,19 @@ function Categories() {
     };
 
     fetchCategories();
-  }, []);
-
-  if (loading) {
-    return <div className="text-center py-12">Loading...</div>;
+  }, []);  if (loading) {
+    return (
+      <section className="bg-[var(--color-muted)] py-6">
+        <div className="container mx-auto px-2 text-center">
+          <div className="py-8">
+            <InlineLoader 
+              text="Loading categories..." 
+              size="sm"
+            />
+          </div>
+        </div>
+      </section>
+    );
   }
 
   if (error) {

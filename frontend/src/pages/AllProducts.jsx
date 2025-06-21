@@ -5,6 +5,7 @@ import ProductCard from '../components/ProductCard';
 import PromoBanner from '../components/PromoBanner';
 import { useCMS } from '../Context/CMSContext';
 import Categories from "../components/Categories";
+import InlineLoader from '../components/InlineLoader';
 import { toast } from 'react-toastify';
 
 const AllProducts = () => {
@@ -308,45 +309,25 @@ const AllProducts = () => {
       });
     });
     return Array.from(subcategories);
-  };  // Enhanced Loading state
-  if (loading && products.length === 0) {
+  };  // Enhanced Loading state - Only show for initial loads, not for subsequent searches
+  if (loading && products.length === 0 && !isSearchMode) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-gray-50" style={{ backgroundColor: theme.muted || '#F5F5F5' }}>
         <div className="container mx-auto px-4 py-8">
-          {/* Minimalistic Loading Screen */}
-          <div className="flex flex-col justify-center items-center py-20">
-            {/* Simple spinner */}
-            <div className="relative mb-6">
-              <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-gray-800"></div>
-            </div>
-            
-            {/* Clean loading text */}
-            <div className="text-center space-y-2">
-              <h2 className="text-gray-800 text-lg font-medium">
-                {isSearchMode ? 'Searching products...' : 'Loading products...'}
-              </h2>
-              <p className="text-gray-500 text-sm max-w-md mx-auto">
-                {query ? `Finding "${query}"` : 'Getting the latest products ready for you'}
-              </p>
-              
-              {/* Simple dots */}
-              <div className="flex justify-center space-x-1 mt-4">
-                {[0, 1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-pulse"
-                    style={{ animationDelay: `${i * 0.2}s` }}
-                  ></div>
-                ))}
-              </div>
-            </div>
+          <Categories categories={getCategories()} />
+          
+          {/* Branded Loading Screen */}
+          <div className="flex flex-col justify-center items-center py-12">
+            <InlineLoader 
+              text="Loading products..." 
+              size="md"
+            />
           </div>
         </div>
       </div>
     );
-  }
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/10 to-background">
+  }return (
+    <div className="min-h-screen bg-gray-50" style={{ backgroundColor: theme.muted || '#F5F5F5' }}>
       <div className="container mx-auto px-4 py-8">
 <Categories categories={getCategories()} />        {( category || subcategory) && (
           <div className="mb-4">
@@ -822,10 +803,20 @@ const AllProducts = () => {
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Main content */}
-          <div className="flex-1">            {products.length > 0 ? (
+          </div>          {/* Main content */}
+          <div className="flex-1 relative">            {/* Loading overlay for search/filter operations */}
+            {loading && products.length > 0 && (
+              <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-10 flex items-center justify-center">
+                <div className="bg-white rounded-lg shadow-lg p-6">
+                  <InlineLoader 
+                    text={isSearchMode ? 'Searching products...' : 'Loading products...'} 
+                    size="sm"
+                  />
+                </div>
+              </div>
+            )}
+            
+            {products.length > 0 ? (
               <>                {/* Products grid with enhanced styling and promotional banners */}
                 <div className="space-y-8">
                   {/* First promotional banner after 4 products */}

@@ -31,12 +31,10 @@ const SignupForm = () => {
         // Add your Google signup logic here
     };
 
-    return (
-        <div className="flex items-center justify-center min-h-[75vh] bg-[var(--background)]">
-            <div className="w-full max-w-md bg-white rounded-lg shadow-md p-8">
-                <h2 className="text-2xl font-bold text-[var(--HeadingText)] text-center mb-6">Sign Up</h2>
-                {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-                {success && <p className="text-green-500 text-sm mb-4">Account created successfully! Please log in.</p>}
+    return (        <div className="w-full bg-white rounded-lg shadow-md p-6 sm:p-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-[var(--HeadingText)] text-center mb-4 sm:mb-6">Sign Up</h2>
+            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+            {success && <p className="text-green-500 text-sm mb-4">Account created successfully! Please log in.</p>}
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
                         <label
@@ -128,11 +126,9 @@ const SignupForm = () => {
                             alt="Google"
                             className="w-5 h-5 mr-2"
                         />
-                        Sign Up with Facebook
-                    </button>
+                        Sign Up with Facebook                    </button>
                 </div>
             </div>
-        </div>
     );
 };
 

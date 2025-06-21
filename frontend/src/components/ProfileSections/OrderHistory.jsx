@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchUserOrders } from '../../services/api';
 import { toast } from 'react-toastify';
+import InlineLoader from '../InlineLoader'; // Import branded loader
 
 const OrderHistory = () => {
   const navigate = useNavigate();
@@ -56,11 +57,13 @@ const OrderHistory = () => {
       minute: '2-digit'
     });
   };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-primary)]"></div>
+        <InlineLoader 
+          text="Loading your orders..." 
+          size="large"
+        />
       </div>
     );
   }

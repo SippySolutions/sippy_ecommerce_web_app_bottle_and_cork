@@ -6,10 +6,12 @@ import { useCart } from '../Context/CartContext'; // Import CartContext
 import { useWishlist } from '../Context/WishlistContext'; // Import WishlistContext
 import { useCMS } from '../Context/CMSContext'; // Import CMS Context
 import SearchBar from './SearchBar'; // Import SearchBar component
+import InlineLoader from './InlineLoader'; // Import branded loader
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import MenuIcon from '@mui/icons-material/Menu';
+import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import HomeIcon from '@mui/icons-material/Home';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
@@ -164,20 +166,17 @@ function Navbar() {
               )}
             </div>
           </div>        </div>
-      </div>
-
-      <nav className="bg-white shadow-md sticky top-0 z-40">
-      {/* Top Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-4">{/* Logo */}
-        <Link to="/" className="flex items-center text-4xl font-bold text-[var(--color-accent)]">
+      </div>      <nav className="bg-white shadow-md sticky top-0 z-40">
+      {/* Top Section with safe area padding */}      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-2 mobile-safe-top md:py-3">{/* Logo */}
+        <Link to="/" className="flex items-center text-3xl font-bold text-[var(--color-accent)]">
           {!cmsLoading && getLogo() ? (
             <img
               src={getLogo()}
               alt="Store Logo"
-              className="h-24 w-auto mr-2"
+              className="h-16 w-auto mr-2"
             />
           ) : (
-            <div className="h-24 w-24 bg-gray-200 animate-pulse rounded mr-2"></div>
+            <div className="h-16 w-16 bg-gray-200 animate-pulse rounded mr-2"></div>
           )}
         </Link>
 
@@ -186,7 +185,7 @@ function Navbar() {
           className="lg:hidden text-gray-600 hover:text-[var(--color-accent)]"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
-          {mobileMenuOpen ? <CloseIcon fontSize="large" /> : <MenuIcon fontSize="large" />}
+          {mobileMenuOpen ? <CloseIcon fontSize="large" /> : <SearchIcon fontSize="large" />}
         </button>        {/* Desktop Search Bar */}
         <div className="hidden lg:flex items-center w-full max-w-2xl mx-4">
           <SearchBar className="w-full" placeholder="Search products, brands, categories..." />
@@ -275,57 +274,26 @@ function Navbar() {
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white shadow-md border-t border-gray-200">
           <div className="flex flex-col space-y-4 px-4 py-6">
-            
-            {/* Search Bar */}
+              {/* Search Bar */}
             <div className="w-full">
               <SearchBar className="w-full" placeholder="Search products, brands, categories..." />
             </div>
 
-            {/* Main Navigation Links */}
-            <div className="border-b border-gray-200 pb-4">
-              <Link 
-                to="/" 
-                className="flex items-center text-gray-600 hover:text-[var(--color-accent)] py-2"
+            {/* Quick Links */}
+            <div className="flex space-x-2">
+              <Link
+                to="/products"
+                className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <HomeIcon className="mr-3" />
-                Home
+                All Products
               </Link>
-              <Link 
-                to="/products" 
-                className="flex items-center text-gray-600 hover:text-[var(--color-accent)] py-2"
+              <Link
+                to="/collections"
+                className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <ViewListIcon className="mr-3" />
-                View All Products
-              </Link>
-            </div>
-
-            {/* Account Links */}
-            <div className="border-b border-gray-200 pb-4">
-              <Link 
-                to="/account/myDetails" 
-                className="text-gray-600 hover:text-[var(--color-accent)] flex items-center py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <AccountCircleIcon className="mr-3" />
-                Account
-              </Link>
-              <Link 
-                to="/wishlist" 
-                className="text-gray-600 hover:text-[var(--color-accent)] flex items-center py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <FavoriteIcon className="mr-3" />
-                Wishlist ({wishlistCount})
-              </Link>
-              <Link 
-                to="/cart" 
-                className="text-gray-600 hover:text-[var(--color-accent)] flex items-center py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <ShoppingCartIcon className="mr-3" />
-                Cart ({cartItems.length})
+                Collections
               </Link>
             </div>
 
@@ -344,10 +312,13 @@ function Navbar() {
                     }}
                   >
                     {department.department.charAt(0).toUpperCase() + department.department.slice(1).toLowerCase()}
-                  </button>
-                )) : (
-                  <div className="col-span-2 text-center text-gray-500 py-4">
-                    Loading departments...
+                  </button>                )) : (
+                  <div className="col-span-2 py-4">
+                    <InlineLoader 
+                      size="small" 
+                      text="Loading departments..." 
+                      className="justify-center"
+                    />
                   </div>
                 )}
               </div>
@@ -416,16 +387,27 @@ function Navbar() {
                     className="flex items-center text-gray-700 hover:text-[var(--color-accent)] font-bold transition-colors duration-200 px-4 py-2 rounded-md hover:bg-gray-100"
                   >
                
-                    All Products
+                    All Products                  </Link>
+                </motion.div>
+                
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Link 
+                    to="/collections" 
+                    className="flex items-center text-gray-700 hover:text-[var(--color-accent)] font-bold transition-colors duration-200 px-4 py-2 rounded-md hover:bg-gray-100"
+                  >
+                    Collections
                   </Link>
                 </motion.div>
                 
                 {departmentsLoading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-                    <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-                    <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-                  </div>
+                  <InlineLoader 
+                    size="small" 
+                    text="Loading departments..." 
+                    className="flex items-center space-x-2"
+                  />
                 ) : safeDepartments && safeDepartments.length > 0 ? (
                   <AnimatePresence>
                     {safeDepartments.map((department, deptIndex) => (
@@ -558,14 +540,13 @@ function Navbar() {
                 className="flex items-center space-x-1"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-              >
+                transition={{ duration: 0.3, delay: 0.1 }}              >
                 {departmentsLoading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-                    <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-                    <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-                  </div>
+                  <InlineLoader 
+                    size="small" 
+                    text="Loading departments..." 
+                    className="flex items-center space-x-2"
+                  />
                 ) : safeDepartments && safeDepartments.length > 0 ? (
                   <>
                     {safeDepartments.slice(0, 6).map((department, deptIndex) => (

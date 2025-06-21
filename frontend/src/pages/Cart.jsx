@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useCart } from '../Context/CartContext';
+import { useCMS } from '../Context/CMSContext';
 import SimilarProducts from '../components/SimilarProducts';
 import PromoBanner from '../components/PromoBanner';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +8,9 @@ import { fetchCMSData } from '../services/api';
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart } = useCart();
+  const { getTheme } = useCMS();
   const navigate = useNavigate();
+  const theme = getTheme();
 
   const [taxRate, setTaxRate] = useState(0);
 
@@ -29,9 +32,9 @@ const Cart = () => {
   );
   const taxAmount = subtotal * (taxRate / 100);
   const totalWithTax = subtotal + taxAmount;
-
   return (
-    <div className="container mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="min-h-screen bg-gray-50" style={{ backgroundColor: theme.muted || '#F5F5F5' }}>
+      <div className="container mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Panel: Cart Items */}
       <div className="lg:col-span-2">
         <h1 className="text-2xl font-bold mb-4">Your Shopping Cart</h1>
@@ -147,11 +150,10 @@ const Cart = () => {
       </div>      {/* Bottom Section: Promotional Banner and Recommendations */}
       <div className="lg:col-span-3 mt-8">
         <SimilarProducts department="WINE" priceRange="10-50" />
-      </div>
-
-      {/* Promo Banner */}
+      </div>      {/* Promo Banner */}
       <div className="lg:col-span-3 mt-8">
         <PromoBanner />
+      </div>
       </div>
     </div>
   );

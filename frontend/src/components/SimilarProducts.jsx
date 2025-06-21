@@ -3,6 +3,7 @@ import { fetchSimilarProducts } from '../services/api'; // API function to fetch
 import ProductCard from './ProductCard'; // Import ProductCard component
 import { motion } from 'framer-motion';
 import BestSellers from './BestSellers';
+import InlineLoader from './InlineLoader'; // Import branded loader
 
 const SimilarProducts = ({ department, category, subcategory, priceRange }) => {
   const [similarProducts, setSimilarProducts] = useState([]);
@@ -30,9 +31,15 @@ const SimilarProducts = ({ department, category, subcategory, priceRange }) => {
 
     getSimilarProducts();
   }, [department, category, subcategory, priceRange]);
-
   if (loading) {
-    return <div>Loading similar products...</div>;
+    return (
+      <div className="text-center py-12">
+        <InlineLoader 
+          text="Loading similar products..." 
+          size="medium"
+        />
+      </div>
+    );
   }
 
   if (similarProducts.length === 0) {

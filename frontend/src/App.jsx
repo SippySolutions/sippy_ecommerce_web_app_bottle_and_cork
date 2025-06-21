@@ -3,9 +3,10 @@ import {AnimatePresence, motion} from 'framer-motion'; // Import framer-motion c
 import Home from './pages/Home.jsx';
 import AllProducts from './pages/AllProducts';
 import SingleProduct from './pages/SingleProduct';
+import Collections from './pages/Collections';
+import AllCollections from './pages/AllCollections';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import PromoBanner from './components/PromoBanner';
 import Account from './pages/Account.jsx';
 import AuthProvider from './components/AuthContext.jsx';
 import Cart from './pages/Cart.jsx';
@@ -22,42 +23,41 @@ import Profile from './components/Profile';
 import Checkout from './pages/Checkout.jsx';
 import Wishlist from './pages/Wishlist.jsx';
 import OrderTracking from './pages/OrderTracking.jsx';
+import NetworkStatus from './components/NetworkStatus.jsx';
+import StatusBarManager from './components/StatusBarManager.jsx';
+import BottomNavigation from './components/BottomNavigation.jsx';
+import InlineLoader from './components/InlineLoader.jsx';
 
 function AppContent() {
     const location = useLocation();
-    const {isVerified, isDenied, isLoading, handleVerified, handleDenied} = useAgeVerification();
-
-    // Animation variants for route transitions
+    const {isVerified, isDenied, isLoading, handleVerified, handleDenied} = useAgeVerification();    // Animation variants for route transitions - Faster animations
     const pageVariants = {
         initial: {
             opacity: 0,
-            y: 20
+            y: 10
         },
         animate: {
             opacity: 1,
             y: 0,
             transition: {
-                duration: 0.3
+                duration: 0.15
             }
         },
         exit: {
             opacity: 0,
-            y: -20,
+            y: -10,
             transition: {
-                duration: 0.3
+                duration: 0.15
             }
         }
-    };
-
-    // Show loading state
+    };    // Show loading state - Use branded loading
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-100">
-                <div className="text-center">
-                    <div
-                        className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading...</p>
-                </div>
+            <div className="min-h-screen flex items-center justify-center bg-white">
+                <InlineLoader 
+                    text="Initializing Universal Liquors..." 
+                    size="lg"
+                />
             </div>
         );
     }
@@ -71,9 +71,11 @@ function AppContent() {
     if (!isVerified) {
         return <AgeVerification onVerified={handleVerified} onDenied={handleDenied}/>;
     }    // Show main app content if age verified
-    return (        <>
+    return (
+        <NetworkStatus>
+            <StatusBarManager />
             <Navbar />
-            <main className="min-h-screen">
+            <main className="min-h-screen  md:pb-0">
                 <AnimatePresence mode="wait">
                     <Routes location={location} key={location.pathname}>
                         <Route
@@ -112,6 +114,19 @@ function AppContent() {
                                     exit="exit"
                                 >
                                     <SingleProduct />
+                                </motion.div>
+                            }
+                        />
+                        <Route
+                            path="/collections/:groupId"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
+                                >
+                                    <Collections />
                                 </motion.div>
                             }
                         />
@@ -193,12 +208,24 @@ function AppContent() {
                                 </motion.div>
                             }
                         />
-                    </Routes>
-                </AnimatePresence>
-            </main>
+                        <Route
+                            path="/collections"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
+                                >
+                                    <AllCollections />
+                                </motion.div>
+                            }
+                        />
+                    </Routes>                </AnimatePresence>            </main>
+            <BottomNavigation />
             <Footer />
             <ToastContainer />
-        </>
+        </NetworkStatus>
     );
 }
 
@@ -209,7 +236,9 @@ function App() {
                 <CartProvider>
                     <WishlistProvider>
                         <AgeVerificationProvider>
-                            <AppContent />
+                            <NetworkStatus>
+                                <AppContent />
+                            </NetworkStatus>
                         </AgeVerificationProvider>
                     </WishlistProvider>
                 </CartProvider>

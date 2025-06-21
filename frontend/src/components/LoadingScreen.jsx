@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const LoadingScreen = ({ onLoadingComplete, cmsData = null, serverHealthCheck = null, error = null }) => {
-  const [progress, setProgress] = useState(0);  const [loadingText, setLoadingText] = useState('Loading...');
+const LoadingScreen = ({ onLoadingComplete, serverHealthCheck = null, error = null }) => {
+  const [progress, setProgress] = useState(0);
+  const [loadingText, setLoadingText] = useState('Loading...');
   const [isVisible, setIsVisible] = useState(true);
   const [serverStatus, setServerStatus] = useState('connecting');
   const [retryCount, setRetryCount] = useState(0);
@@ -133,39 +134,27 @@ const LoadingScreen = ({ onLoadingComplete, cmsData = null, serverHealthCheck = 
         >
           {/* Removed subtle background pattern for solid white background */}
 
-          <div className="relative z-10 text-center px-6 max-w-sm w-full">
-            {/* Minimalistic Store Logo */}
+          <div className="relative z-10 text-center px-6 max-w-sm w-full">            {/* Simple Store Logo */}
             <motion.div
               className="mb-6"
               variants={logoVariants}
               initial="initial"
               animate="animate"
             >
-              {cmsData?.logo ? (
-                <img
-                  src={cmsData.logo}
-                  alt={cmsData?.storeInfo?.name || "Store Logo"}
-                  className="h-16 w-auto mx-auto"
-                  style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.1))' }}
-                />
-              ) : (
-                <div className="h-16 w-16 mx-auto bg-gray-100 rounded-lg flex items-center justify-center">
-                  <div className="text-2xl text-gray-600">🏪</div>
-                </div>
-              )}
+              <div className="h-16 w-16 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center shadow-sm">
+                <div className="text-2xl">🏪</div>
+              </div>
             </motion.div>
 
-            {/* Store Name - Only if available */}
-            {cmsData?.storeInfo?.name && (
-              <motion.h1
-                className="text-xl font-semibold text-gray-800 mb-4"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                {cmsData.storeInfo.name}
-              </motion.h1>
-            )}
+            {/* Simple Store Name */}
+            <motion.h1
+              className="text-xl font-semibold text-gray-800 mb-4"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              Universal Liquors
+            </motion.h1>
 
             {/* Loading Text */}
             <motion.p
@@ -238,12 +227,11 @@ const LoadingScreen = ({ onLoadingComplete, cmsData = null, serverHealthCheck = 
                 <div className="mt-2 text-xs text-gray-500">
                   Store may be starting up
                 </div>
-              </motion.div>
-            ) : (
+              </motion.div>            ) : (
               <div className="mt-4">
                 {progress < 100 && (
                   <div className="text-xs text-gray-500">
-                    {cmsData?.storeInfo?.tagline || 'Getting everything ready for you...'}
+                    Getting everything ready for you...
                   </div>
                 )}
               </div>
