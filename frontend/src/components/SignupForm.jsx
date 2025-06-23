@@ -1,33 +1,38 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { registerUser } from '../services/api'; // Import the API function
 
-const SignupForm = () => {
-    const [formData, setFormData] = useState({
+const SignupForm = () => {    const [formData, setFormData] = useState({
         name: '',
         email: '',
         password: '',
     });
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
+    const [agreedToTerms, setAgreedToTerms] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
-    };
-
-    const handleSubmit = async (e) => {
+    };    const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null); // Clear previous errors
         setSuccess(false); // Reset success state
+
+        if (!agreedToTerms) {
+            setError('You must agree to the Terms & Conditions and Privacy Policy to create an account.');
+            return;
+        }
 
         try {
             await registerUser(formData); // Call the API function
             setSuccess(true);
             setFormData({ name: '', email: '', password: '' }); // Clear form
+            setAgreedToTerms(false);
         } catch (err) {
             setError(err); // Display the error message
         }
-    };    const handleGoogleSignup = () => {
+    };const handleGoogleSignup = () => {
         // Add your Google signup logic here
     };
 
@@ -87,12 +92,42 @@ const SignupForm = () => {
                             onChange={handleChange}
                             required
                             className="mt-1 block w-full px-4 py-2 border border-[var(--muted)] rounded-md shadow-sm focus:ring-[var(--color-accent)] focus:border-[var(--color-accent)] sm:text-sm"
-                            placeholder="Enter your password"
-                        />
+                            placeholder="Enter your password"                        />
                     </div>
+
+                    {/* Terms and Conditions Agreement */}
+                    <div className="flex items-start space-x-3">
+                        <input
+                            id="terms-agreement"
+                            type="checkbox"
+                            checked={agreedToTerms}
+                            onChange={(e) => setAgreedToTerms(e.target.checked)}
+                            className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="terms-agreement" className="text-sm text-gray-700">
+                            I agree to the{' '}
+                            <Link 
+                                to="/terms-and-conditions" 
+                                target="_blank"
+                                className="text-blue-600 hover:text-blue-800 underline"
+                            >
+                                Terms & Conditions
+                            </Link>
+                            {' '}and{' '}
+                            <Link 
+                                to="/privacy-policy" 
+                                target="_blank"
+                                className="text-blue-600 hover:text-blue-800 underline"
+                            >
+                                Privacy Policy
+                            </Link>
+                        </label>
+                    </div>
+
                     <button
                         type="submit"
-                        className="w-full bg-[var(--color-accent)] text-white py-2 px-4 rounded-md shadow-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2"
+                        disabled={!agreedToTerms}
+                        className="w-full bg-[var(--color-accent)] text-white py-2 px-4 rounded-md shadow-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Sign Up
                     </button>

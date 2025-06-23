@@ -1,4 +1,5 @@
 import { useEffect, useState, useContext } from "react";
+import { Link } from "react-router-dom";
 import { AuthContext } from "./AuthContext"; // Import AuthContext
 import Android from "../assets/android.png";
 import Apple from "../assets/Apple.png";
@@ -147,11 +148,29 @@ function Footer() {
                 />
               </a>
             </div>
+          </div>        </div>
+
+        {/* Legal Links */}
+        <div className="mt-8 pt-8 border-t border-gray-200">
+          <div className="flex justify-center space-x-6 text-sm">
+            <Link 
+              to="/terms-and-conditions" 
+              className="text-[var(--color-muted-foreground)] hover:text-[var(--color-primary)] transition-colors duration-200"
+            >
+              Terms & Conditions
+            </Link>
+            <span className="text-[var(--color-muted-foreground)]">|</span>
+            <Link 
+              to="/privacy-policy" 
+              className="text-[var(--color-muted-foreground)] hover:text-[var(--color-primary)] transition-colors duration-200"
+            >
+              Privacy Policy
+            </Link>
           </div>
         </div>
 
         {/* Footer Bottom */}
-        <div className="mt-12 text-center text-sm text-[var(--color-muted-foreground)]">
+        <div className="mt-4 text-center text-sm text-[var(--color-muted-foreground)]">
           Copyright © 2025 <span className="font-bold text-[var(--color-foreground)]">{storeInfo.name}</span>. All rights reserved.
         </div>
       </div>

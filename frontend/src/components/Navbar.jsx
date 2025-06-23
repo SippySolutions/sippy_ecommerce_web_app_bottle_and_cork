@@ -219,11 +219,25 @@ function Navbar() {
                         <HomeIcon className="mr-2" />
                         Addresses
                       </Link>
-                    </li>
-                    <li>
+                    </li>                    <li>
                       <Link to="/account?tab=billing" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
                         <CreditCardIcon className="mr-2" />
                         Billing
+                      </Link>
+                    </li>
+                  </ul>
+                  <hr />
+                  <ul className="space-y-2 px-4 py-2">
+                    <li>
+                      <Link to="/terms-and-conditions" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
+                        <ViewListIcon className="mr-2" />
+                        Terms & Conditions
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/privacy-policy" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
+                        <ViewListIcon className="mr-2" />
+                        Privacy Policy
                       </Link>
                     </li>
                   </ul>
@@ -320,7 +334,26 @@ function Navbar() {
                       className="justify-center"
                     />
                   </div>
-                )}
+                )}              </div>
+            </div>
+
+            {/* Legal Links */}
+            <div className="border-t border-gray-200 pt-4">
+              <div className="flex space-x-2">
+                <Link
+                  to="/terms-and-conditions"
+                  className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Terms & Conditions
+                </Link>
+                <Link
+                  to="/privacy-policy"
+                  className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Privacy Policy
+                </Link>
               </div>
             </div>            {/* Store Information */}
             <div className="border-t border-gray-200 pt-4 space-y-3">

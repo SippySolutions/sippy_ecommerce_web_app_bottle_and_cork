@@ -5,6 +5,8 @@ import AllProducts from './pages/AllProducts';
 import SingleProduct from './pages/SingleProduct';
 import Collections from './pages/Collections';
 import AllCollections from './pages/AllCollections';
+import TermsAndConditions from './pages/TermsAndConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Account from './pages/Account.jsx';
@@ -219,9 +221,34 @@ function AppContent() {
                                 >
                                     <AllCollections />
                                 </motion.div>
+                            }                        />
+                        <Route
+                            path="/terms-and-conditions"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
+                                >
+                                    <TermsAndConditions />
+                                </motion.div>
                             }
                         />
-                    </Routes>                </AnimatePresence>            </main>
+                        <Route
+                            path="/privacy-policy"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
+                                >
+                                    <PrivacyPolicy />
+                                </motion.div>
+                            }
+                        />
+                    </Routes></AnimatePresence>            </main>
             <BottomNavigation />
             <Footer />
             <ToastContainer />

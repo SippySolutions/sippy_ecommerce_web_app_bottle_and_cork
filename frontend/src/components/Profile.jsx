@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
 import MyDetails from './ProfileSections/MyDetails';
 import OrderHistory from './ProfileSections/OrderHistory';
@@ -157,8 +157,29 @@ const Profile = () => {
             >
               <Billing refreshUser={handleRefreshUser} />
             </motion.div>
-          )}
-        </AnimatePresence>
+          )}        </AnimatePresence>
+        </div>
+
+        {/* Legal Links Section */}
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <div className="text-center">
+            <h3 className="text-sm font-medium text-gray-900 mb-4">Legal</h3>
+            <div className="flex justify-center space-x-6 text-sm">
+              <Link 
+                to="/terms-and-conditions" 
+                className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
+              >
+                Terms & Conditions
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link 
+                to="/privacy-policy" 
+                className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
+              >
+                Privacy Policy
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>

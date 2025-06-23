@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { CartContext } from '../Context/CartContext';
@@ -109,10 +109,10 @@ const Checkout = () => {
     timeSlot: '',
     instructions: ''
   });
-  
-  const [paymentMethod, setPaymentMethod] = useState('new'); // 'new' or 'saved'
+    const [paymentMethod, setPaymentMethod] = useState('new'); // 'new' or 'saved'
   const [selectedCard, setSelectedCard] = useState(null);
   const [saveCard, setSaveCard] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   
   // Guest checkout fields
   const [guestInfo, setGuestInfo] = useState({
@@ -957,13 +957,12 @@ const Checkout = () => {
                         )}
                       </div>
                     )}                    {paymentMethod === 'new' && (
-                      <div>
-                        <AuthorizationOnlyPaymentForm
+                      <div>                        <AuthorizationOnlyPaymentForm
                           amount={total}
                           onAuthorizationComplete={handleAuthorizationComplete}
                           onPaymentError={handlePaymentError}
-                          disabled={loading}
-                          billingAddress={billingAddress}                          orderData={{
+                          disabled={loading || !agreedToTerms}
+                          billingAddress={billingAddress}orderData={{
                             customerType: isAuthenticated ? 'user' : 'guest',
                             cartItems: cartItems.map(item => ({
                               product: item._id,
@@ -1102,23 +1101,54 @@ const Checkout = () => {
                             </span>
                           </div>
                         </div>
-                      )}
-                    </div>                    {/* Place Order Button */}
+                      )}                    </div>
+
+                    {/* Terms and Conditions Agreement */}
+                    <div className="mt-4 p-4 bg-gray-50 rounded-md">
+                      <div className="flex items-start space-x-3">
+                        <input
+                          id="terms-agreement"
+                          type="checkbox"
+                          checked={agreedToTerms}
+                          onChange={(e) => setAgreedToTerms(e.target.checked)}
+                          className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="terms-agreement" className="text-sm text-gray-700">
+                          I agree to the{' '}
+                          <Link 
+                            to="/terms-and-conditions" 
+                            target="_blank"
+                            className="text-blue-600 hover:text-blue-800 underline"
+                          >
+                            Terms & Conditions
+                          </Link>
+                          {' '}and{' '}
+                          <Link 
+                            to="/privacy-policy" 
+                            target="_blank"
+                            className="text-blue-600 hover:text-blue-800 underline"
+                          >
+                            Privacy Policy
+                          </Link>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Place Order Button */}
                     <div className="mt-6">
-                      {paymentMethod === 'saved' ? (
-                        <button
+                      {paymentMethod === 'saved' ? (                        <button
                           onClick={handleSavedCardPayment}
-                          disabled={loading || !selectedCard}
+                          disabled={loading || !selectedCard || !agreedToTerms}
                           className="w-full py-3 px-6 rounded-md font-semibold transition-all duration-200 text-white hover:transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ backgroundColor: loading ? theme.secondary : '#10B981' }}
                           onMouseEnter={(e) => {
-                            if (!loading && selectedCard) {
+                            if (!loading && selectedCard && agreedToTerms) {
                               e.target.style.backgroundColor = '#059669';
                               e.target.style.boxShadow = `0 4px 12px #10B98130`;
                             }
                           }}
                           onMouseLeave={(e) => {
-                            if (!loading && selectedCard) {
+                            if (!loading && selectedCard && agreedToTerms) {
                               e.target.style.backgroundColor = '#10B981';
                               e.target.style.boxShadow = 'none';
                             }
