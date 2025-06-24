@@ -74,9 +74,8 @@ export const useOrderPaymentWorkflow = () => {
    */
   const getOrderPaymentStatus = (order) => {
     if (!order) return 'unknown';
-    
-    const paymentStatus = order.paymentStatus || 'pending';
-    const orderStatus = order.status || 'pending';
+      const paymentStatus = order.paymentStatus || 'pending';
+    const orderStatus = order.status || 'new';
     
     return {
       paymentStatus,

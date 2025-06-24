@@ -18,11 +18,11 @@ const orderSchema = new mongoose.Schema({
   },
   items: [orderItemSchema],
   subtotal: { type: Number, required: true },
-  tax: { type: Number, default: 0 },
-  total: { type: Number, required: true },  status: { 
+  tax: { type: Number, default: 0 },  total: { type: Number, required: true },
+  status: { 
     type: String, 
-    enum: ['pending', 'processing', 'completed', 'shipped', 'delivered', 'cancelled'], 
-    default: 'pending' 
+    enum: ['new', 'accepted', 'packing', 'ready', 'out_for_delivery', 'completed', 'cancelled'], 
+    default: 'new' 
   },
   shippingAddress: {
     firstName: String,

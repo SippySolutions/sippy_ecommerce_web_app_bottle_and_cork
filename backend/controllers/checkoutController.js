@@ -333,21 +333,19 @@ exports.processPayment = async (req, res) => {
         method: 'card',
         amount: roundToTwo(total)
       },
-      orderType: orderType,
-      tip: roundToTwo(tip),
+      orderType: orderType,      tip: roundToTwo(tip),
       bagFee: roundToTwo(bagFee),
       deliveryFee: roundToTwo(deliveryFee),
       ageVerified: ageVerified,
       ageVerifiedAt: ageVerifiedAt,
-      status: 'pending'
-    });
-
-    await order.save();
+      status: 'new'
+    });    await order.save();
 
     // Update user's orders (ensure orders array exists)
     if (!user.orders) {
       user.orders = [];
-    }    user.orders.push(order._id);
+    }
+    user.orders.push(order._id);
     await user.save();
 
     console.log('Order created successfully:', order._id);
@@ -588,19 +586,16 @@ exports.processPaymentWithSavedCard = async (req, res) => {
         transactionId: paymentResult.transactionId,
         method: 'saved_card',
         amount: roundToTwo(total)
-      },
-      orderType: orderType,
+      },      orderType: orderType,
       tip: roundToTwo(tip),
       bagFee: roundToTwo(bagFee),
       deliveryFee: roundToTwo(deliveryFee),
       ageVerified: ageVerified,
       ageVerifiedAt: ageVerifiedAt,
-      status: 'pending'
+      status: 'new'
     });
 
-    await order.save();
-
-    // Update user's orders
+    await order.save();    // Update user's orders
     if (!user.orders) {
       user.orders = [];
     }
@@ -1455,10 +1450,9 @@ exports.authorizePayment = async (req, res) => {
       tax: 0, // Calculate tax if needed
       tip: tipAmount,
       bagFee: bagFeeAmount,
-      deliveryFee: deliveryFeeAmount,
-      total: totalAmount,
+      deliveryFee: deliveryFeeAmount,      total: totalAmount,
       paymentStatus: 'authorized', // Key difference - authorized not paid
-      status: 'pending',
+      status: 'new',
       transactionId: authResult.transactionId,
       authorizationCode: authResult.authCode,
       customerProfileId,
@@ -1466,9 +1460,14 @@ exports.authorizePayment = async (req, res) => {
       ageVerified,
       ageVerifiedAt: ageVerified ? ageVerifiedAt : null,
       createdAt: new Date()
-    });
-
-    await order.save();
+    });    await order.save();    // Add order to user's orders array if user is authenticated
+    if (user) {
+      if (!user.orders) {
+        user.orders = [];
+      }
+      user.orders.push(order._id);
+      await user.save();
+    }
 
     console.log('Authorization successful:', {
       orderId: order._id,

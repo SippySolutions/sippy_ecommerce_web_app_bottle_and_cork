@@ -2,15 +2,19 @@ import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, Link } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
+import { fetchUserOrders } from '../services/api';
 import MyDetails from './ProfileSections/MyDetails';
 import OrderHistory from './ProfileSections/OrderHistory';
 import Addresses from './ProfileSections/Addresses';
 import Billing from './ProfileSections/Billing';
+import OrderStatusBadge from './OrderStatusBadge';
 
 const Profile = () => {
   const { user, isAuthenticated, logout, refreshUser } = useContext(AuthContext);
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('profile');
+  const [activeOrders, setActiveOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
 
   // Simple refresh function for child components
   const handleRefreshUser = () => {
@@ -18,6 +22,29 @@ const Profile = () => {
       refreshUser();
     }
   };
+
+  // Load active orders for overview
+  useEffect(() => {
+    const loadActiveOrders = async () => {
+      if (isAuthenticated) {
+        try {
+          const response = await fetchUserOrders();
+          if (response.success) {
+            const active = response.orders.filter(order => 
+              ['new', 'accepted', 'packing', 'ready', 'out_for_delivery'].includes(order.status)
+            );
+            setActiveOrders(active);
+          }
+        } catch (error) {
+          console.error('Error loading active orders:', error);
+        } finally {
+          setLoadingOrders(false);
+        }
+      }
+    };
+
+    loadActiveOrders();
+  }, [isAuthenticated]);
 
   // Handle URL query parameters for tab switching
   useEffect(() => {
@@ -56,8 +83,7 @@ const Profile = () => {
     { id: 'orders', label: 'Order History' },
     { id: 'addresses', label: 'Addresses' },
     { id: 'billing', label: 'Billing' }
-  ];
-  return (
+  ];  return (
     <div className="min-h-screen w-full bg-gray-50">
       {/* Hero Section */}
       <div className="bg-white shadow-sm border-b">
@@ -81,6 +107,69 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      {/* Active Orders Overview */}
+      {!loadingOrders && activeOrders.length > 0 && (
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                <span className="animate-pulse mr-2">🔄</span>
+                Current Orders ({activeOrders.length})
+              </h2>
+              <button
+                onClick={() => setActiveTab('orders')}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                View All Orders →
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {activeOrders.slice(0, 3).map(order => (
+                <div key={order._id} className="bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium text-gray-900">
+                      #{order.orderNumber}
+                    </div>
+                    <OrderStatusBadge status={order.status} size="small" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+                    <span>{order.items.length} items</span>
+                    <span className="font-semibold text-gray-900">${order.total.toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 mb-3">
+                    {order.items.slice(0, 3).map((item, idx) => (
+                      <img
+                        key={idx}
+                        src={item.image || '/placeholder.png'}
+                        alt={item.name}
+                        className="h-6 w-6 object-contain rounded"
+                        onError={(e) => { e.target.src = '/placeholder.png'; }}
+                      />
+                    ))}
+                    {order.items.length > 3 && (
+                      <span className="text-xs text-gray-500">+{order.items.length - 3}</span>
+                    )}
+                  </div>
+                  
+                  <Link
+                    to={`/orders/${order._id}`}
+                    className="inline-flex items-center text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Track Order
+                    <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

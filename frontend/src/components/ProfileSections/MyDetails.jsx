@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { AuthContext } from '../AuthContext';
 import { updateUserProfile } from '../../services/api';
+import OrderStats from '../OrderStats';
 
 const MyDetails = () => {
   const { user, updateUser } = useContext(AuthContext);
@@ -46,9 +47,12 @@ const MyDetails = () => {
       setLoading(false);
     }
   };
-
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Order Statistics */}
+      <OrderStats />
+      
+      {/* Profile Information */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -147,8 +151,7 @@ const MyDetails = () => {
                   Update Profile
                 </>
               )}
-            </button>
-          </div>
+            </button>          </div>
         </form>
       </div>
     </div>

@@ -1,5 +1,12 @@
 const express = require('express');
-const { getUserOrders, getOrderById, updateOrderStatus } = require('../controllers/orderController');
+const { 
+  getUserOrders, 
+  getOrderById, 
+  updateOrderStatus, 
+  getOrdersByStatus, 
+  acceptOrder, 
+  getOrderStatusHistory 
+} = require('../controllers/orderController');
 const auth = require('../middleware/authMiddleware');
 const router = express.Router();
 
@@ -24,8 +31,17 @@ const optionalAuth = (req, res, next) => {
 // Get user's orders (requires authentication)
 router.get('/me', auth, getUserOrders);
 
+// Get orders by status (for store management)
+router.get('/status/:status', auth, getOrdersByStatus);
+
 // Get specific order by ID (supports both authenticated and guest access)
 router.get('/:orderId', optionalAuth, getOrderById);
+
+// Get order status history/timeline
+router.get('/:orderId/history', optionalAuth, getOrderStatusHistory);
+
+// Accept an order (transition from new to accepted)
+router.put('/:orderId/accept', auth, acceptOrder);
 
 // Update order status (admin only - you might want to add admin middleware)
 router.put('/:orderId/status', auth, updateOrderStatus);

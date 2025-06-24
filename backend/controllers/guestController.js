@@ -216,13 +216,12 @@ exports.processGuestPayment = async (req, res) => {
         method: 'card',
         amount: roundToTwo(total)
       },
-      orderType: orderType,
-      tip: roundToTwo(tip),
+      orderType: orderType,      tip: roundToTwo(tip),
       bagFee: roundToTwo(bagFee),
       deliveryFee: roundToTwo(deliveryFee),
       ageVerified: ageVerified,
       ageVerifiedAt: ageVerifiedAt,
-      status: 'pending'
+      status: 'new'
     });
 
     await order.save();

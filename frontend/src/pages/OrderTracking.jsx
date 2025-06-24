@@ -38,40 +38,51 @@ const OrderTracking = () => {
       setLoading(false);
     }
   };
-
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
-      case 'processing': return 'text-blue-600 bg-blue-100';
-      case 'shipped': return 'text-purple-600 bg-purple-100';
-      case 'delivered': return 'text-green-600 bg-green-100';
+      case 'new': return 'text-blue-600 bg-blue-100';
+      case 'accepted': return 'text-green-600 bg-green-100';
+      case 'packing': return 'text-yellow-600 bg-yellow-100';
+      case 'ready': return 'text-purple-600 bg-purple-100';
+      case 'out_for_delivery': return 'text-orange-600 bg-orange-100';
+      case 'completed': return 'text-green-600 bg-green-100';
       case 'cancelled': return 'text-red-600 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
-
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'pending':
+      case 'new':
         return (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         );
-      case 'processing':
+      case 'accepted':
         return (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         );
-      case 'shipped':
+      case 'packing':
         return (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
         );
-      case 'delivered':
+      case 'ready':
+        return (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        );
+      case 'out_for_delivery':
+        return (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        );
+      case 'completed':
         return (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -91,21 +102,22 @@ const OrderTracking = () => {
         );
     }
   };
-
   const getTrackingSteps = () => {
     const allSteps = [
-      { key: 'pending', label: 'Order Received', description: 'Your order has been placed successfully' },
-      { key: 'processing', label: 'Order Processing', description: 'We are preparing your order' },
-      { key: 'shipped', label: order?.orderType === 'pickup' ? 'Ready for Pickup' : 'Shipped', description: order?.orderType === 'pickup' ? 'Your order is ready for pickup' : 'Your order is on the way' },
-      { key: 'delivered', label: order?.orderType === 'pickup' ? 'Picked Up' : 'Delivered', description: order?.orderType === 'pickup' ? 'Order has been picked up' : 'Order has been delivered' }
+      { key: 'new', label: 'Order Placed', description: 'Your order has been placed successfully' },
+      { key: 'accepted', label: 'Order Accepted', description: 'Your order has been accepted by the store' },
+      { key: 'packing', label: 'Packing', description: 'Your order is being packed' },
+      { key: 'ready', label: order?.orderType === 'pickup' ? 'Ready for Pickup' : 'Ready for Delivery', description: order?.orderType === 'pickup' ? 'Your order is ready for pickup' : 'Your order is ready for delivery' },
+      { key: 'out_for_delivery', label: order?.orderType === 'pickup' ? 'Available for Pickup' : 'Out for Delivery', description: order?.orderType === 'pickup' ? 'Your order is available for pickup at the store' : 'Your order is on the way' },
+      { key: 'completed', label: order?.orderType === 'pickup' ? 'Picked Up' : 'Delivered', description: order?.orderType === 'pickup' ? 'Order has been picked up' : 'Order has been delivered' }
     ];
 
     const currentStatusIndex = allSteps.findIndex(step => step.key === order?.status);
     
     return allSteps.map((step, index) => ({
       ...step,
-      completed: index <= currentStatusIndex,
-      current: index === currentStatusIndex
+      completed: index <= currentStatusIndex && order?.status !== 'cancelled',
+      current: index === currentStatusIndex && order?.status !== 'cancelled'
     }));
   };
 
@@ -424,7 +436,7 @@ const OrderTracking = () => {
             View All Orders
           </button>
           
-          {order.status === 'delivered' && (
+          {order.status === 'completed' && (
             <button
               onClick={() => {
                 // TODO: Implement reorder functionality
