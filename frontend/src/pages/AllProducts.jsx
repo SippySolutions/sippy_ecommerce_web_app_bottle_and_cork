@@ -5,15 +5,16 @@ import ProductCard from '../components/ProductCard';
 import PromoBanner from '../components/PromoBanner';
 import { useCMS } from '../Context/CMSContext';
 import Categories from "../components/Categories";
-import InlineLoader from '../components/InlineLoader';
 import { toast } from 'react-toastify';
+import { ProductGridSkeleton } from '../components/LazyLoadingUtils';
 
 const AllProducts = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { getTheme, getStoreInfo, loading: cmsLoading ,getCategories,} = useCMS();
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [backgroundLoading, setBackgroundLoading] = useState(false);
   const [pagination, setPagination] = useState(null);
   const [suggestions, setSuggestions] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);  const [sortOption, setSortOption] = useState('default');
@@ -35,7 +36,7 @@ const AllProducts = () => {
   const theme = getTheme();
   const storeInfo = getStoreInfo();
 
-  // Load departments data on component mount
+  // Load departments data on component mount - don't block UI
   useEffect(() => {
     const loadDepartments = async () => {
       try {
@@ -43,6 +44,7 @@ const AllProducts = () => {
         setDepartmentsData(data.departments || []);
       } catch (error) {
         console.error('Failed to fetch departments:', error);
+        // Silently fail - don't show error to user for non-critical data
       }
     };
     loadDepartments();
@@ -51,20 +53,45 @@ const AllProducts = () => {
     const hasSearchParams = query || department || category || subcategory;
     setIsSearchMode(hasSearchParams);
     
+    // Only trigger new loads for actual search parameter changes
     if (hasSearchParams) {
       performSearch();
     } else {
       loadAllProducts();
     }
+    
     // Reset page when search parameters change
     setCurrentPage(1);
     
-    // Always scroll to top when filters, departments, or search parameters change
+    // Smooth scroll to top when filters change
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [query, department, category, subcategory, sortOption, priceRange, stockFilter, quickSearchQuery]);
+  }, [query, department, category, subcategory]);
+  
+  // Separate effect for sort and filter changes to avoid full reload
+  useEffect(() => {
+    if (products.length > 0) {
+      // Re-apply filters and sorting to existing products
+      setBackgroundLoading(true);
+      
+      // Small delay to show the updating indicator
+      setTimeout(() => {
+        if (isSearchMode) {
+          performSearch(currentPage);
+        } else {
+          loadAllProducts(currentPage);
+        }
+      }, 100);
+    }
+  }, [sortOption, priceRange, stockFilter, quickSearchQuery]);
   const loadAllProducts = async (page = 1) => {
     try {
-      setLoading(true);
+      // Only show initial loading for first load, background loading for subsequent
+      if (page === 1 && products.length === 0) {
+        setInitialLoading(true);
+      } else {
+        setBackgroundLoading(true);
+      }
+      
       const productList = await fetchProducts();
       
       // Apply advanced filters first
@@ -91,13 +118,19 @@ const AllProducts = () => {
       console.error('Error loading products:', error);
       toast.error('Failed to load products');
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
+      setBackgroundLoading(false);
     }
   };
 
   const performSearch = async (page = 1) => {
     try {
-      setLoading(true);
+      // Only show initial loading for first search, background loading for pagination
+      if (page === 1) {
+        setInitialLoading(true);
+      } else {
+        setBackgroundLoading(true);
+      }
       
       const searchFilters = {};
       if (department) searchFilters.department = department;
@@ -123,7 +156,8 @@ const AllProducts = () => {
       console.error('Search error:', error);
       toast.error('Failed to search products');
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
+      setBackgroundLoading(false);
     }
   };
   const applySorting = (productList) => {
@@ -201,22 +235,35 @@ const AllProducts = () => {
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
+    
+    // Smooth scroll to top without waiting
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Load new page data
     if (isSearchMode) {
       performSearch(page);
     } else {
       loadAllProducts(page);
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSortChange = (newSortOption) => {
     setSortOption(newSortOption);
+    // Quick feedback without blocking UI
+    if (products.length > 0) {
+      toast.success('Sorting updated!', { 
+        position: "bottom-right", 
+        autoClose: 1000,
+        hideProgressBar: true 
+      });
+    }
   };
   const handleFilterClick = (filterType, value) => {
     const params = new URLSearchParams(searchParams);
     params.set(filterType, value);
     navigate(`/products?${params.toString()}`);
-    // Immediately scroll to top when filter is applied
+    
+    // Immediate scroll without waiting for data
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -309,19 +356,17 @@ const AllProducts = () => {
       });
     });
     return Array.from(subcategories);
-  };  // Enhanced Loading state - Only show for initial loads, not for subsequent searches
-  if (loading && products.length === 0 && !isSearchMode) {
+  };  // Enhanced Loading state - Only show skeleton for true initial loads
+  if (initialLoading && products.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50" style={{ backgroundColor: theme.muted || '#F5F5F5' }}>
         <div className="container mx-auto px-4 py-8">
           <Categories categories={getCategories()} />
           
-          {/* Branded Loading Screen */}
-          <div className="flex flex-col justify-center items-center py-12">
-            <InlineLoader 
-              text="Loading products..." 
-              size="md"
-            />
+          {/* Show skeleton grid instead of spinner */}
+          <div className="mt-8">
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-6 animate-pulse"></div>
+            <ProductGridSkeleton count={12} />
           </div>
         </div>
       </div>
@@ -804,20 +849,16 @@ const AllProducts = () => {
               </div>
             </div>
           </div>          {/* Main content */}
-          <div className="flex-1 relative">            {/* Loading overlay for search/filter operations */}
-            {loading && products.length > 0 && (
-              <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-10 flex items-center justify-center">
-                <div className="bg-white rounded-lg shadow-lg p-6">
-                  <InlineLoader 
-                    text={isSearchMode ? 'Searching products...' : 'Loading products...'} 
-                    size="sm"
-                  />
-                </div>
-              </div>
-            )}
+          <div className="flex-1 relative">
             
             {products.length > 0 ? (
-              <>                {/* Products grid with enhanced styling and promotional banners */}
+              <>
+                {/* Subtle background loading indicator - only for filter/sort changes */}
+                {backgroundLoading && (
+                  <div className="absolute top-0 right-0 z-10 bg-blue-500 text-white px-3 py-1 rounded-bl-lg text-sm font-medium">
+                    Updating...
+                  </div>
+                )}                {/* Products grid with enhanced styling and promotional banners */}
                 <div className="space-y-8">
                   {/* First promotional banner after 4 products */}
                   <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
@@ -855,18 +896,27 @@ const AllProducts = () => {
                       ))}
                     </div>
                   )}</div>
-                  {/* Modern Responsive Pagination */}
+                  {/* Modern Responsive Pagination with Loading State */}
                 {pagination && pagination.totalPages > 1 && (
                   <div className="flex justify-center mt-8 sm:mt-12">
                     <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-200 p-1 sm:p-2">
+                      {/* Loading indicator for pagination */}
+                      {backgroundLoading && (
+                        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+                          <div className="bg-blue-500 text-white px-2 py-1 rounded text-xs">
+                            Loading...
+                          </div>
+                        </div>
+                      )}
+                      
                       {/* Previous Button */}
                       <button
                         onClick={() => handlePageChange(pagination.page - 1)}
-                        disabled={pagination.page <= 1}
+                        disabled={pagination.page <= 1 || backgroundLoading}
                         className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-md sm:rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
-                          backgroundColor: pagination.page <= 1 ? 'transparent' : theme.primary + '10',
-                          color: pagination.page <= 1 ? theme.bodyText + '60' : theme.primary
+                          backgroundColor: (pagination.page <= 1 || backgroundLoading) ? 'transparent' : theme.primary + '10',
+                          color: (pagination.page <= 1 || backgroundLoading) ? theme.bodyText + '60' : theme.primary
                         }}
                         title="Previous page"
                       >
@@ -914,7 +964,8 @@ const AllProducts = () => {
                             <button
                               key={pageNumber}
                               onClick={() => handlePageChange(pageNumber)}
-                              className="flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                              disabled={backgroundLoading}
+                              className="flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50"
                               style={{
                                 backgroundColor: isActive ? theme.accent : 'transparent',
                                 color: isActive ? 'white' : theme.bodyText
@@ -933,7 +984,8 @@ const AllProducts = () => {
                             )}
                             <button
                               onClick={() => handlePageChange(pagination.totalPages)}
-                              className="flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                              disabled={backgroundLoading}
+                              className="flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50"
                               style={{
                                 backgroundColor: theme.primary + '10',
                                 color: theme.primary
@@ -948,11 +1000,11 @@ const AllProducts = () => {
                       {/* Next Button */}
                       <button
                         onClick={() => handlePageChange(pagination.page + 1)}
-                        disabled={pagination.page >= pagination.totalPages}
+                        disabled={pagination.page >= pagination.totalPages || backgroundLoading}
                         className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-md sm:rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
-                          backgroundColor: pagination.page >= pagination.totalPages ? 'transparent' : theme.primary + '10',
-                          color: pagination.page >= pagination.totalPages ? theme.bodyText + '60' : theme.primary
+                          backgroundColor: (pagination.page >= pagination.totalPages || backgroundLoading) ? 'transparent' : theme.primary + '10',
+                          color: (pagination.page >= pagination.totalPages || backgroundLoading) ? theme.bodyText + '60' : theme.primary
                         }}
                         title="Next page"
                       >
