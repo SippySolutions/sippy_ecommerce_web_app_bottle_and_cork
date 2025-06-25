@@ -25,15 +25,35 @@ const OrderTracking = () => {
   const loadOrderDetails = async () => {
     try {
       setLoading(true);
+      setError(''); // Clear previous errors
+      
+      // Check if orderId is valid
+      if (!orderId || orderId.length < 20) {
+        setError('Invalid order ID');
+        return;
+      }
+      
       const response = await fetchOrderById(orderId);
       if (response.success) {
         setOrder(response.order);
       } else {
-        setError('Order not found');
+        setError(response.message || 'Order not found');
       }
     } catch (err) {
       console.error('Error loading order:', err);
-      setError(err.message || 'Failed to load order details');
+      
+      // Handle specific error cases
+      if (err.status === 404) {
+        setError('Order not found. Please check your order ID.');
+      } else if (err.status === 403) {
+        setError('Access denied. You can only view your own orders.');
+      } else if (err.status === 400) {
+        setError('Invalid order ID format.');
+      } else if (err.message?.includes('Network Error') || err.code === 'ERR_NETWORK') {
+        setError('Unable to connect to the server. Please check your internet connection.');
+      } else {
+        setError(err.message || 'Failed to load order details');
+      }
     } finally {
       setLoading(false);
     }
@@ -276,16 +296,33 @@ const OrderTracking = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">Payment Method:</span>
                 <span className="font-medium capitalize">
-                  {order.paymentInfo.method === 'card' ? 'Credit Card' : 
-                   order.paymentInfo.method === 'saved_card' ? 'Saved Card' : 'Payment'}
-                  {order.paymentInfo.lastFour && ` ****${order.paymentInfo.lastFour}`}
+                  {order.paymentInfo?.method === 'card' ? 'Credit Card' : 
+                   order.paymentInfo?.method === 'saved_card' ? 'Saved Card' : 
+                   order.paymentInfo?.method || 'Credit Card'}
+                  {order.paymentInfo?.lastFour && ` ****${order.paymentInfo.lastFour}`}
                 </span>
               </div>
               
-              {order.paymentInfo.transactionId && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Payment Status:</span>
+                <span className="font-medium capitalize">
+                  {order.paymentStatus || 'Completed'}
+                </span>
+              </div>
+              
+              {(order.paymentInfo?.transactionId || order.transactionId) && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Transaction ID:</span>
-                  <span className="font-medium text-sm">{order.paymentInfo.transactionId}</span>
+                  <span className="font-medium text-sm">
+                    {order.paymentInfo?.transactionId || order.transactionId}
+                  </span>
+                </div>
+              )}
+              
+              {order.authorizationCode && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Authorization Code:</span>
+                  <span className="font-medium text-sm">{order.authorizationCode}</span>
                 </div>
               )}
               

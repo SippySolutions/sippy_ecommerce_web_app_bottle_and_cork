@@ -34,29 +34,48 @@ exports.getOrderById = async (req, res) => {
   try {
     const { orderId } = req.params;
     
-    let query = { _id: orderId };
-    
-    // If user is authenticated, check if they own the order
-    if (req.user) {
-      const userId = req.user.id;
-      query = { 
-        _id: orderId, 
-        $or: [
-          { customer: userId },
-          { customerType: 'guest' } // Allow authenticated users to view guest orders if they have the link
-        ]
-      };
+    // Validate ObjectId format
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid order ID format'
+      });
     }
-    // For non-authenticated requests, allow guest orders to be viewed
-    // This allows order tracking links to work for guest users
-
-    const order = await Order.findOne(query).populate('items.product', 'name price productimg');
-
+    
+    // Find order in database
+    let order = await Order.findById(orderId).populate('items.product', 'name price productimg');
+    
     if (!order) {
       return res.status(404).json({ 
         success: false, 
         message: 'Order not found' 
       });
+    }
+
+    // Check access permissions
+    if (req.user) {
+      const userId = req.user.id;
+      
+      // User can access their own orders or any guest orders
+      const hasAccess = 
+        (order.customer && order.customer.toString() === userId) || 
+        order.customerType === 'guest';
+        
+      if (!hasAccess) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied'
+        });
+      }
+    } else {
+      // Non-authenticated users can only access guest orders
+      if (order.customerType !== 'guest') {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied'
+        });
+      }
     }
 
     res.status(200).json({
