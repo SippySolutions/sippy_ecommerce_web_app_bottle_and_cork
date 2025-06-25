@@ -1,4 +1,4 @@
-# 🚨 URGENT FIX: Vercel Git Author Access Issue
+# 🚨 URGENT FIX: Vercel Git Author Access Issuess
 
 ## Problem
 **Error**: "Git author PreetRai must have access to the project on Vercel to create deployments"
