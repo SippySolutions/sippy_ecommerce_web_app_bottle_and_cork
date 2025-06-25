@@ -28,7 +28,8 @@ const Account = () => {
         const token = localStorage.getItem('token');
         if (token && !user) {
             // If there's a token but no user, wait for AuthContext to load user
-            setTimeout(() => setIsLoading(false), 1000);
+            // Removed artificial delay - just set loading to false immediately
+            setIsLoading(false);
         } else {
             setIsLoading(false);
         }

@@ -4,6 +4,7 @@ import {useCart} from '../Context/CartContext';
 import {useCMS} from '../Context/CMSContext';
 import {toast} from 'react-toastify';
 import WishlistIcon from './WishlistIcon';
+import { LazyImage } from './LazyLoadingUtils';
 
 // Minimal icon components
 const StarIcon = ({className}) => (
@@ -65,7 +66,6 @@ function ProductCard({ product }) {
     const navigate = useNavigate();
     const { addToCart } = useCart();
     const { getTheme } = useCMS();
-    const [imageLoaded, setImageLoaded] = useState(false);
 
     const theme = getTheme();
 
@@ -219,24 +219,17 @@ function ProductCard({ product }) {
                         )
                     }
                 </div>
-            </div>            {/* Product Image - Compact */}
+            </div>            {/* Product Image - Optimized with Lazy Loading */}
             <div
                 className="relative h-32 sm:h-52 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-2 sm:p-3">
-                <img
+                <LazyImage
                     src={product.productimg || '/placeholder-image.png'}
                     alt={product.name}
-                    className={`h-full w-auto object-contain transition-all duration-300 group-hover:scale-105 ${
-                    imageLoaded
-                        ? 'opacity-100'
-                        : 'opacity-0'}`}
-                    onLoad={() => setImageLoaded(true)}
-                    loading="lazy"/> {
-                    !imageLoaded && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="animate-pulse bg-gray-300 rounded w-8 h-12 sm:w-12 sm:h-16"></div>
-                        </div>
-                    )
-                }
+                    className="h-full w-auto object-contain transition-all duration-300 group-hover:scale-105"
+                    placeholder={
+                        <div className="animate-pulse bg-gray-300 rounded w-8 h-12 sm:w-12 sm:h-16"></div>
+                    }
+                />
 
                 {/* Size Floating Badge - Bottom Right - Compact */}
                 {
