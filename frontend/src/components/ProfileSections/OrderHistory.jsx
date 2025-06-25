@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchUserOrders } from '../../services/api';
 import { toast } from 'react-toastify';
+import { useRealTimeOrders } from '../../Context/RealTimeOrderContext';
 import InlineLoader from '../InlineLoader';
 
 const OrderHistory = () => {
   const navigate = useNavigate();
+  const { orders: realTimeOrders, setOrders: setRealTimeOrders } = useRealTimeOrders();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,13 +18,25 @@ const OrderHistory = () => {
 
   useEffect(() => {
     loadOrders();
-  }, []);  const loadOrders = async () => {
+  }, []);
+
+  // Update local orders when real-time orders change
+  useEffect(() => {
+    if (realTimeOrders && realTimeOrders.length > 0) {
+      setOrders(realTimeOrders);
+      categorizeOrders(realTimeOrders);
+    }
+  }, [realTimeOrders]);
+
+  const loadOrders = async () => {
     try {
       setLoading(true);
       const response = await fetchUserOrders();
       if (response.success) {
         setOrders(response.orders);
         categorizeOrders(response.orders);
+        // Initialize real-time orders with fetched data
+        setRealTimeOrders(response.orders);
       } else {
         setError('Failed to load orders');
       }

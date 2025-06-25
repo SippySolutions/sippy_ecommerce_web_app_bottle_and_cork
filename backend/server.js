@@ -1,4 +1,6 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -21,6 +23,23 @@ dotenv.config();
 connectDB();
 
 const app = express();
+const server = http.createServer(app);
+
+// Configure Socket.IO with CORS
+const io = new Server(server, {
+  cors: {
+    origin: [
+      process.env.FRONTEND_URL || 'http://localhost:3003',
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST']
+  },
+  transports: ['websocket', 'polling']
+});
+
 app.use(cors());
 app.use(express.json());
 
@@ -44,8 +63,14 @@ app.use('/api/checkout', checkoutRoutes); // Register checkout routes
 app.use('/api/wishlist', wishlistRoutes); // Register wishlist routes
 app.use('/api/guest', guestRoutes); // Register guest routes
 app.use('/api/product-groups', productGroupRoutes); // Register product group routes
+
+// Initialize real-time service
+const realTimeService = require('./services/realTimeService');
+realTimeService.initialize(io);
+
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('Socket.IO server initialized for real-time order updates');
 });

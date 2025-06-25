@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const User = require('../models/User');
+const realTimeService = require('../services/realTimeService');
 
 // Get user's orders
 exports.getUserOrders = async (req, res) => {
@@ -141,6 +142,9 @@ exports.updateOrderStatus = async (req, res) => {
       { new: true }
     );
 
+    // Emit real-time update
+    realTimeService.broadcastOrderStats();
+
     res.status(200).json({
       success: true,
       order,
@@ -216,6 +220,9 @@ exports.acceptOrder = async (req, res) => {
       { status: 'accepted' },
       { new: true }
     ).populate('items.product', 'name price productimg');
+
+    // Emit real-time update
+    realTimeService.broadcastOrderStats();
 
     res.status(200).json({
       success: true,

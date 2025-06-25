@@ -16,6 +16,8 @@ import {CartProvider} from './Context/CartContext.jsx';
 import {CMSProvider} from './Context/CMSContext.jsx';
 import {AgeVerificationProvider, useAgeVerification} from './Context/AgeVerificationContext.jsx';
 import {WishlistProvider} from './Context/WishlistContext.jsx';
+import {NotificationProvider} from './Context/NotificationContext.jsx';
+import {RealTimeOrderProvider} from './Context/RealTimeOrderContext.jsx';
 import AgeVerification from './components/AgeVerification.jsx';
 import AgeDenied from './components/AgeDenied.jsx';
 import {ToastContainer} from 'react-toastify';
@@ -29,6 +31,7 @@ import NetworkStatus from './components/NetworkStatus.jsx';
 import StatusBarManager from './components/StatusBarManager.jsx';
 import BottomNavigation from './components/BottomNavigation.jsx';
 import InlineLoader from './components/InlineLoader.jsx';
+import LiveOrderNotifications from './components/LiveOrderNotifications.jsx';
 
 function AppContent() {
     const location = useLocation();
@@ -248,7 +251,10 @@ function AppContent() {
                                 </motion.div>
                             }
                         />
-                    </Routes></AnimatePresence>            </main>
+                    </Routes></AnimatePresence>
+                {/* Live Order Notifications */}
+                <LiveOrderNotifications />
+            </main>
             <BottomNavigation />
             <Footer />
             <ToastContainer />
@@ -262,11 +268,15 @@ function App() {
             <AuthProvider>
                 <CartProvider>
                     <WishlistProvider>
-                        <AgeVerificationProvider>
-                            <NetworkStatus>
-                                <AppContent />
-                            </NetworkStatus>
-                        </AgeVerificationProvider>
+                        <NotificationProvider>
+                            <RealTimeOrderProvider>
+                                <AgeVerificationProvider>
+                                    <NetworkStatus>
+                                        <AppContent />
+                                    </NetworkStatus>
+                                </AgeVerificationProvider>
+                            </RealTimeOrderProvider>
+                        </NotificationProvider>
                     </WishlistProvider>
                 </CartProvider>
             </AuthProvider>

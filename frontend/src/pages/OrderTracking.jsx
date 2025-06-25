@@ -3,13 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { useCMS } from '../Context/CMSContext';
+import { useRealTimeOrders } from '../Context/RealTimeOrderContext';
 import { fetchOrderById } from '../services/api';
-import InlineLoader from '../components/InlineLoader'; // Import branded loader
+import InlineLoader from '../components/InlineLoader';
+import CustomerOrderTracker from '../components/CustomerOrderTracker';
 
 const OrderTracking = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const { getTheme, cmsData } = useCMS();
+  const { currentOrder, setCurrentOrderForTracking } = useRealTimeOrders();
   const theme = getTheme();
   
   const [order, setOrder] = useState(null);
@@ -22,12 +25,19 @@ const OrderTracking = () => {
     }
   }, [orderId]);
 
+  // Update order when real-time data changes
+  useEffect(() => {
+    if (currentOrder && currentOrder._id === orderId) {
+      setOrder(currentOrder);
+      setLoading(false);
+    }
+  }, [currentOrder, orderId]);
+
   const loadOrderDetails = async () => {
     try {
       setLoading(true);
-      setError(''); // Clear previous errors
+      setError('');
       
-      // Check if orderId is valid
       if (!orderId || orderId.length < 20) {
         setError('Invalid order ID');
         return;
@@ -36,13 +46,14 @@ const OrderTracking = () => {
       const response = await fetchOrderById(orderId);
       if (response.success) {
         setOrder(response.order);
+        // Set up real-time tracking for this order
+        setCurrentOrderForTracking(response.order);
       } else {
         setError(response.message || 'Order not found');
       }
     } catch (err) {
       console.error('Error loading order:', err);
       
-      // Handle specific error cases
       if (err.status === 404) {
         setError('Order not found. Please check your order ID.');
       } else if (err.status === 403) {
@@ -57,6 +68,12 @@ const OrderTracking = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle real-time order updates
+  const handleOrderUpdate = (updatedOrder) => {
+    setOrder(updatedOrder);
+    setError(''); // Clear any previous errors
   };
   const getStatusColor = (status) => {
     switch (status) {
@@ -189,6 +206,19 @@ const OrderTracking = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Real-Time Order Tracker */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <CustomerOrderTracker 
+            orderId={orderId}
+            customerId={order?.customer}
+            onOrderUpdate={handleOrderUpdate}
+          />
+        </motion.div>
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
