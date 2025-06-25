@@ -109,6 +109,9 @@ const CustomerOrderTracker = ({ orderId, customerId, onOrderUpdate }) => {
   };
 
   const deliveryInfo = currentOrder ? getDeliveryInfo(currentOrder._id) : null;
+  
+  // Check if real-time features are available
+  const realTimeAvailable = isConnected || connectionError !== 'Real-time updates not available';
 
   if (!currentOrder) {
     return (
@@ -123,29 +126,41 @@ const CustomerOrderTracker = ({ orderId, customerId, onOrderUpdate }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      {/* Connection Status */}
-      <div className={`px-4 py-2 text-sm ${
-        isConnected 
-          ? 'bg-green-50 text-green-700 border-b border-green-200' 
-          : 'bg-red-50 text-red-700 border-b border-red-200'
-      }`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className={`w-2 h-2 rounded-full mr-2 ${
-              isConnected ? 'bg-green-500' : 'bg-red-500'
-            }`}></div>
-            {isConnected ? 'Live tracking active' : 'Connection lost'}
+      {/* Connection Status - Only show if real-time is available */}
+      {realTimeAvailable && (
+        <div className={`px-4 py-2 text-sm ${
+          isConnected 
+            ? 'bg-green-50 text-green-700 border-b border-green-200' 
+            : 'bg-red-50 text-red-700 border-b border-red-200'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className={`w-2 h-2 rounded-full mr-2 ${
+                isConnected ? 'bg-green-500' : 'bg-red-500'
+              }`}></div>
+              {isConnected ? 'Live tracking active' : 'Connection lost'}
+            </div>
+            {lastUpdate && (
+              <span className="text-xs">
+                Last update: {lastUpdate.timestamp.toLocaleTimeString()}
+              </span>
+            )}
           </div>
-          {lastUpdate && (
-            <span className="text-xs">
-              Last update: {lastUpdate.timestamp.toLocaleTimeString()}
-            </span>
+          {connectionError && connectionError !== 'Real-time updates not available' && (
+            <p className="text-xs mt-1 text-red-600">{connectionError}</p>
           )}
         </div>
-        {connectionError && (
-          <p className="text-xs mt-1 text-red-600">{connectionError}</p>
-        )}
-      </div>
+      )}
+      
+      {/* Show info banner if real-time is not available */}
+      {!realTimeAvailable && (
+        <div className="px-4 py-2 text-sm bg-blue-50 text-blue-700 border-b border-blue-200">
+          <div className="flex items-center">
+            <div className="w-2 h-2 rounded-full mr-2 bg-blue-500"></div>
+            Standard tracking mode - Refresh page for latest updates
+          </div>
+        </div>
+      )}
 
       {/* Current Status */}
       <div className="p-6">

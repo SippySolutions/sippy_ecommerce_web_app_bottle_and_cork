@@ -27,7 +27,7 @@ export const NotificationProvider = ({ children }) => {
       return;
     }
 
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+    const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
     const socketUrl = API_BASE_URL.replace('/api', '');
 
     console.log('Connecting to Socket.IO server:', socketUrl);
@@ -38,8 +38,9 @@ export const NotificationProvider = ({ children }) => {
       autoConnect: true,
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
-      timeout: 20000
+      reconnectionAttempts: 3, // Reduced attempts for production
+      timeout: 10000, // Reduced timeout
+      forceNew: true
     });
 
     // Connection event handlers
@@ -62,6 +63,15 @@ export const NotificationProvider = ({ children }) => {
 
     newSocket.on('connect_error', (error) => {
       console.error('Socket connection error:', error.message);
+      
+      // Check if this is a production environment without Socket.IO
+      if (error.message.includes('404') || error.message.includes('ENOTFOUND')) {
+        console.log('📡 Socket.IO not available on this server - using fallback mode');
+        setConnectionError('Real-time updates not available');
+        setIsConnected(false);
+        return; // Don't attempt to reconnect
+      }
+      
       setConnectionError(error.message);
       setIsConnected(false);
     });
@@ -75,6 +85,12 @@ export const NotificationProvider = ({ children }) => {
     newSocket.on('reconnect_error', (error) => {
       console.error('Reconnection error:', error.message);
       setConnectionError('Reconnection failed');
+    });
+
+    newSocket.on('reconnect_failed', () => {
+      console.log('❌ Failed to reconnect to Socket.IO server');
+      setConnectionError('Real-time updates unavailable');
+      setIsConnected(false);
     });
 
     // Connection status updates

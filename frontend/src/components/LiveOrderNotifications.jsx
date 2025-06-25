@@ -9,6 +9,7 @@ const LiveOrderNotifications = () => {
     notifications, 
     unreadCount, 
     isConnected, 
+    connectionError,
     markAsRead, 
     markAllAsRead, 
     clearNotifications 
@@ -20,6 +21,13 @@ const LiveOrderNotifications = () => {
   
   const [showNotifications, setShowNotifications] = useState(false);
   const [filter, setFilter] = useState('all'); // 'all', 'order_updates', 'delivery'
+
+  // Don't show the notification bell if Socket.IO is not available in production
+  const shouldShowNotifications = isConnected || notifications.length > 0;
+
+  if (!shouldShowNotifications && connectionError?.includes('Real-time updates not available')) {
+    return null; // Hide completely if real-time is not available
+  }
 
   const getNotificationIcon = (type) => {
     const icons = {
