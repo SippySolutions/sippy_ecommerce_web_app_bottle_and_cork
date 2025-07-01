@@ -333,9 +333,9 @@ class RealTimeService {
     
     const [total, newOrders, inProgress, completed, todayOrders] = await Promise.all([
       Order.countDocuments(),
-      Order.countDocuments({ status: 'new' }),
-      Order.countDocuments({ status: { $in: ['accepted', 'packing', 'ready', 'out_for_delivery'] } }),
-      Order.countDocuments({ status: 'completed' }),
+      Order.countDocuments({ status: 'pending' }),
+      Order.countDocuments({ status: { $in: ['processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit'] } }),
+      Order.countDocuments({ status: 'delivered' }),
       Order.countDocuments({ createdAt: { $gte: today } })
     ]);
 

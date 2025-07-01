@@ -221,7 +221,7 @@ exports.processGuestPayment = async (req, res) => {
       deliveryFee: roundToTwo(deliveryFee),
       ageVerified: ageVerified,
       ageVerifiedAt: ageVerifiedAt,
-      status: 'new'
+      status: 'pending'
     });
 
     await order.save();

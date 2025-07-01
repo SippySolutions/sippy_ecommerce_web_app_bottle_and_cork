@@ -171,7 +171,7 @@ export const RealTimeOrderProvider = ({ children }) => {
   // Get active orders (not completed or cancelled)
   const getActiveOrders = useCallback(() => {
     return orders.filter(order => 
-      !['completed', 'cancelled'].includes(order.status)
+      !['delivered', 'cancelled'].includes(order.status)
     );
   }, [orders]);
 

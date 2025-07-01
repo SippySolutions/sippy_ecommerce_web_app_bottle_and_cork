@@ -92,7 +92,7 @@ const OrderPaymentManagement = ({ orderId, orderData, onPaymentUpdate, isStoreOw
     }
 
     const buttons = [];    // Capture full payment
-    if (paymentStatus === 'authorized' && orderStatus === 'completed') {
+    if (paymentStatus === 'authorized' && orderStatus === 'delivered') {
       buttons.push(
         <button
           key="capture"
@@ -363,7 +363,7 @@ const OrderPaymentManagement = ({ orderId, orderData, onPaymentUpdate, isStoreOw
                 <div className="text-sm text-gray-700 space-y-1">
                   <p><strong>Order Status:</strong> {order?.status || 'Unknown'}</p>
                   <p><strong>Payment Status:</strong> {order?.paymentStatus || 'Unknown'}</p>
-                  {order?.status === 'completed' && order?.paymentStatus === 'authorized' && (
+                  {order?.status === 'delivered' && order?.paymentStatus === 'authorized' && (
                     <p className="text-green-600">✅ Ready to capture payment automatically</p>
                   )}
                 </div>

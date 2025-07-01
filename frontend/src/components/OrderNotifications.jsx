@@ -15,7 +15,7 @@ const OrderNotifications = ({ userId }) => {
           const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
           const recentlyUpdated = response.orders.filter(order => {
             const updatedAt = new Date(order.updatedAt || order.createdAt);
-            return updatedAt > last24Hours && order.status !== 'completed';
+            return updatedAt > last24Hours && order.status !== 'delivered';
           });
           
           setRecentUpdates(recentlyUpdated);

@@ -23,7 +23,7 @@ const OrderStats = () => {
           const activeOrders = orders.filter(order => 
             ['new', 'accepted', 'packing', 'ready', 'out_for_delivery'].includes(order.status)
           ).length;
-          const completedOrders = orders.filter(order => order.status === 'completed').length;
+          const completedOrders = orders.filter(order => order.status === 'delivered').length;
           const totalSpent = orders.reduce((sum, order) => sum + order.total, 0);
           const averageOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
           

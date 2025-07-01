@@ -75,12 +75,12 @@ export const useOrderPaymentWorkflow = () => {
   const getOrderPaymentStatus = (order) => {
     if (!order) return 'unknown';
       const paymentStatus = order.paymentStatus || 'pending';
-    const orderStatus = order.status || 'new';
+    const orderStatus = order.status || 'pending';
     
     return {
       paymentStatus,
       orderStatus,
-      canBeCaptured: paymentStatus === 'authorized' && orderStatus === 'completed',
+      canBeCaptured: paymentStatus === 'authorized' && orderStatus === 'delivered',
       isAuthorized: paymentStatus === 'authorized',
       isPaid: paymentStatus === 'paid' || paymentStatus === 'captured',
       isVoided: paymentStatus === 'voided',

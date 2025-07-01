@@ -531,7 +531,7 @@ const OrderTracking = () => {
             View All Orders
           </button>
           
-          {order.status === 'completed' && (
+          {order.status === 'delivered' && (
             <button
               onClick={() => {
                 // TODO: Implement reorder functionality

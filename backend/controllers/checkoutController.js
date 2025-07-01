@@ -338,7 +338,7 @@ exports.processPayment = async (req, res) => {
       deliveryFee: roundToTwo(deliveryFee),
       ageVerified: ageVerified,
       ageVerifiedAt: ageVerifiedAt,
-      status: 'new'
+      status: 'pending'
     });    await order.save();
 
     // Update user's orders (ensure orders array exists)
@@ -592,7 +592,7 @@ exports.processPaymentWithSavedCard = async (req, res) => {
       deliveryFee: roundToTwo(deliveryFee),
       ageVerified: ageVerified,
       ageVerifiedAt: ageVerifiedAt,
-      status: 'new'
+      status: 'pending'
     });
 
     await order.save();    // Update user's orders
@@ -1452,7 +1452,7 @@ exports.authorizePayment = async (req, res) => {
       bagFee: bagFeeAmount,
       deliveryFee: deliveryFeeAmount,      total: totalAmount,
       paymentStatus: 'authorized', // Key difference - authorized not paid
-      status: 'new',
+      status: 'pending',
       transactionId: authResult.transactionId,
       authorizationCode: authResult.authCode,
       customerProfileId,
@@ -1501,7 +1501,7 @@ exports.authorizePayment = async (req, res) => {
   }
 };
 
-// Capture authorized payment - called when order status is updated to 'completed'
+// Capture authorized payment - called when order status is updated to 'delivered'
 exports.capturePayment = async (req, res) => {
   try {
     console.log('=== CAPTURE PROCESS START ===');

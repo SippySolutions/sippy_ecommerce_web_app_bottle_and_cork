@@ -274,12 +274,12 @@ const PaymentStatusIndicator = ({ orderId, orderStatus, onStatusChange }) => {
             <p className="text-blue-700">
               <strong>Order Status:</strong> {orderStatus}
             </p>
-            {paymentDetails.status === 'authorized' && orderStatus !== 'completed' && (
+            {paymentDetails.status === 'authorized' && orderStatus !== 'delivered' && (
               <p className="text-blue-600">
                 💡 Payment will be captured automatically when order is marked as completed
               </p>
             )}
-            {paymentDetails.status === 'authorized' && orderStatus === 'completed' && (
+            {paymentDetails.status === 'authorized' && orderStatus === 'delivered' && (
               <p className="text-green-600">
                 ✅ Ready to capture payment
               </p>
