@@ -100,7 +100,7 @@ exports.updateOrderStatus = async (req, res) => {
     const { orderId } = req.params;
     const { status } = req.body;
     
-    const validStatuses = ['new', 'accepted', 'packing', 'ready', 'out_for_delivery', 'completed', 'cancelled'];
+    const validStatuses = ['pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
@@ -119,12 +119,14 @@ exports.updateOrderStatus = async (req, res) => {
 
     // Validate status transitions
     const validTransitions = {
-      'new': ['accepted', 'cancelled'],
-      'accepted': ['packing', 'cancelled'],
-      'packing': ['ready', 'cancelled'],
-      'ready': ['out_for_delivery', 'cancelled'],
-      'out_for_delivery': ['completed', 'cancelled'],
-      'completed': [], // Final state
+      'pending': ['processing', 'cancelled'],
+      'processing': ['ready_for_pickup', 'ready_for_delivery', 'cancelled'],
+      'ready_for_pickup': ['delivered', 'cancelled'], // Customer picks up directly
+      'ready_for_delivery': ['driver_assigned', 'cancelled'],
+      'driver_assigned': ['picked_up', 'ready_for_delivery', 'cancelled'], // Can reassign
+      'picked_up': ['in_transit', 'cancelled'],
+      'in_transit': ['delivered', 'ready_for_delivery', 'cancelled'], // Failed delivery
+      'delivered': [], // Final state
       'cancelled': [] // Final state
     };
 
@@ -166,7 +168,7 @@ exports.getOrdersByStatus = async (req, res) => {
   try {
     const { status } = req.params;
     
-    const validStatuses = ['new', 'accepted', 'packing', 'ready', 'out_for_delivery', 'completed', 'cancelled'];
+    const validStatuses = ['pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
@@ -208,7 +210,7 @@ exports.acceptOrder = async (req, res) => {
       });
     }
 
-    if (order.status !== 'new') {
+    if (order.status !== 'pending') {
       return res.status(400).json({
         success: false,
         message: `Cannot accept order with status: ${order.status}`
@@ -217,7 +219,7 @@ exports.acceptOrder = async (req, res) => {
 
     const updatedOrder = await Order.findByIdAndUpdate(
       orderId,
-      { status: 'accepted' },
+      { status: 'processing' },
       { new: true }
     ).populate('items.product', 'name price productimg');
 
@@ -254,7 +256,7 @@ exports.getOrderStatusHistory = async (req, res) => {
     }
 
     // Generate status timeline based on current status
-    const statusFlow = ['new', 'accepted', 'packing', 'ready', 'out_for_delivery', 'completed'];
+    const statusFlow = ['pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit', 'delivered'];
     const currentStatusIndex = statusFlow.indexOf(order.status);
     
     const timeline = statusFlow.map((status, index) => ({

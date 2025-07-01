@@ -9,12 +9,14 @@ const OrdersDashboard = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   const statusTabs = [
-    { key: 'new', label: 'New Orders', count: 0 },
-    { key: 'accepted', label: 'Accepted', count: 0 },
-    { key: 'packing', label: 'Packing', count: 0 },
-    { key: 'ready', label: 'Ready', count: 0 },
-    { key: 'out_for_delivery', label: 'Out for Delivery', count: 0 },
-    { key: 'completed', label: 'Completed', count: 0 },
+    { key: 'pending', label: 'Pending Orders', count: 0 },
+    { key: 'processing', label: 'Processing', count: 0 },
+    { key: 'ready_for_pickup', label: 'Ready for Pickup', count: 0 },
+    { key: 'ready_for_delivery', label: 'Ready for Delivery', count: 0 },
+    { key: 'driver_assigned', label: 'Driver Assigned', count: 0 },
+    { key: 'picked_up', label: 'Picked Up', count: 0 },
+    { key: 'in_transit', label: 'In Transit', count: 0 },
+    { key: 'delivered', label: 'Delivered', count: 0 },
     { key: 'cancelled', label: 'Cancelled', count: 0 }
   ];
 

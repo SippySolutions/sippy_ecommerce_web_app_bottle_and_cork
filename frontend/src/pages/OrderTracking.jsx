@@ -77,49 +77,58 @@ const OrderTracking = () => {
   };
   const getStatusColor = (status) => {
     switch (status) {
-      case 'new': return 'text-blue-600 bg-blue-100';
-      case 'accepted': return 'text-green-600 bg-green-100';
-      case 'packing': return 'text-yellow-600 bg-yellow-100';
-      case 'ready': return 'text-purple-600 bg-purple-100';
-      case 'out_for_delivery': return 'text-orange-600 bg-orange-100';
-      case 'completed': return 'text-green-600 bg-green-100';
+      case 'pending': return 'text-blue-600 bg-blue-100';
+      case 'processing': return 'text-yellow-600 bg-yellow-100';
+      case 'ready_for_pickup': return 'text-purple-600 bg-purple-100';
+      case 'ready_for_delivery': return 'text-purple-600 bg-purple-100';
+      case 'driver_assigned': return 'text-indigo-600 bg-indigo-100';
+      case 'picked_up': return 'text-orange-600 bg-orange-100';
+      case 'in_transit': return 'text-orange-600 bg-orange-100';
+      case 'delivered': return 'text-green-600 bg-green-100';
       case 'cancelled': return 'text-red-600 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'new':
+      case 'pending':
         return (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         );
-      case 'accepted':
+      case 'processing':
         return (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
         );
-      case 'packing':
+      case 'ready_for_pickup':
+      case 'ready_for_delivery':
         return (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
         );
-      case 'ready':
+      case 'driver_assigned':
         return (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
         );
-      case 'out_for_delivery':
+      case 'picked_up':
+        return (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case 'in_transit':
         return (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         );
-      case 'completed':
+      case 'delivered':
         return (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -141,17 +150,36 @@ const OrderTracking = () => {
   };
   const getTrackingSteps = () => {
     const allSteps = [
-      { key: 'new', label: 'Order Placed', description: 'Your order has been placed successfully' },
-      { key: 'accepted', label: 'Order Accepted', description: 'Your order has been accepted by the store' },
-      { key: 'packing', label: 'Packing', description: 'Your order is being packed' },
-      { key: 'ready', label: order?.orderType === 'pickup' ? 'Ready for Pickup' : 'Ready for Delivery', description: order?.orderType === 'pickup' ? 'Your order is ready for pickup' : 'Your order is ready for delivery' },
-      { key: 'out_for_delivery', label: order?.orderType === 'pickup' ? 'Available for Pickup' : 'Out for Delivery', description: order?.orderType === 'pickup' ? 'Your order is available for pickup at the store' : 'Your order is on the way' },
-      { key: 'completed', label: order?.orderType === 'pickup' ? 'Picked Up' : 'Delivered', description: order?.orderType === 'pickup' ? 'Order has been picked up' : 'Order has been delivered' }
+      { key: 'pending', label: 'Order Placed', description: 'Your order has been placed successfully' },
+      { key: 'processing', label: 'Order Processing', description: 'Your order is being prepared by the store' },
+      { key: 'ready_for_pickup', label: 'Ready for Pickup', description: 'Your order is ready for pickup at the store' },
+      { key: 'ready_for_delivery', label: 'Ready for Delivery', description: 'Your order is ready for delivery' },
+      { key: 'driver_assigned', label: 'Driver Assigned', description: 'A driver has been assigned to deliver your order' },
+      { key: 'picked_up', label: 'Picked Up by Driver', description: 'Driver has collected your order from the store' },
+      { key: 'in_transit', label: order?.orderType === 'pickup' ? 'Available for Pickup' : 'In Transit', description: order?.orderType === 'pickup' ? 'Your order is available for pickup at the store' : 'Your order is on the way to you' },
+      { key: 'delivered', label: order?.orderType === 'pickup' ? 'Picked Up' : 'Delivered', description: order?.orderType === 'pickup' ? 'Order has been picked up' : 'Order has been delivered successfully' }
     ];
 
-    const currentStatusIndex = allSteps.findIndex(step => step.key === order?.status);
+    // Filter steps based on order type
+    let relevantSteps = allSteps;
     
-    return allSteps.map((step, index) => ({
+    if (order?.orderType === 'pickup') {
+      // For pickup orders, exclude delivery-specific steps
+      relevantSteps = allSteps.filter(step => 
+        !['ready_for_delivery', 'driver_assigned', 'picked_up'].includes(step.key)
+      );
+      // Rename 'in_transit' to 'ready_for_pickup' for pickup orders
+      relevantSteps = relevantSteps.map(step => {
+        if (step.key === 'in_transit') {
+          return { ...step, key: 'ready_for_pickup', label: 'Ready for Pickup', description: 'Your order is ready for pickup at the store' };
+        }
+        return step;
+      });
+    }
+
+    const currentStatusIndex = relevantSteps.findIndex(step => step.key === order?.status);
+    
+    return relevantSteps.map((step, index) => ({
       ...step,
       completed: index <= currentStatusIndex && order?.status !== 'cancelled',
       current: index === currentStatusIndex && order?.status !== 'cancelled'

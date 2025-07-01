@@ -103,7 +103,7 @@ export const useRealTimeOrderTracking = (orderId = null, autoTrack = true) => {
   // Check if order is in active state
   const isActiveOrder = useCallback(() => {
     if (!trackingOrder) return false;
-    return !['completed', 'cancelled'].includes(trackingOrder.status);
+    return !['delivered', 'cancelled'].includes(trackingOrder.status);
   }, [trackingOrder]);
 
   // Get estimated completion time
@@ -137,7 +137,7 @@ export const useRealTimeOrderTracking = (orderId = null, autoTrack = true) => {
   const getOrderProgress = useCallback(() => {
     if (!trackingOrder) return 0;
 
-    const statusFlow = ['new', 'accepted', 'packing', 'ready', 'out_for_delivery', 'completed'];
+    const statusFlow = ['pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit', 'delivered'];
     const currentIndex = statusFlow.indexOf(trackingOrder.status);
     
     if (currentIndex === -1) return 0;

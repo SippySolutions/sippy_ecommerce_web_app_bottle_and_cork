@@ -12,7 +12,7 @@ export const useRealTimeOrders = () => {
 };
 
 export const RealTimeOrderProvider = ({ children }) => {
-  const { socket, isConnected } = useNotifications();
+  const { socket, isConnected, addEventListener } = useNotifications();
   const [orders, setOrders] = useState([]);
   const [currentOrder, setCurrentOrder] = useState(null);
   const [orderStats, setOrderStats] = useState({});
@@ -182,24 +182,23 @@ export const RealTimeOrderProvider = ({ children }) => {
 
   // Set up real-time listeners
   useEffect(() => {
-    if (!socket || !isConnected) return;
+    if (!isConnected) return;
 
     console.log('🔌 Setting up real-time order listeners');
 
-    // Order-specific events
-    socket.on('customer_order_update', handleCustomerOrderUpdate);
-    socket.on('single_order_update', handleSingleOrderUpdate);
-    socket.on('delivery_update', handleDeliveryUpdate);
-    socket.on('order_stats_update', handleOrderStatsUpdate);
+    // Order-specific events using addEventListener
+    const cleanups = [
+      addEventListener('customer_order_update', handleCustomerOrderUpdate),
+      addEventListener('single_order_update', handleSingleOrderUpdate),
+      addEventListener('delivery_update', handleDeliveryUpdate),
+      addEventListener('order_stats_update', handleOrderStatsUpdate)
+    ];
 
     return () => {
       console.log('🔌 Cleaning up real-time order listeners');
-      socket.off('customer_order_update', handleCustomerOrderUpdate);
-      socket.off('single_order_update', handleSingleOrderUpdate);
-      socket.off('delivery_update', handleDeliveryUpdate);
-      socket.off('order_stats_update', handleOrderStatsUpdate);
+      cleanups.forEach(cleanup => cleanup());
     };
-  }, [socket, isConnected, handleCustomerOrderUpdate, handleSingleOrderUpdate, handleDeliveryUpdate, handleOrderStatsUpdate]);
+  }, [isConnected, addEventListener, handleCustomerOrderUpdate, handleSingleOrderUpdate, handleDeliveryUpdate, handleOrderStatsUpdate]);
 
   const value = {
     // Data

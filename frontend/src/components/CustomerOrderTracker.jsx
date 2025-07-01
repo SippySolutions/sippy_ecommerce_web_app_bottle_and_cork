@@ -68,12 +68,14 @@ const CustomerOrderTracker = ({ orderId, customerId, onOrderUpdate }) => {
 
   const getStatusMessage = (status, orderNumber) => {
     const messages = {
-      'new': 'Your order has been placed and is awaiting confirmation',
-      'accepted': 'Great news! Your order has been accepted and is being prepared',
-      'packing': 'Your order is being carefully packed',
-      'ready': 'Your order is ready for pickup/delivery',
-      'out_for_delivery': 'Your order is on its way to you!',
-      'completed': 'Your order has been completed successfully',
+      'pending': 'Your order has been placed and is awaiting store confirmation',
+      'processing': 'Great news! Your order is being prepared by the store',
+      'ready_for_pickup': 'Your order is ready for pickup at the store',
+      'ready_for_delivery': 'Your order is ready and waiting for driver assignment',
+      'driver_assigned': 'A driver has been assigned to deliver your order',
+      'picked_up': 'Your order has been picked up and is on its way!',
+      'in_transit': 'Your order is on its way to you!',
+      'delivered': 'Your order has been delivered successfully',
       'cancelled': 'Your order has been cancelled'
     };
     
@@ -82,12 +84,14 @@ const CustomerOrderTracker = ({ orderId, customerId, onOrderUpdate }) => {
 
   const getStatusIcon = (status) => {
     const icons = {
-      'new': '🆕',
-      'accepted': '✅',
-      'packing': '📦',
-      'ready': '🚀',
-      'out_for_delivery': '🚚',
-      'completed': '✨',
+      'pending': '📋',
+      'processing': '⚙️',
+      'ready_for_pickup': '📦',
+      'ready_for_delivery': '�',
+      'driver_assigned': '�',
+      'picked_up': '📮',
+      'in_transit': '🚗',
+      'delivered': '✅',
       'cancelled': '❌'
     };
     
@@ -96,12 +100,14 @@ const CustomerOrderTracker = ({ orderId, customerId, onOrderUpdate }) => {
 
   const getStatusColor = (status) => {
     const colors = {
-      'new': 'bg-blue-100 text-blue-800 border-blue-200',
-      'accepted': 'bg-green-100 text-green-800 border-green-200',
-      'packing': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'ready': 'bg-purple-100 text-purple-800 border-purple-200',
-      'out_for_delivery': 'bg-orange-100 text-orange-800 border-orange-200',
-      'completed': 'bg-green-100 text-green-800 border-green-200',
+      'pending': 'bg-blue-100 text-blue-800 border-blue-200',
+      'processing': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'ready_for_pickup': 'bg-purple-100 text-purple-800 border-purple-200',
+      'ready_for_delivery': 'bg-purple-100 text-purple-800 border-purple-200',
+      'driver_assigned': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      'picked_up': 'bg-orange-100 text-orange-800 border-orange-200',
+      'in_transit': 'bg-orange-100 text-orange-800 border-orange-200',
+      'delivered': 'bg-green-100 text-green-800 border-green-200',
       'cancelled': 'bg-red-100 text-red-800 border-red-200'
     };
     

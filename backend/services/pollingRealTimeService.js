@@ -210,7 +210,7 @@ class PollingRealTimeService {
       });
 
       // Send delivery tracking updates
-      if (['out_for_delivery', 'ready'].includes(order.status)) {
+      if (['in_transit', 'ready_for_delivery', 'driver_assigned'].includes(order.status)) {
         this.io.to(`customer_${order.customer._id}`).emit('delivery_update', {
           type: 'delivery_tracking_update',
           orderId: order._id,
@@ -233,12 +233,14 @@ class PollingRealTimeService {
   // Helper methods (same as Change Stream version)
   getStatusMessage(status, orderNumber) {
     const messages = {
-      'new': `Your order #${orderNumber} has been placed and is awaiting confirmation`,
-      'accepted': `Great news! Your order #${orderNumber} has been accepted and is being prepared`,
-      'packing': `Your order #${orderNumber} is being packed with care`,
-      'ready': `Your order #${orderNumber} is ready for pickup/delivery`,
-      'out_for_delivery': `Your order #${orderNumber} is on its way to you!`,
-      'completed': `Your order #${orderNumber} has been successfully completed. Thank you!`,
+      'pending': `Your order #${orderNumber} has been placed and is awaiting confirmation`,
+      'processing': `Great news! Your order #${orderNumber} is being prepared by the store`,
+      'ready_for_pickup': `Your order #${orderNumber} is ready for pickup at the store`,
+      'ready_for_delivery': `Your order #${orderNumber} is ready and waiting for driver assignment`,
+      'driver_assigned': `A driver has been assigned to deliver your order #${orderNumber}`,
+      'picked_up': `Your order #${orderNumber} has been picked up and is on its way!`,
+      'in_transit': `Your order #${orderNumber} is on its way to you!`,
+      'delivered': `Your order #${orderNumber} has been successfully delivered. Thank you!`,
       'cancelled': `Your order #${orderNumber} has been cancelled`
     };
     
@@ -247,10 +249,15 @@ class PollingRealTimeService {
 
   getStatusPriority(status) {
     const priorities = {
-      'new': 'high',
-      'cancelled': 'high',
-      'out_for_delivery': 'medium',
-      'completed': 'low'
+      'pending': 'high',
+      'processing': 'medium',
+      'ready_for_pickup': 'medium',
+      'ready_for_delivery': 'high',
+      'driver_assigned': 'medium',
+      'picked_up': 'medium',
+      'in_transit': 'medium',
+      'delivered': 'low',
+      'cancelled': 'high'
     };
     
     return priorities[status] || 'medium';

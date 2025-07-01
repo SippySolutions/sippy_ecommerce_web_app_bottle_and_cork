@@ -5,23 +5,27 @@ const OrderStatusManager = ({ orderId, currentStatus, onStatusUpdate }) => {
   const [loading, setLoading] = useState(false);
   
   const statusFlow = [
-    { key: 'new', label: 'New Order', color: 'bg-blue-100 text-blue-800' },
-    { key: 'accepted', label: 'Accepted', color: 'bg-green-100 text-green-800' },
-    { key: 'packing', label: 'Packing', color: 'bg-yellow-100 text-yellow-800' },
-    { key: 'ready', label: 'Ready', color: 'bg-purple-100 text-purple-800' },
-    { key: 'out_for_delivery', label: 'Out for Delivery', color: 'bg-orange-100 text-orange-800' },
-    { key: 'completed', label: 'Completed', color: 'bg-green-100 text-green-800' },
+    { key: 'pending', label: 'Pending', color: 'bg-blue-100 text-blue-800' },
+    { key: 'processing', label: 'Processing', color: 'bg-yellow-100 text-yellow-800' },
+    { key: 'ready_for_pickup', label: 'Ready for Pickup', color: 'bg-purple-100 text-purple-800' },
+    { key: 'ready_for_delivery', label: 'Ready for Delivery', color: 'bg-purple-100 text-purple-800' },
+    { key: 'driver_assigned', label: 'Driver Assigned', color: 'bg-indigo-100 text-indigo-800' },
+    { key: 'picked_up', label: 'Picked Up', color: 'bg-orange-100 text-orange-800' },
+    { key: 'in_transit', label: 'In Transit', color: 'bg-orange-100 text-orange-800' },
+    { key: 'delivered', label: 'Delivered', color: 'bg-green-100 text-green-800' },
     { key: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-800' }
   ];
 
   const getValidNextStatuses = (currentStatus) => {
     const transitions = {
-      'new': ['accepted', 'cancelled'],
-      'accepted': ['packing', 'cancelled'],
-      'packing': ['ready', 'cancelled'],
-      'ready': ['out_for_delivery', 'cancelled'],
-      'out_for_delivery': ['completed', 'cancelled'],
-      'completed': [],
+      'pending': ['processing', 'cancelled'],
+      'processing': ['ready_for_pickup', 'ready_for_delivery', 'cancelled'],
+      'ready_for_pickup': ['delivered', 'cancelled'], // Customer picks up directly
+      'ready_for_delivery': ['driver_assigned', 'cancelled'],
+      'driver_assigned': ['picked_up', 'ready_for_delivery', 'cancelled'], // Can reassign
+      'picked_up': ['in_transit', 'cancelled'],
+      'in_transit': ['delivered', 'ready_for_delivery', 'cancelled'], // Failed delivery
+      'delivered': [],
       'cancelled': []
     };
     
@@ -101,7 +105,7 @@ const OrderStatusManager = ({ orderId, currentStatus, onStatusUpdate }) => {
         </div>
       </div>
 
-      {currentStatus === 'new' && (
+      {currentStatus === 'pending' && (
         <div className="mb-4">
           <button
             onClick={handleAcceptOrder}
@@ -138,7 +142,7 @@ const OrderStatusManager = ({ orderId, currentStatus, onStatusUpdate }) => {
         </div>
       )}
 
-      {validNextStatuses.length === 0 && currentStatus !== 'new' && (
+      {validNextStatuses.length === 0 && currentStatus !== 'pending' && (
         <div className="text-sm text-gray-500">
           This order is in its final state and cannot be updated further.
         </div>

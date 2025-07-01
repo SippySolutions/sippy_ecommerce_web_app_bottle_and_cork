@@ -49,10 +49,10 @@ const OrderHistory = () => {
     }
   };  const categorizeOrders = (orders) => {
     const active = orders.filter(order => 
-      ['new', 'accepted', 'packing', 'ready', 'out_for_delivery'].includes(order.status)
+      ['pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit'].includes(order.status)
     );
     const completed = orders.filter(order => 
-      ['completed', 'cancelled'].includes(order.status)
+      ['delivered', 'cancelled'].includes(order.status)
     );
     
     setActiveOrders(active);
@@ -484,19 +484,21 @@ const OrderCard = ({ order, navigate }) => {
 // Helper function to get status info (moved outside component)
 const getStatusInfo = (status) => {
   const statusMap = {
-    new: { color: 'bg-blue-100 text-blue-800', label: 'New Order', icon: '🆕' },
-    accepted: { color: 'bg-green-100 text-green-800', label: 'Accepted', icon: '✅' },
-    packing: { color: 'bg-yellow-100 text-yellow-800', label: 'Packing', icon: '📦' },
-    ready: { color: 'bg-purple-100 text-purple-800', label: 'Ready', icon: '🚀' },
-    out_for_delivery: { color: 'bg-orange-100 text-orange-800', label: 'Out for Delivery', icon: '🚚' },
-    completed: { color: 'bg-green-100 text-green-800', label: 'Completed', icon: '✨' },
+    pending: { color: 'bg-blue-100 text-blue-800', label: 'Pending', icon: '📋' },
+    processing: { color: 'bg-yellow-100 text-yellow-800', label: 'Processing', icon: '⚙️' },
+    ready_for_pickup: { color: 'bg-purple-100 text-purple-800', label: 'Ready for Pickup', icon: '📦' },
+    ready_for_delivery: { color: 'bg-purple-100 text-purple-800', label: 'Ready for Delivery', icon: '�' },
+    driver_assigned: { color: 'bg-indigo-100 text-indigo-800', label: 'Driver Assigned', icon: '👤' },
+    picked_up: { color: 'bg-orange-100 text-orange-800', label: 'Picked Up', icon: '📮' },
+    in_transit: { color: 'bg-orange-100 text-orange-800', label: 'In Transit', icon: '�' },
+    delivered: { color: 'bg-green-100 text-green-800', label: 'Delivered', icon: '✅' },
     cancelled: { color: 'bg-red-100 text-red-800', label: 'Cancelled', icon: '❌' }
   };
   return statusMap[status] || { color: 'bg-gray-100 text-gray-800', label: status, icon: '❓' };
 };
 
 const getStatusProgress = (status) => {
-  const statusFlow = ['new', 'accepted', 'packing', 'ready', 'out_for_delivery', 'completed'];
+  const statusFlow = ['pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit', 'delivered'];
   const currentIndex = statusFlow.indexOf(status);
   if (currentIndex === -1) return 0;
   return ((currentIndex + 1) / statusFlow.length) * 100;

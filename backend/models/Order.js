@@ -21,8 +21,8 @@ const orderSchema = new mongoose.Schema({
   tax: { type: Number, default: 0 },  total: { type: Number, required: true },
   status: { 
     type: String, 
-    enum: ['new', 'accepted', 'packing', 'ready', 'out_for_delivery', 'completed', 'cancelled'], 
-    default: 'new' 
+    enum: ['pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'], 
+    default: 'pending' 
   },
   shippingAddress: {
     firstName: String,
@@ -79,6 +79,41 @@ const orderSchema = new mongoose.Schema({
   ageVerified: { type: Boolean, default: false },
   ageVerifiedAt: { type: Date }
 }, { timestamps: true });
+
+// Driver assignment and delivery tracking
+orderSchema.add({
+  driverInfo: {
+    driverId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    driverName: String,
+    driverPhone: String,
+    assignedAt: Date,
+    pickedUpAt: Date,
+    deliveryStartedAt: Date,
+    estimatedDeliveryTime: Date,
+    deliveryInstructions: String,
+    deliveryPhotos: [String], // URLs to delivery confirmation photos
+    deliverySignature: String, // URL to delivery signature
+    deliveryConfirmation: {
+      confirmedBy: String, // Name of person who received order
+      confirmationMethod: String, // 'signature', 'photo', 'contactless'
+      timestamp: Date
+    }
+  },
+
+  // Order timeline for status history
+  statusHistory: [{
+    status: String,
+    timestamp: { type: Date, default: Date.now },
+    updatedBy: String, // Staff member or system
+    notes: String
+  }],
+
+  // Additional fields for enhanced tracking
+  estimatedDeliveryTime: Date,
+  pickupReadyAt: Date, // When order became ready for pickup
+  qrCode: String, // QR code for driver self-assignment
+  specialInstructions: String, // Customer delivery/pickup notes
+});
 
 // Generate order number before validation
 orderSchema.pre('validate', function(next) {
