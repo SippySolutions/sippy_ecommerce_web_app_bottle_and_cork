@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Universal Liquors</string>
     <string name="title_activity_main">Universal Liquors</string>
-    <string name="package_name">com.sippysolution.universalliquor</string>
-    <string name="custom_url_scheme">com.sippysolution.universalliquor</string>
+    <string name="package_name">com.sippysolutions.universalliquors</string>
+    <string name="custom_url_scheme">com.sippysolutions.universalliquors</string>
 </resources>
