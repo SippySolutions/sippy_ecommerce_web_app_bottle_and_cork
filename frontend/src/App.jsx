@@ -18,6 +18,7 @@ import {AgeVerificationProvider, useAgeVerification} from './Context/AgeVerifica
 import {WishlistProvider} from './Context/WishlistContext.jsx';
 import {NotificationProvider} from './Context/NotificationContext.jsx';
 import {RealTimeOrderProvider} from './Context/RealTimeOrderContext.jsx';
+import useThemePreview from './hooks/useThemePreview.js';
 import AgeVerification from './components/AgeVerification.jsx';
 import AgeDenied from './components/AgeDenied.jsx';
 import {ToastContainer} from 'react-toastify';
@@ -37,7 +38,12 @@ import LiveOrderNotifications from './components/LiveOrderNotifications.jsx';
 
 function AppContent() {
     const location = useLocation();
-    const {isVerified, isDenied, isLoading, handleVerified, handleDenied} = useAgeVerification();    // Animation variants for route transitions - Faster animations
+    const {isVerified, isDenied, isLoading, handleVerified, handleDenied} = useAgeVerification();
+    
+    // Initialize theme preview functionality
+    useThemePreview();
+    
+    // Animation variants for route transitions - Faster animations
     const pageVariants = {
         initial: {
             opacity: 0,

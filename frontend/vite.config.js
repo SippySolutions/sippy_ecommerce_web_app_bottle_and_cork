@@ -7,6 +7,12 @@ export default defineConfig({
   server: {
     port: 3003,
     host: true,
+    cors: {
+      origin: '*',
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      credentials: true
+    }
   },
   build: {
     minify: 'esbuild',
