@@ -14,7 +14,7 @@ const config: CapacitorConfig = {
     allowMixedContent: false,
     captureInput: true,
     webContentsDebuggingEnabled: true,
-    backgroundColor: '#1e1e1e',
+    backgroundColor: '#ffffff',
     minWebViewVersion: 70,
     appendUserAgent: 'UniversalLiquorsApp/1.0',
     buildOptions: {
@@ -24,10 +24,11 @@ const config: CapacitorConfig = {
     }
   },
   ios: {
-    backgroundColor: '#1e1e1e',
+    backgroundColor: '#ffffff',
     contentInset: 'automatic',
     scrollEnabled: true,
-    allowsLinkPreview: false
+    allowsLinkPreview: false,
+    preferredContentMode: 'mobile'
   },
   plugins: {
     SplashScreen: {
@@ -41,7 +42,7 @@ const config: CapacitorConfig = {
     },
     StatusBar: {
       style: 'LIGHT',
-      backgroundColor: '#1e1e1e',
+      backgroundColor: '#ffffff',
       overlaysWebView: false
     },
     Keyboard: {

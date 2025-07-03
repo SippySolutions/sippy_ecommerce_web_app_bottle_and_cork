@@ -103,11 +103,130 @@ body {
 /* Mobile-specific safe area handling */
 @supports (padding-top: env(safe-area-inset-top)) {
   .mobile-safe-top {
-    padding-top: calc(env(safe-area-inset-top) + 0.5rem);
+    padding-top: env(safe-area-inset-top);
   }
   
   .mobile-safe-bottom {
     padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
+  }
+  
+  /* iOS specific - prevent gap between status bar and content */
+  .ios-seamless-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: #ffffff !important;
+    /* Extend background upward to fill any gaps */
+    margin-top: calc(-1 * env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  /* Alternative approach: ensure full screen coverage */
+  .ios-full-background {
+    background: linear-gradient(to bottom, #ffffff 0%, #ffffff 100%);
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
+/* Mobile-specific navbar adjustments */
+@media screen and (max-width: 768px) {
+  /* For iOS devices - use fixed positioning to prevent navbar hiding */
+  .mobile-navbar-ios {
+    background: #ffffff !important;
+    position: fixed !important; /* Changed from sticky to fixed for mobile */
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 1000;
+    /* Extend background to fill any gap above navbar */
+    box-shadow: 0 calc(-100vh) 0 0 #ffffff;
+  }
+  
+  /* Add top padding to body content to compensate for fixed navbar */
+  .mobile-body-padding {
+    padding-top: 80px; /* Adjust based on actual navbar height */
+  }
+  
+  /* iOS Status Bar Background Fix - Extend body background */
+  @supports (-webkit-touch-callout: none) {
+    /* Only apply to iOS devices */
+    body {
+      background-color: #ffffff;
+    }
+    
+    /* Ensure root elements have white background */
+    html, #root {
+      background-color: #ffffff;
+    }
+    
+    /* Create seamless status bar to navbar transition */
+    .ios-status-bar-fill {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: env(safe-area-inset-top);
+      background-color: #ffffff;
+      z-index: 999;
+    }
+    
+    /* Adjust mobile body padding for iOS safe area */
+    .mobile-body-padding {
+      padding-top: calc(80px + env(safe-area-inset-top));
+    }
+  }
+  
+  /* Ensure smooth transition */
+  .navbar-transition {
+    transition: background-color 0.3s ease;
+  }
+  
+  /* Enhanced mobile navbar positioning fix */
+  @media screen and (max-width: 768px) {
+    /* Ensure fixed navbar doesn't interfere with page content */
+    .mobile-fixed-navbar-container {
+      position: relative;
+      z-index: 1000;
+    }
+    
+    /* Prevent content from sliding under fixed navbar */
+    .mobile-content-container {
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Mobile-specific fixes for long scrollable content */
+    .mobile-long-content {
+      /* Ensure content can scroll properly with fixed navbar */
+      overflow-y: auto;
+      /* Prevent bounce scrolling on iOS that might hide navbar */
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+    }
+    
+    /* Ensure proper viewport handling on mobile */
+    .mobile-viewport-fix {
+      min-height: 100vh;
+      min-height: 100dvh;
+      /* Account for mobile browser chrome */
+      min-height: calc(100vh - env(keyboard-inset-height, 0px));
+    }
+  }
+}
+
+/* Desktop: maintain sticky behavior */
+@media screen and (min-width: 769px) {
+  .desktop-navbar {
+    position: sticky !important;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  /* Remove mobile-specific padding on desktop */
+  .mobile-body-padding {
+    padding-top: 0 !important;
   }
 }
 
@@ -142,5 +261,57 @@ body {
   .mobile-compact-spacing {
     margin-top: 0.5rem;
     margin-bottom: 0.5rem;
+  }
+}
+
+/* Enhanced iOS viewport and status bar handling */
+@supports (-webkit-touch-callout: none) {
+  /* iOS-specific viewport fixes */
+  html {
+    height: 100%;
+    height: -webkit-fill-available;
+  }
+  
+  body {
+    height: 100%;
+    height: -webkit-fill-available;
+    background-color: #ffffff;
+    /* Prevent bounce scrolling */
+    overflow: hidden;
+    overflow-y: auto;
+  }
+  
+  #root {
+    height: 100%;
+    height: -webkit-fill-available;
+    background-color: #ffffff;
+  }
+  
+  /* Ensure seamless status bar integration */
+  .ios-status-bar-integration {
+    background-color: #ffffff;
+    /* Extend background to cover any gaps */
+    background-image: linear-gradient(to bottom, #ffffff 0%, #ffffff 100%);
+    min-height: 100vh;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Additional mobile viewport fixes */
+@media screen and (max-width: 768px) {
+  /* Ensure full viewport coverage */
+  html, body {
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* iOS Safari specific fixes */
+  @supports (-webkit-touch-callout: none) {
+    .mobile-full-height {
+      min-height: 100vh;
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+    }
   }
 }

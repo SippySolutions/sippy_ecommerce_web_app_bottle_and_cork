@@ -166,8 +166,8 @@ function Navbar() {
               )}
             </div>
           </div>        </div>
-      </div>      <nav className="bg-white shadow-md sticky top-0 z-40">
-      {/* Top Section with safe area padding */}      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-2 mobile-safe-top md:py-3">{/* Logo */}
+      </div>      <nav className="bg-white shadow-md sticky top-0 z-40 mobile-navbar-ios navbar-transition sticky-navbar-mobile desktop-navbar mobile-fixed-navbar-container">
+      {/* Top Section with safe area padding */}      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-2 md:py-3">{/* Logo */}
         <Link to="/" className="flex items-center text-3xl font-bold text-[var(--color-accent)]">
           {!cmsLoading && getLogo() ? (
             <img

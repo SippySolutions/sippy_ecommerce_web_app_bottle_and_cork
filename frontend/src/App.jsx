@@ -29,6 +29,8 @@ import Wishlist from './pages/Wishlist.jsx';
 import OrderTracking from './pages/OrderTracking.jsx';
 import NetworkStatus from './components/NetworkStatus.jsx';
 import StatusBarManager from './components/StatusBarManager.jsx';
+import iOSStatusBarFill from './components/iOSStatusBarFill.jsx';
+import NavbarHeightManager from './components/NavbarHeightManager.jsx';
 import BottomNavigation from './components/BottomNavigation.jsx';
 import InlineLoader from './components/InlineLoader.jsx';
 import LiveOrderNotifications from './components/LiveOrderNotifications.jsx';
@@ -79,8 +81,10 @@ function AppContent() {
     return (
         <NetworkStatus>
             <StatusBarManager />
+            <iOSStatusBarFill />
+            <NavbarHeightManager />
             <Navbar />
-            <main className="min-h-screen  md:pb-0">
+            <main className="min-h-screen mobile-full-height mobile-body-padding mobile-content-container mobile-long-content mobile-viewport-fix md:pb-0 ios-status-bar-integration">
                 <AnimatePresence mode="wait">
                     <Routes location={location} key={location.pathname}>
                         <Route

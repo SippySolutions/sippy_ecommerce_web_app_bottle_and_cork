@@ -27,6 +27,10 @@
     "ios:dev": "npm run cap:build && npx cap run ios --livereload",
     "ios:build": "npm run cap:build && npx cap run ios --prod",
     "ios:release": "npm run cap:build && cd ios && xcodebuild archive -workspace App.xcworkspace -scheme App -archivePath ./build/App.xcarchive",
+    "ios:assets": "npx @capacitor/assets generate --ios",
+    "ios:icons": "./generate-ios-icons.sh",
+    "ios:prepare": "npm run build:mobile && npm run cap:sync && npm run ios:icons",
+    "appstore:ready": "npm run ios:prepare && echo '🍎 Ready for App Store! Open Xcode: npm run cap:open ios'",
     "mobile:setup": "npx cap add android && npx cap add ios && npm run cap:sync",
     "mobile:clean": "npx cap sync --clean"
   },
