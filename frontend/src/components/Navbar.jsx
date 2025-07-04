@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Capacitor } from '@capacitor/core';
 import { AuthContext } from './AuthContext'; // Import AuthContext
 import { useCart } from '../Context/CartContext'; // Import CartContext
 import { useWishlist } from '../Context/WishlistContext'; // Import WishlistContext
@@ -180,15 +181,45 @@ function Navbar() {
           )}
         </Link>
 
-        {/* Mobile Menu Toggle */}
-        <button
-          className="lg:hidden text-gray-600 hover:text-[var(--color-accent)]"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? <CloseIcon fontSize="large" /> : <SearchIcon fontSize="large" />}
-        </button>        {/* Desktop Search Bar */}
+        {/* Desktop Search Bar */}
         <div className="hidden lg:flex items-center w-full max-w-2xl mx-4">
           <SearchBar className="w-full" placeholder="Search products, brands, categories..." />
+        </div>
+
+        {/* Mobile Navigation Icons - Right side */}
+        <div className="lg:hidden flex items-center space-x-3 ml-auto">
+          {/* Mobile Web Navigation - Only show in web browsers, not mobile apps */}
+          {!Capacitor.isNativePlatform() && (
+            <>
+              <Link to="/cart" className="relative flex flex-col items-center">
+                <ShoppingCartIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
+                {cartItems.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
+                    {cartItems.reduce((total, item) => total + item.quantity, 0)}
+                  </span>
+                )}
+              </Link>
+              <Link to="/wishlist" className="relative flex flex-col items-center">
+                <FavoriteIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+              <Link to="/account" className="flex flex-col items-center">
+                <AccountCircleIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
+              </Link>
+            </>
+          )}
+          
+          {/* Mobile Menu Toggle - Always last */}
+          <button
+            className="text-gray-600 hover:text-[var(--color-accent)] mobile-menu-toggle"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <CloseIcon fontSize="large" /> : <MenuIcon fontSize="large" />}
+          </button>
         </div>        {/* Icons */}
         <div className="hidden lg:flex items-center space-x-6 relative">
           {user ? (
@@ -296,11 +327,19 @@ function Navbar() {
             {/* Quick Links */}
             <div className="flex space-x-2">
               <Link
+                to="/"
+                className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <HomeIcon fontSize="small" className="mr-1" />
+                Home
+              </Link>
+              <Link
                 to="/products"
                 className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                All Products
+                Shop
               </Link>
               <Link
                 to="/collections"

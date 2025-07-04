@@ -400,3 +400,109 @@ body {
     }
   }
 }
+
+/* Mobile Web Navigation Styling */
+@media screen and (max-width: 1024px) {
+  /* Mobile navigation container */
+  .mobile-nav-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+  }
+  
+  /* Mobile web navigation icons */
+  .mobile-web-nav-icon {
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+  }
+  
+  .mobile-web-nav-icon:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Badge styling for mobile navigation */
+  .mobile-nav-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #ef4444;
+    color: white;
+    font-size: 0.75rem;
+    border-radius: 50%;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+  }
+  
+  /* Mobile hamburger menu improved styling */
+  .mobile-menu-toggle {
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .mobile-menu-toggle:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Ensure hamburger menu button is properly aligned */
+  .mobile-menu-toggle svg {
+    display: block;
+  }
+  
+  /* Mobile menu content improvements */
+  .mobile-menu-content {
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Quick links grid for mobile */
+  .mobile-quick-links {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  
+  .mobile-quick-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 0.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  
+  .mobile-quick-link:hover {
+    border-color: var(--color-accent, #FF5722);
+    color: var(--color-accent, #FF5722);
+  }
+  
+  /* Mobile navbar right side layout */
+  .mobile-navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+  }
+  
+  /* Ensure all mobile nav icons are same size */
+  .mobile-navbar-right > * {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
