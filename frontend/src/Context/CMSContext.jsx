@@ -68,9 +68,9 @@ export const CMSProvider = ({ children }) => {
       root.style.setProperty('--color-accent', theme.accent);
       root.style.setProperty('--color-muted', theme.muted);
       root.style.setProperty('--color-background', theme.background);
-      root.style.setProperty('--color-heading-text', theme.headingText);
-      root.style.setProperty('--color-body-text', theme.bodyText);
-      root.style.setProperty('--color-link-text', theme.linkText);
+      root.style.setProperty('--color-headingText', theme.headingText);
+      root.style.setProperty('--color-bodyText', theme.bodyText);
+      root.style.setProperty('--color-link', theme.linkText);
     }
   };
 
