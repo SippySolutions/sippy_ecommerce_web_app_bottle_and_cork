@@ -13,14 +13,14 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: false,
     captureInput: true,
-    webContentsDebuggingEnabled: true,
+    webContentsDebuggingEnabled: false,
     backgroundColor: '#ffffff',
     minWebViewVersion: 70,
-    appendUserAgent: 'UniversalLiquorsApp/1.0',
+    appendUserAgent: 'UniversalLiquorsApp/1.2',
     buildOptions: {
       keystorePath: './release-key.keystore',
       keystoreAlias: 'universalliquor-key',
-      releaseType: 'APK'
+      releaseType: 'AAB'
     }
   },
   ios: {

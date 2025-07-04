@@ -129,90 +129,59 @@ body {
   }
 }
 
-/* Mobile-specific navbar adjustments */
+/* Universal Mobile Configuration - Works for both iOS and Android */
 @media screen and (max-width: 768px) {
-  /* For iOS devices - use fixed positioning to prevent navbar hiding */
+  /* Ensure status bar area is white */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--status-bar-height, 24px);
+    background: #ffffff;
+    z-index: 999;
+  }
+  
   .mobile-navbar-ios {
     background: #ffffff !important;
-    position: fixed !important; /* Changed from sticky to fixed for mobile */
-    top: 0;
+    position: fixed !important;
+    top: var(--status-bar-height, 0px);
     left: 0;
     right: 0;
     width: 100%;
     z-index: 1000;
-    /* Extend background to fill any gap above navbar */
     box-shadow: 0 calc(-100vh) 0 0 #ffffff;
   }
   
-  /* Add top padding to body content to compensate for fixed navbar */
   .mobile-body-padding {
-    padding-top: 80px; /* Adjust based on actual navbar height */
+    padding-top: calc(80px + var(--status-bar-height, 0px));
   }
   
-  /* iOS Status Bar Background Fix - Extend body background */
-  @supports (-webkit-touch-callout: none) {
-    /* Only apply to iOS devices */
-    body {
-      background-color: #ffffff;
-    }
-    
-    /* Ensure root elements have white background */
-    html, #root {
-      background-color: #ffffff;
-    }
-    
-    /* Create seamless status bar to navbar transition */
-    .ios-status-bar-fill {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: env(safe-area-inset-top);
-      background-color: #ffffff;
-      z-index: 999;
-    }
-    
-    /* Adjust mobile body padding for iOS safe area */
-    .mobile-body-padding {
-      padding-top: calc(80px + env(safe-area-inset-top));
-    }
-  }
-  
-  /* Ensure smooth transition */
   .navbar-transition {
     transition: background-color 0.3s ease;
   }
   
-  /* Enhanced mobile navbar positioning fix */
-  @media screen and (max-width: 768px) {
-    /* Ensure fixed navbar doesn't interfere with page content */
-    .mobile-fixed-navbar-container {
-      position: relative;
-      z-index: 1000;
-    }
-    
-    /* Prevent content from sliding under fixed navbar */
-    .mobile-content-container {
-      position: relative;
-      z-index: 1;
-    }
-    
-    /* Mobile-specific fixes for long scrollable content */
-    .mobile-long-content {
-      /* Ensure content can scroll properly with fixed navbar */
-      overflow-y: auto;
-      /* Prevent bounce scrolling on iOS that might hide navbar */
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior-y: contain;
-    }
-    
-    /* Ensure proper viewport handling on mobile */
-    .mobile-viewport-fix {
-      min-height: 100vh;
-      min-height: 100dvh;
-      /* Account for mobile browser chrome */
-      min-height: calc(100vh - env(keyboard-inset-height, 0px));
-    }
+  .mobile-fixed-navbar-container {
+    position: relative;
+    z-index: 1000;
+  }
+  
+  .mobile-content-container {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .mobile-long-content {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+  
+  .mobile-viewport-fix {
+    min-height: 100vh;
+    min-height: 100dvh;
+    min-height: calc(100vh - env(keyboard-inset-height, 0px));
   }
 }
 

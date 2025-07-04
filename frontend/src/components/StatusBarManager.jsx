@@ -30,24 +30,38 @@ const StatusBarManager = () => {
         const theme = getTheme();
         console.log('StatusBar: Theme data:', theme);
         
-        // Platform-specific configuration
+        // Unified configuration for both iOS and Android
+        // Get status bar info first
+        const statusBarInfo = await StatusBar.getInfo();
+        console.log('StatusBar: Status bar info:', statusBarInfo);
+        
+        // Calculate the status bar height for CSS
+        let statusBarHeight = 0;
+        
         if (platform === 'ios') {
-          // iOS: Disable overlay to prevent gap, set solid white background
-          await StatusBar.setOverlaysWebView({ overlay: false });
-          await StatusBar.setBackgroundColor({ color: '#ffffff' });
-          await StatusBar.setStyle({ style: 'LIGHT' }); // LIGHT = white text on colored background
-          console.log('StatusBar: iOS configuration applied - no overlay with solid white background');
-          
-          // Verify the configuration
-          const finalInfo = await StatusBar.getInfo();
-          console.log('StatusBar: Final iOS configuration:', finalInfo);
+          // iOS: Use safe area inset or default
+          statusBarHeight = statusBarInfo.height || 44; // Common iOS status bar height
         } else if (platform === 'android') {
-          // Android: Keep existing configuration
-          await StatusBar.setOverlaysWebView({ overlay: false });
-          await StatusBar.setBackgroundColor({ color: '#ffffff' });
-          await StatusBar.setStyle({ style: 'LIGHT' }); // LIGHT = white text on colored background
-          console.log('StatusBar: Android configuration applied');
+          // Android: Use reported height or default
+          statusBarHeight = statusBarInfo.height || 24; // Common Android status bar height
         }
+        
+        // Configure status bar for both platforms
+        await StatusBar.setOverlaysWebView({ overlay: false });
+        await StatusBar.setBackgroundColor({ color: '#ffffff' });
+        await StatusBar.setStyle({ style: 'LIGHT' }); // LIGHT = dark content on light background
+        
+        // Force show the status bar to ensure it's visible
+        await StatusBar.show();
+        
+        // Set unified CSS custom property for both platforms
+        document.documentElement.style.setProperty('--status-bar-height', `${statusBarHeight}px`);
+        
+        console.log(`StatusBar: Applied unified styling - Platform: ${platform}, Height: ${statusBarHeight}px, Background: white`);
+        
+        // Verify the configuration
+        const finalInfo = await StatusBar.getInfo();
+        console.log('StatusBar: Final configuration:', finalInfo);
         
         console.log('StatusBar: Configuration complete!');
       } catch (error) {
