@@ -1,5 +1,6 @@
 import { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
+import { Capacitor } from '@capacitor/core';
 import { AuthContext } from "./AuthContext"; // Import AuthContext
 import Android from "../assets/android.png";
 import Apple from "../assets/Apple.png";
@@ -13,6 +14,11 @@ import InlineLoader from "./InlineLoader"; // Import branded loader
 function Footer() {
   const [cmsData, setCmsData] = useState(null);
   const { user } = useContext(AuthContext); // Access user from AuthContext
+
+  // Hide footer in mobile apps (Capacitor), show only in web browsers
+  if (Capacitor.isNativePlatform()) {
+    return null;
+  }
 
   // Fetch CMS data using the API utility
   useEffect(() => {

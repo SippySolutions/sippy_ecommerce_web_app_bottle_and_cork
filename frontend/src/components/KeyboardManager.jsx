@@ -16,20 +16,23 @@ const KeyboardManager = () => {
       const keyboardShowListener = Keyboard.addListener('keyboardWillShow', info => {
         console.log('KeyboardManager: Keyboard will show', info);
         
-        // Add keyboard-open class to prevent layout shifts
-        document.body.classList.add('keyboard-open');
-        document.documentElement.classList.add('keyboard-open');
-        
-        // Find elements with mobile classes and add keyboard-open
-        const mobileElements = document.querySelectorAll('.mobile-body-padding, .mobile-viewport-fix');
-        mobileElements.forEach(element => {
-          element.classList.add('keyboard-open');
-        });
-        
-        // Prevent viewport from resizing by keeping fixed height
-        const viewport = document.querySelector('meta[name="viewport"]');
-        if (viewport) {
-          viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+        // Only apply keyboard fixes in Capacitor apps
+        if (Capacitor.isNativePlatform()) {
+          // Add keyboard-open class to prevent layout shifts
+          document.body.classList.add('keyboard-open');
+          document.documentElement.classList.add('keyboard-open');
+          
+          // Find elements with mobile classes and add keyboard-open
+          const mobileElements = document.querySelectorAll('.mobile-body-padding, .mobile-viewport-fix');
+          mobileElements.forEach(element => {
+            element.classList.add('keyboard-open');
+          });
+          
+          // Prevent viewport from resizing by keeping fixed height
+          const viewport = document.querySelector('meta[name="viewport"]');
+          if (viewport) {
+            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+          }
         }
       });
 
@@ -37,20 +40,23 @@ const KeyboardManager = () => {
       const keyboardHideListener = Keyboard.addListener('keyboardWillHide', () => {
         console.log('KeyboardManager: Keyboard will hide');
         
-        // Remove keyboard-open class
-        document.body.classList.remove('keyboard-open');
-        document.documentElement.classList.remove('keyboard-open');
-        
-        // Remove from mobile elements
-        const mobileElements = document.querySelectorAll('.mobile-body-padding, .mobile-viewport-fix');
-        mobileElements.forEach(element => {
-          element.classList.remove('keyboard-open');
-        });
-        
-        // Restore viewport
-        const viewport = document.querySelector('meta[name="viewport"]');
-        if (viewport) {
-          viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
+        // Only apply keyboard fixes in Capacitor apps
+        if (Capacitor.isNativePlatform()) {
+          // Remove keyboard-open class
+          document.body.classList.remove('keyboard-open');
+          document.documentElement.classList.remove('keyboard-open');
+          
+          // Remove from mobile elements
+          const mobileElements = document.querySelectorAll('.mobile-body-padding, .mobile-viewport-fix');
+          mobileElements.forEach(element => {
+            element.classList.remove('keyboard-open');
+          });
+          
+          // Restore viewport
+          const viewport = document.querySelector('meta[name="viewport"]');
+          if (viewport) {
+            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
+          }
         }
       });
 

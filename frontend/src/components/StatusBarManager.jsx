@@ -19,6 +19,12 @@ const StatusBarManager = () => {
         const platform = Capacitor.getPlatform();
         console.log('StatusBar: Platform detected:', platform);
         
+        // Add capacitor-app class to enable Capacitor-specific CSS
+        if (Capacitor.isNativePlatform()) {
+          document.documentElement.classList.add('capacitor-app');
+          console.log('StatusBar: Added capacitor-app class for native platform');
+        }
+        
         // Get status bar info first
         const info = await StatusBar.getInfo();
         console.log('StatusBar: Current info:', info);

@@ -131,26 +131,52 @@ body {
 
 /* Universal Mobile Configuration - Works for both iOS and Android */
 @media screen and (max-width: 768px) {
-  /* Keyboard handling - prevent layout shifts */
-  html {
+  /* Keyboard handling - prevent layout shifts (Capacitor apps only) */
+  .capacitor-app html {
     height: 100vh;
     height: 100dvh;
   }
   
-  body {
+  .capacitor-app body {
     height: 100vh;
     height: 100dvh;
     overflow-x: hidden;
-    /* Prevent viewport resizing glitches */
+    /* Prevent viewport resizing glitches (Capacitor only) */
     position: fixed;
     width: 100%;
   }
   
-  #root {
+  .capacitor-app #root {
     height: 100vh;
     height: 100dvh;
     overflow-y: auto;
     overflow-x: hidden;
+  }
+  
+  /* Mobile app specific adjustments */
+  .capacitor-app .mobile-viewport-fix {
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* Add bottom padding for bottom navigation + safe area */
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  }
+  
+  /* Improve bottom navigation for mobile apps */
+  .capacitor-app .mobile-safe-bottom {
+    padding-bottom: calc(0.25rem + env(safe-area-inset-bottom, 0px));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Web browser - normal scrolling behavior */
+  html:not(.capacitor-app) {
+    overflow-x: hidden;
+  }
+  
+  html:not(.capacitor-app) body {
+    overflow-x: hidden;
+    /* Allow normal scrolling in web browsers */
   }
   
   /* Ensure status bar area is white */
@@ -182,8 +208,8 @@ body {
     transition: padding-top 0.1s ease-out;
   }
   
-  /* Keyboard-specific handling */
-  .mobile-body-padding.keyboard-open {
+  /* Keyboard-specific handling (Capacitor apps only) */
+  .capacitor-app .mobile-body-padding.keyboard-open {
     padding-top: calc(80px + var(--status-bar-height, 0px));
   }
   
@@ -213,8 +239,8 @@ body {
     min-height: calc(100vh - env(keyboard-inset-height, 0px));
   }
   
-  /* Prevent keyboard from causing layout shifts */
-  .mobile-viewport-fix.keyboard-open {
+  /* Prevent keyboard from causing layout shifts (Capacitor apps only) */
+  .capacitor-app .mobile-viewport-fix.keyboard-open {
     min-height: 100vh;
     min-height: 100dvh;
   }

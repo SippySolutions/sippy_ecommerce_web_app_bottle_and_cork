@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { useCart } from '../Context/CartContext';
 import { useWishlist } from '../Context/WishlistContext';
 import { useCMS } from '../Context/CMSContext';
@@ -14,6 +15,11 @@ const BottomNavigation = () => {
   const { cartItems } = useCart();
   const { getWishlistCount } = useWishlist();
   const { getTheme } = useCMS();
+  
+  // Only show bottom navigation in mobile apps (Capacitor), hide in web browsers
+  if (!Capacitor.isNativePlatform()) {
+    return null;
+  }
   
   const wishlistCount = getWishlistCount();
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
