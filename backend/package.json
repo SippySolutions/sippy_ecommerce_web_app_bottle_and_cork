@@ -10,7 +10,10 @@
     "test:credentials": "node test-credentials.js"
   },
   "keywords": [],
-  "author": "",
+  "author": {
+    "name": "SippySolutions",
+    "email": "admin@sippysolutions.com"
+  },
   "license": "ISC",
   "description": "",
   "dependencies": {

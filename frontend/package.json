@@ -3,6 +3,10 @@
   "private": true,
   "version": "1.3.0",
   "type": "module",
+  "author": {
+    "name": "SippySolutions",
+    "email": "admin@sippysolutions.com"
+  },
   "scripts": {
     "dev": "vite --port 3003",
     "dev:https": "vite --port 3003 --https",

@@ -36,10 +36,13 @@ import NavbarHeightManager from './components/NavbarHeightManager.jsx';
 import BottomNavigation from './components/BottomNavigation.jsx';
 import InlineLoader from './components/InlineLoader.jsx';
 import LiveOrderNotifications from './components/LiveOrderNotifications.jsx';
+import UpdateDialog from './components/UpdateDialog.jsx';
+import useAppUpdate from './hooks/useAppUpdate.js';
 
 function AppContent() {
     const location = useLocation();
     const {isVerified, isDenied, isLoading, handleVerified, handleDenied} = useAgeVerification();
+    const { updateAvailable, updateInfo, redirectToPlayStore, dismissUpdate } = useAppUpdate();
     
     // Initialize theme preview functionality
     useThemePreview();
@@ -270,6 +273,15 @@ function AppContent() {
             <BottomNavigation />
             <Footer />
             <ToastContainer />
+            
+            {/* App Update Dialog */}
+            <UpdateDialog
+                isOpen={updateAvailable}
+                updateInfo={updateInfo}
+                onUpdate={redirectToPlayStore}
+                onDismiss={dismissUpdate}
+                onLater={dismissUpdate}
+            />
         </NetworkStatus>
     );
 }
