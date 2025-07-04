@@ -179,6 +179,15 @@ body {
     /* Allow normal scrolling in web browsers */
   }
   
+  /* Web browser - remove height constraints to allow normal scrolling */
+  html:not(.capacitor-app) .mobile-viewport-fix {
+    min-height: auto;
+  }
+  
+  html:not(.capacitor-app) .min-h-screen {
+    min-height: auto;
+  }
+  
   /* Ensure status bar area is white */
   body::before {
     content: '';
@@ -245,6 +254,28 @@ body {
     min-height: 100dvh;
   }
   
+  /* Web browser specific - ensure normal scrolling */
+  html:not(.capacitor-app) .mobile-viewport-fix {
+    /* Remove height constraints for web browsers */
+    min-height: auto;
+  }
+  
+  html:not(.capacitor-app) .mobile-long-content {
+    /* Ensure normal overflow behavior in web browsers */
+    overflow-y: visible;
+    -webkit-overflow-scrolling: auto;
+    overscroll-behavior-y: auto;
+  }
+  
+  /* Web browser - remove main element height constraints */
+  html:not(.capacitor-app) main.mobile-viewport-fix {
+    min-height: auto;
+  }
+  
+  html:not(.capacitor-app) main.min-h-screen {
+    min-height: auto;
+  }
+  
   /* Search input specific fixes */
   input[type="search"], input[type="text"] {
     /* Prevent zoom on focus */
@@ -280,9 +311,15 @@ body {
 
 /* Fix mobile viewport height issues */
 @media screen and (max-width: 768px) {
-  .min-h-screen {
+  /* Mobile app specific - keep viewport constraints */
+  .capacitor-app .min-h-screen {
     min-height: 100vh;
     min-height: 100dvh; /* Dynamic viewport height for mobile */
+  }
+  
+  /* Web browser - allow normal content height */
+  html:not(.capacitor-app) .min-h-screen {
+    min-height: auto;
   }
   
   /* Mobile browser experience optimizations */
