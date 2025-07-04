@@ -5,7 +5,7 @@
   "type": "module",
   "author": {
     "name": "SippySolutions",
-    "email": "admin@sippysolutions.com"
+    "email": "info@sippysolutions.com"
   },
   "scripts": {
     "dev": "vite --port 3003",
