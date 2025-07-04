@@ -131,6 +131,28 @@ body {
 
 /* Universal Mobile Configuration - Works for both iOS and Android */
 @media screen and (max-width: 768px) {
+  /* Keyboard handling - prevent layout shifts */
+  html {
+    height: 100vh;
+    height: 100dvh;
+  }
+  
+  body {
+    height: 100vh;
+    height: 100dvh;
+    overflow-x: hidden;
+    /* Prevent viewport resizing glitches */
+    position: fixed;
+    width: 100%;
+  }
+  
+  #root {
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  
   /* Ensure status bar area is white */
   body::before {
     content: '';
@@ -155,6 +177,13 @@ body {
   }
   
   .mobile-body-padding {
+    padding-top: calc(80px + var(--status-bar-height, 0px));
+    /* Prevent keyboard from adding extra padding */
+    transition: padding-top 0.1s ease-out;
+  }
+  
+  /* Keyboard-specific handling */
+  .mobile-body-padding.keyboard-open {
     padding-top: calc(80px + var(--status-bar-height, 0px));
   }
   
@@ -182,6 +211,30 @@ body {
     min-height: 100vh;
     min-height: 100dvh;
     min-height: calc(100vh - env(keyboard-inset-height, 0px));
+  }
+  
+  /* Prevent keyboard from causing layout shifts */
+  .mobile-viewport-fix.keyboard-open {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  
+  /* Search input specific fixes */
+  input[type="search"], input[type="text"] {
+    /* Prevent zoom on focus */
+    font-size: 16px;
+    /* Prevent layout shifts */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+  
+  /* Prevent iOS Safari from resizing viewport */
+  input:focus {
+    /* Prevent zoom */
+    font-size: 16px;
+    /* Prevent layout shifts */
+    -webkit-user-select: text;
+    user-select: text;
   }
 }
 

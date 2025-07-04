@@ -46,9 +46,9 @@ const config: CapacitorConfig = {
       overlaysWebView: false
     },
     Keyboard: {
-      resize: KeyboardResize.Native,
+      resize: KeyboardResize.Body,
       style: KeyboardStyle.Dark,
-      resizeOnFullScreen: true
+      resizeOnFullScreen: false
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert']
