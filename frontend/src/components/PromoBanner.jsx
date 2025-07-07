@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCMS } from '../Context/CMSContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -12,6 +13,7 @@ const PromoBanner = ({
 }) => {
   const { cmsData, getTheme } = useCMS();
   const theme = getTheme();
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   if (!cmsData?.promo_banner) {
@@ -19,22 +21,66 @@ const PromoBanner = ({
   }
 
   const { promo_1, promo_2, promo_3 } = cmsData.promo_banner;
-  const promoImages = [promo_1, promo_2, promo_3].filter(Boolean);
+  
+  // Extract promo items with both image and action data
+  const promoItems = [promo_1, promo_2, promo_3].filter(item => item && item.image);
 
-  if (promoImages.length === 0) {
+  if (promoItems.length === 0) {
     return null;
   }
 
+  // Handle click navigation based on action
+  const handleBannerClick = (promoItem) => {
+    if (!promoItem?.action) return;
+
+    switch (promoItem.action) {
+      case 'products':
+        navigate('/products');
+        break;
+      case 'product-group':
+        if (promoItem.group_id) {
+          navigate(`/collections/${promoItem.group_id}`);
+        } else {
+          navigate('/collections');
+        }
+        break;
+      case 'brand':
+        if (promoItem.brand) {
+          navigate(`/products?brand=${encodeURIComponent(promoItem.brand)}`);
+        } else {
+          navigate('/products');
+        }
+        break;
+      case 'department':
+        if (promoItem.department) {
+          navigate(`/products?department=${encodeURIComponent(promoItem.department)}`);
+        } else {
+          navigate('/products');
+        }
+        break;
+      case 'category':
+        if (promoItem.category && promoItem.department) {
+          navigate(`/products?department=${encodeURIComponent(promoItem.department)}&category=${encodeURIComponent(promoItem.category)}`);
+        } else {
+          navigate('/products');
+        }
+        break;
+      default:
+        navigate('/products');
+        break;
+    }
+  };
+
   // Auto-advance carousel for full-width banners
   useEffect(() => {
-    if (type === 'carousel' && promoImages.length > 1) {
+    if (type === 'carousel' && promoItems.length > 1) {
       const interval = setInterval(() => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % promoImages.length);
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % promoItems.length);
       }, 5000); // Change every 5 seconds
 
       return () => clearInterval(interval);
     }
-  }, [type, promoImages.length]);
+  }, [type, promoItems.length]);
 
   // Animation variants
   const containerVariants = {
@@ -89,10 +135,11 @@ const PromoBanner = ({
                 x: { type: "spring", stiffness: 300, damping: 30 },
                 opacity: { duration: 0.2 }
               }}
-              className="absolute inset-0"
+              className="absolute inset-0 cursor-pointer"
+              onClick={() => handleBannerClick(promoItems[currentIndex])}
             >
               <img
-                src={promoImages[currentIndex]}
+                src={promoItems[currentIndex]?.image}
                 alt={`Promotional Banner ${currentIndex + 1}`}
                 className="w-full h-full object-cover object-center"
                 loading="lazy"
@@ -100,9 +147,9 @@ const PromoBanner = ({
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
             </motion.div>
           </AnimatePresence>          {/* Navigation dots */}
-          {promoImages.length > 1 && (
+          {promoItems.length > 1 && (
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-3 z-10">
-              {promoImages.map((_, index) => (
+              {promoItems.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentIndex(index)}
@@ -117,7 +164,7 @@ const PromoBanner = ({
           )}
 
           {/* Progress bar */}
-          {promoImages.length > 1 && (
+          {promoItems.length > 1 && (
             <div className="absolute bottom-0 left-0 w-full h-1 bg-black/20">
               <motion.div
                 className="h-full bg-white"
@@ -134,7 +181,7 @@ const PromoBanner = ({
   }
   if (type === 'single') {
     // Single banner display - good for between products
-    const randomImage = promoImages[Math.floor(Math.random() * promoImages.length)];
+    const randomPromoItem = promoItems[Math.floor(Math.random() * promoItems.length)];
     return (
       <motion.div
         className={`w-full my-8 ${className}`}
@@ -144,14 +191,15 @@ const PromoBanner = ({
         viewport={{ once: true, amount: 0.3 }}
       >
         <motion.div
-          className="relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+          className="relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer"
           variants={itemVariants}
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.3 }}
+          onClick={() => handleBannerClick(randomPromoItem)}
         >
           <div className="relative w-full" style={{ paddingBottom: '25%' }}>
             <img
-              src={randomImage}
+              src={randomPromoItem?.image}
               alt="Promotional Banner"
               className="absolute inset-0 w-full h-full object-cover object-center"
               loading="lazy"
@@ -173,17 +221,18 @@ const PromoBanner = ({
         viewport={{ once: true, amount: 0.3 }}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {promoImages.map((image, index) => (
+          {promoItems.map((promoItem, index) => (
             <motion.div
               key={index}
-              className="relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+              className="relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer"
               variants={itemVariants}
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.3 }}
+              onClick={() => handleBannerClick(promoItem)}
             >
               <div className="relative w-full" style={{ paddingBottom: '60%' }}>
                 <img
-                  src={image}
+                  src={promoItem?.image}
                   alt={`Promotional Banner ${index + 1}`}
                   className="absolute inset-0 w-full h-full object-cover object-center"
                   loading="lazy"
@@ -206,17 +255,18 @@ const PromoBanner = ({
       viewport={{ once: true, amount: 0.3 }}
     >
       <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-        {promoImages.map((image, index) => (
+        {promoItems.map((promoItem, index) => (
           <motion.div
             key={index}
-            className="flex-1 relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+            className="flex-1 relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer"
             variants={itemVariants}
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.3 }}
+            onClick={() => handleBannerClick(promoItem)}
           >
             <div className="relative w-full" style={{ paddingBottom: '40%' }}>
               <img
-                src={image}
+                src={promoItem?.image}
                 alt={`Promotional Banner ${index + 1}`}
                 className="absolute inset-0 w-full h-full object-cover object-center"
                 loading="lazy"
