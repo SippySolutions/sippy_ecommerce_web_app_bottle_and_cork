@@ -16,7 +16,18 @@ const PromoBanner = ({
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Debug logging for mobile
+  useEffect(() => {
+    console.log('PromoBanner: Component mounted with type:', type);
+    console.log('PromoBanner: Platform check:', {
+      isCapacitor: window.Capacitor,
+      userAgent: navigator.userAgent,
+      platform: navigator.platform
+    });
+  }, [type]);
+
   if (!cmsData?.promo_banner) {
+    console.warn('PromoBanner: No promo_banner data in CMS');
     return null;
   }
 
@@ -25,49 +36,64 @@ const PromoBanner = ({
   // Extract promo items with both image and action data
   const promoItems = [promo_1, promo_2, promo_3].filter(item => item && item.image);
 
+  console.log('PromoBanner: CMS data:', cmsData.promo_banner);
+  console.log('PromoBanner: Filtered promo items:', promoItems);
+
   if (promoItems.length === 0) {
+    console.warn('PromoBanner: No valid promo items found');
     return null;
   }
 
   // Handle click navigation based on action
   const handleBannerClick = (promoItem) => {
-    if (!promoItem?.action) return;
+    try {
+      if (!promoItem?.action) {
+        console.warn('PromoBanner: No action defined for promo item');
+        return;
+      }
 
-    switch (promoItem.action) {
-      case 'products':
-        navigate('/products');
-        break;
-      case 'product-group':
-        if (promoItem.group_id) {
-          navigate(`/collections/${promoItem.group_id}`);
-        } else {
-          navigate('/collections');
-        }
-        break;
-      case 'brand':
-        if (promoItem.brand) {
-          navigate(`/products?brand=${encodeURIComponent(promoItem.brand)}`);
-        } else {
+      console.log('PromoBanner: Navigating with action:', promoItem.action, promoItem);
+
+      switch (promoItem.action) {
+        case 'products':
           navigate('/products');
-        }
-        break;
-      case 'department':
-        if (promoItem.department) {
-          navigate(`/products?department=${encodeURIComponent(promoItem.department)}`);
-        } else {
+          break;
+        case 'product-group':
+          if (promoItem.group_id) {
+            navigate(`/collections/${promoItem.group_id}`);
+          } else {
+            navigate('/collections');
+          }
+          break;
+        case 'brand':
+          if (promoItem.brand) {
+            navigate(`/products?brand=${encodeURIComponent(promoItem.brand)}`);
+          } else {
+            navigate('/products');
+          }
+          break;
+        case 'department':
+          if (promoItem.department) {
+            navigate(`/products?department=${encodeURIComponent(promoItem.department)}`);
+          } else {
+            navigate('/products');
+          }
+          break;
+        case 'category':
+          if (promoItem.category && promoItem.department) {
+            navigate(`/products?department=${encodeURIComponent(promoItem.department)}&category=${encodeURIComponent(promoItem.category)}`);
+          } else {
+            navigate('/products');
+          }
+          break;
+        default:
           navigate('/products');
-        }
-        break;
-      case 'category':
-        if (promoItem.category && promoItem.department) {
-          navigate(`/products?department=${encodeURIComponent(promoItem.department)}&category=${encodeURIComponent(promoItem.category)}`);
-        } else {
-          navigate('/products');
-        }
-        break;
-      default:
-        navigate('/products');
-        break;
+          break;
+      }
+    } catch (error) {
+      console.error('PromoBanner: Navigation error:', error);
+      // Fallback navigation
+      navigate('/products');
     }
   };
 
@@ -118,7 +144,7 @@ const PromoBanner = ({
       x: direction < 0 ? 1000 : -1000,
       opacity: 0
     })
-  };if (type === 'carousel') {
+  };  if (type === 'carousel') {
     // Full-width carousel - for under navbar
     return (
       <div className={`full-width bg-gray-100 ${className}`}>
@@ -135,14 +161,22 @@ const PromoBanner = ({
                 x: { type: "spring", stiffness: 300, damping: 30 },
                 opacity: { duration: 0.2 }
               }}
-              className="absolute inset-0 cursor-pointer"
+              className="absolute inset-0 cursor-pointer touch-manipulation"
               onClick={() => handleBannerClick(promoItems[currentIndex])}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleBannerClick(promoItems[currentIndex]);
+              }}
             >
               <img
                 src={promoItems[currentIndex]?.image}
                 alt={`Promotional Banner ${currentIndex + 1}`}
                 className="w-full h-full object-cover object-center"
                 loading="lazy"
+                onError={(e) => {
+                  console.error('PromoBanner: Image load error:', e.target.src);
+                  e.target.style.display = 'none';
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
             </motion.div>
@@ -153,7 +187,12 @@ const PromoBanner = ({
                 <button
                   key={index}
                   onClick={() => setCurrentIndex(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 border-2 ${
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCurrentIndex(index);
+                  }}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 border-2 touch-manipulation ${
                     index === currentIndex 
                       ? 'bg-white border-white scale-125 shadow-lg' 
                       : 'bg-transparent border-white/70 hover:border-white hover:bg-white/30'
@@ -191,11 +230,15 @@ const PromoBanner = ({
         viewport={{ once: true, amount: 0.3 }}
       >
         <motion.div
-          className="relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+          className="relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer touch-manipulation"
           variants={itemVariants}
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.3 }}
           onClick={() => handleBannerClick(randomPromoItem)}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleBannerClick(randomPromoItem);
+          }}
         >
           <div className="relative w-full" style={{ paddingBottom: '25%' }}>
             <img
@@ -203,6 +246,10 @@ const PromoBanner = ({
               alt="Promotional Banner"
               className="absolute inset-0 w-full h-full object-cover object-center"
               loading="lazy"
+              onError={(e) => {
+                console.error('PromoBanner: Image load error:', e.target.src);
+                e.target.style.display = 'none';
+              }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
           </div>
@@ -224,11 +271,15 @@ const PromoBanner = ({
           {promoItems.map((promoItem, index) => (
             <motion.div
               key={index}
-              className="relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+              className="relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer touch-manipulation"
               variants={itemVariants}
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.3 }}
               onClick={() => handleBannerClick(promoItem)}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleBannerClick(promoItem);
+              }}
             >
               <div className="relative w-full" style={{ paddingBottom: '60%' }}>
                 <img
@@ -236,6 +287,10 @@ const PromoBanner = ({
                   alt={`Promotional Banner ${index + 1}`}
                   className="absolute inset-0 w-full h-full object-cover object-center"
                   loading="lazy"
+                  onError={(e) => {
+                    console.error('PromoBanner: Image load error:', e.target.src);
+                    e.target.style.display = 'none';
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
               </div>
@@ -258,11 +313,15 @@ const PromoBanner = ({
         {promoItems.map((promoItem, index) => (
           <motion.div
             key={index}
-            className="flex-1 relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+            className="flex-1 relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer touch-manipulation"
             variants={itemVariants}
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.3 }}
             onClick={() => handleBannerClick(promoItem)}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              handleBannerClick(promoItem);
+            }}
           >
             <div className="relative w-full" style={{ paddingBottom: '40%' }}>
               <img
@@ -270,6 +329,10 @@ const PromoBanner = ({
                 alt={`Promotional Banner ${index + 1}`}
                 className="absolute inset-0 w-full h-full object-cover object-center"
                 loading="lazy"
+                onError={(e) => {
+                  console.error('PromoBanner: Image load error:', e.target.src);
+                  e.target.style.display = 'none';
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
             </div>
