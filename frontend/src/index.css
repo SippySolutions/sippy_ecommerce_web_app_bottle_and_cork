@@ -100,25 +100,20 @@ body {
   padding-right: env(safe-area-inset-right);
 }
 
-/* Mobile-specific safe area handling */
+/* Mobile-specific safe area handling - simplified */
 @supports (padding-top: env(safe-area-inset-top)) {
-  .mobile-safe-top {
-    padding-top: env(safe-area-inset-top);
-  }
-  
   .mobile-safe-bottom {
     padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
   }
   
-  /* iOS specific - prevent gap between status bar and content */
+  /* iOS specific navbar - integrated with safe area */
   .ios-seamless-navbar {
     position: sticky;
     top: 0;
     z-index: 1000;
     background: #ffffff !important;
-    /* Extend background upward to fill any gaps */
-    margin-top: calc(-1 * env(safe-area-inset-top));
-    padding-top: env(safe-area-inset-top);
+    /* Only add safe area padding if not using fixed positioning */
+    padding-top: env(safe-area-inset-top, 0px);
   }
   
   /* Alternative approach: ensure full screen coverage */
@@ -188,14 +183,14 @@ body {
     min-height: auto;
   }
   
-  /* Ensure status bar area is white */
-  body::before {
+  /* Ensure status bar area is white - only for native apps */
+  .capacitor-app body::before {
     content: '';
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: var(--status-bar-height, 24px);
+    height: env(safe-area-inset-top, 0px);
     background: #ffffff;
     z-index: 999;
   }
@@ -203,16 +198,19 @@ body {
   .mobile-navbar-ios {
     background: #ffffff !important;
     position: fixed !important;
-    top: var(--status-bar-height, 0px);
+    top: 0;
     left: 0;
     right: 0;
     width: 100%;
     z-index: 1000;
     box-shadow: 0 calc(-100vh) 0 0 #ffffff;
+    /* Use safe area inset only for native apps */
+    padding-top: env(safe-area-inset-top, 0px);
   }
   
   .mobile-body-padding {
-    padding-top: calc(80px + var(--status-bar-height, 0px));
+    /* Minimal fallback - will be overridden by NavbarHeightManager */
+    padding-top: 80px;
     /* Prevent keyboard from adding extra padding */
     transition: padding-top 0.1s ease-out;
   }

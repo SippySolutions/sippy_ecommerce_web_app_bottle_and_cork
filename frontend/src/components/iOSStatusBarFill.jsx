@@ -30,11 +30,11 @@ const iOSStatusBarFill = () => {
         top: 0,
         left: 0,
         right: 0,
-        height: 'env(safe-area-inset-top)',
+        height: 'env(safe-area-inset-top, 0px)',
         backgroundColor: '#ffffff',
         zIndex: 999,
-        // Fallback for browsers that don't support env()
-        minHeight: '44px', // Standard iOS status bar height
+        // Only show if safe area inset is actually available
+        display: 'var(--safe-area-inset-top, none)',
       }}
     />
   );
