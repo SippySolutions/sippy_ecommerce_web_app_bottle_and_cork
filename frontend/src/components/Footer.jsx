@@ -2,7 +2,6 @@ import { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import { Capacitor } from '@capacitor/core';
 import { AuthContext } from "./AuthContext"; // Import AuthContext
-import AndroidDownloadLink from "./AndroidDownloadLink"; // Import the download component
 import Android from "../assets/android.png";
 import Apple from "../assets/Apple.png";
 import Visa from "../assets/Visa.png";
@@ -139,7 +138,7 @@ function Footer() {
             <p className="text-sm text-[var(--color-muted-foreground)] mb-4">
               Download the app and get the world at your fingertips.
             </p>
-            <div className="flex justify-center lg:justify-start space-x-4 mb-4">
+            <div className="flex justify-center lg:justify-start space-x-4">
               <a 
                 href="https://play.google.com/store/apps/details?id=com.sippysolution.universalliquor&pcampaignid=web_share"
                 target="_blank"
@@ -155,19 +154,10 @@ function Footer() {
               <a href="#" className="opacity-50 cursor-not-allowed">
                 <img
                   src={Apple}
-                  alt="Download on App Store"
+                  alt="Download on App Store (Coming Soon)"
                   className="h-10"
                 />
               </a>
-            </div>
-            
-            {/* Alternative download button */}
-            <div className="mt-4">
-              <AndroidDownloadLink 
-                variant="button" 
-                size="small"
-                className="w-full justify-center lg:justify-start"
-              />
             </div>
           </div>
         </div>
