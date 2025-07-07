@@ -2,6 +2,7 @@ import { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import { Capacitor } from '@capacitor/core';
 import { AuthContext } from "./AuthContext"; // Import AuthContext
+import AndroidDownloadLink from "./AndroidDownloadLink"; // Import the download component
 import Android from "../assets/android.png";
 import Apple from "../assets/Apple.png";
 import Visa from "../assets/Visa.png";
@@ -138,23 +139,38 @@ function Footer() {
             <p className="text-sm text-[var(--color-muted-foreground)] mb-4">
               Download the app and get the world at your fingertips.
             </p>
-            <div className="flex justify-center lg:justify-start space-x-4">
-              <a href="#">
+            <div className="flex justify-center lg:justify-start space-x-4 mb-4">
+              <a 
+                href="https://play.google.com/store/apps/details?id=com.sippysolution.universalliquor&pcampaignid=web_share"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-transform duration-200 hover:scale-105"
+              >
                 <img
                   src={Android}
-                  alt="App Store"
+                  alt="Get it on Google Play"
                   className="h-10"
                 />
               </a>
-              <a href="#">
+              <a href="#" className="opacity-50 cursor-not-allowed">
                 <img
                   src={Apple}
-                  alt="Google Play"
+                  alt="Download on App Store"
                   className="h-10"
                 />
               </a>
             </div>
-          </div>        </div>
+            
+            {/* Alternative download button */}
+            <div className="mt-4">
+              <AndroidDownloadLink 
+                variant="button" 
+                size="small"
+                className="w-full justify-center lg:justify-start"
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Legal Links */}
         <div className="mt-8 pt-8 border-t border-gray-200">

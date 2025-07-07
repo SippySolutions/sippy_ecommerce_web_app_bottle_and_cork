@@ -6,6 +6,7 @@ import Exclusive from "../components/Exclusive";
 import HeroSection from "../components/HeroSection";
 import StaffPick from "../components/StaffPick";
 import PromoBanner from "../components/PromoBanner";
+import AndroidDownloadLink from "../components/AndroidDownloadLink";
 import { useCMS } from "../Context/CMSContext";
 
 function Home() {  const { 
@@ -31,7 +32,16 @@ function Home() {  const {
       </div>
       
       <HeroSection data={getHeroSection()} />
-    <Categories categories={getCategories()} />
+      
+      {/* App Download Banner - Only show in web browsers */}
+      <div className="container mx-auto px-4 py-4">
+        <AndroidDownloadLink 
+          variant="banner"
+          className="mb-6"
+        />
+      </div>
+      
+      <Categories categories={getCategories()} />
       <BestSellers /> 
       <Banner data={getBanner()} />
       
