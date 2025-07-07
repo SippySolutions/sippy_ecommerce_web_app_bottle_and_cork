@@ -15,7 +15,7 @@ const useAppUpdate = () => {
     setIsChecking(true);
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/app-version`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/app-version`);
       const data = await response.json();
       
       const currentVersion = '1.3.0'; // You can also get this from package.json

@@ -425,7 +425,7 @@ const Checkout = () => {
       console.log('Sending authorization request:', authorizationRequest);
 
       // Use the authorization API endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api'}/checkout/authorize`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}/api/checkout/authorize`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

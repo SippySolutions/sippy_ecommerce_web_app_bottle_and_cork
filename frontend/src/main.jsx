@@ -8,7 +8,7 @@ import { fetchCMSData } from "./services/api"; // Import fetchCMSData from api.j
 
 // Server health check function
 async function checkServerHealth() {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+  const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}/api`;
   const maxRetries = 5;
   const retryDelay = 2000; // 2 seconds
 

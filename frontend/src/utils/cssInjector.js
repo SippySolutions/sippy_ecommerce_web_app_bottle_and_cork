@@ -116,7 +116,7 @@ class CSSInjector {
   async previewFromUrlWithProxy(cssUrl, id = 'theme-preview') {
     try {
       // Use your backend as a proxy
-      const proxyUrl = `${import.meta.env.VITE_API_BASE_URL}/proxy-css`;
+      const proxyUrl = `${import.meta.env.VITE_API_BASE_URL}/api/proxy-css`;
       
       const response = await fetch(proxyUrl, {
         method: 'POST',

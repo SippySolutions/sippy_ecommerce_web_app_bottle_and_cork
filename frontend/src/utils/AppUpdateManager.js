@@ -33,7 +33,7 @@ class AppUpdateManager {
   // Get update information from your backend
   async getUpdateInfo() {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/app-version`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/app-version`);
       const data = await response.json();
       
       return {

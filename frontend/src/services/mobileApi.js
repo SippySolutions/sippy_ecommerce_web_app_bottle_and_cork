@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Mobile-specific API configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://univeral-liquors-webapp-test.onrender.com/api';
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'https://sippy-ecommerce-web-app.onrender.com'}/api`;
 const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT) || 15000;
 const RETRY_ATTEMPTS = parseInt(import.meta.env.VITE_API_RETRY_ATTEMPTS) || 3;
 const RETRY_DELAY = parseInt(import.meta.env.VITE_API_RETRY_DELAY) || 2000;

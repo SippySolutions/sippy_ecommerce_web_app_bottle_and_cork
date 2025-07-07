@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Use API base URL from environment variable, fallback to localhost if not set
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}/api`;
 
 // Helper to get token from localStorage
 const getAuthHeaders = () => {
