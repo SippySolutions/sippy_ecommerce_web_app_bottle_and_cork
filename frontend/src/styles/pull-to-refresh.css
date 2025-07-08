@@ -1,0 +1,78 @@
+/* Pull to refresh specific styles */
+.pull-to-refresh-container {
+  overflow: hidden;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pull-to-refresh-container.pulling {
+  overscroll-behavior: none;
+}
+
+/* Mobile-specific touch optimizations */
+@media (max-width: 768px) {
+  .pull-to-refresh-container {
+    touch-action: pan-y;
+  }
+  
+  .pull-to-refresh-container.pulling {
+    touch-action: none;
+  }
+}
+
+/* Android app specific optimizations */
+@media (display-mode: standalone) {
+  .pull-to-refresh-container {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* Capacitor app specific styles */
+.capacitor-app .pull-to-refresh-container {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Refresh indicator styles */
+.refresh-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.refresh-icon {
+  transition: transform 0.2s ease;
+}
+
+.refresh-icon.ready {
+  transform: rotate(180deg) scale(1.1);
+  color: #10b981;
+}
+
+.refresh-icon.loading {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Smooth transitions */
+.pull-to-refresh-content {
+  transition: transform 0.3s ease-out;
+}
+
+.pull-to-refresh-content.no-transition {
+  transition: none;
+}
