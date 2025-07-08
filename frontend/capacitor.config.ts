@@ -6,8 +6,8 @@ const config: CapacitorConfig = {
   appName: 'Universal Liquors',
   webDir: 'dist',
   server: {
+    url: 'https://www.universalliquorsnj.com',
     androidScheme: 'https',
-    hostname: 'localhost',
     cleartext: false
   },
   android: {
