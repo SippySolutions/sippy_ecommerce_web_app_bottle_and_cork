@@ -21,8 +21,8 @@ const orderSchema = new mongoose.Schema({
   tax: { type: Number, default: 0 },  total: { type: Number, required: true },
   status: { 
     type: String, 
-    enum: ['pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'], 
-    default: 'pending' 
+    enum: ['new', 'pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'], 
+    default: 'new' 
   },
   shippingAddress: {
     firstName: String,

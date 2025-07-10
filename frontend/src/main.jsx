@@ -62,6 +62,9 @@ async function initializeApp() {
     console.log('⚠️ Could not fetch initial CMS data, using fallback');
   }
 
+  // Perform server health check first
+  const serverHealthy = await checkServerHealth();
+
   // Show loading screen with server health check
   root.render(
     <StrictMode>
@@ -74,9 +77,6 @@ async function initializeApp() {
       />
     </StrictMode>
   );
-
-  // Perform server health check in background
-  const serverHealthy = await checkServerHealth();
 
   // If no CMS data was loaded initially, try again
   if (!cmsData) {

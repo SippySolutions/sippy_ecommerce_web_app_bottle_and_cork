@@ -49,7 +49,7 @@ const OrderHistory = () => {
     }
   };  const categorizeOrders = (orders) => {
     const active = orders.filter(order => 
-      ['pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit'].includes(order.status)
+      ['new', 'pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit'].includes(order.status)
     );
     const completed = orders.filter(order => 
       ['delivered', 'cancelled'].includes(order.status)
@@ -484,6 +484,7 @@ const OrderCard = ({ order, navigate }) => {
 // Helper function to get status info (moved outside component)
 const getStatusInfo = (status) => {
   const statusMap = {
+    new: { color: 'bg-gray-100 text-gray-800', label: 'New Order', icon: '🆕' },
     pending: { color: 'bg-blue-100 text-blue-800', label: 'Pending', icon: '📋' },
     processing: { color: 'bg-yellow-100 text-yellow-800', label: 'Processing', icon: '⚙️' },
     ready_for_pickup: { color: 'bg-purple-100 text-purple-800', label: 'Ready for Pickup', icon: '📦' },
@@ -498,7 +499,7 @@ const getStatusInfo = (status) => {
 };
 
 const getStatusProgress = (status) => {
-  const statusFlow = ['pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit', 'delivered'];
+  const statusFlow = ['new', 'pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit', 'delivered'];
   const currentIndex = statusFlow.indexOf(status);
   if (currentIndex === -1) return 0;
   return ((currentIndex + 1) / statusFlow.length) * 100;

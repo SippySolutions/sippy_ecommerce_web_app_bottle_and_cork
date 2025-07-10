@@ -77,6 +77,7 @@ const OrderTracking = () => {
   };
   const getStatusColor = (status) => {
     switch (status) {
+      case 'new': return 'text-gray-600 bg-gray-100';
       case 'pending': return 'text-blue-600 bg-blue-100';
       case 'processing': return 'text-yellow-600 bg-yellow-100';
       case 'ready_for_pickup': return 'text-purple-600 bg-purple-100';
@@ -91,6 +92,12 @@ const OrderTracking = () => {
   };
   const getStatusIcon = (status) => {
     switch (status) {
+      case 'new':
+        return (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+        );
       case 'pending':
         return (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,7 +157,8 @@ const OrderTracking = () => {
   };
   const getTrackingSteps = () => {
     const allSteps = [
-      { key: 'pending', label: 'Order Placed', description: 'Your order has been placed successfully' },
+      { key: 'new', label: 'Order Received', description: 'Your order has been received and is being reviewed' },
+      { key: 'pending', label: 'Order Confirmed', description: 'Your order has been confirmed by the store' },
       { key: 'processing', label: 'Order Processing', description: 'Your order is being prepared by the store' },
       { key: 'ready_for_pickup', label: 'Ready for Pickup', description: 'Your order is ready for pickup at the store' },
       { key: 'ready_for_delivery', label: 'Ready for Delivery', description: 'Your order is ready for delivery' },

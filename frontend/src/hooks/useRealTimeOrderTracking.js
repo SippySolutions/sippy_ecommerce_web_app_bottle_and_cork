@@ -137,7 +137,7 @@ export const useRealTimeOrderTracking = (orderId = null, autoTrack = true) => {
   const getOrderProgress = useCallback(() => {
     if (!trackingOrder) return 0;
 
-    const statusFlow = ['pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit', 'delivered'];
+    const statusFlow = ['new', 'pending', 'processing', 'ready_for_pickup', 'ready_for_delivery', 'driver_assigned', 'picked_up', 'in_transit', 'delivered'];
     const currentIndex = statusFlow.indexOf(trackingOrder.status);
     
     if (currentIndex === -1) return 0;

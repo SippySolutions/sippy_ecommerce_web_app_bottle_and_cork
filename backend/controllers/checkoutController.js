@@ -592,7 +592,7 @@ exports.processPaymentWithSavedCard = async (req, res) => {
       deliveryFee: roundToTwo(deliveryFee),
       ageVerified: ageVerified,
       ageVerifiedAt: ageVerifiedAt,
-      status: 'pending'
+      status: 'new'
     });
 
     await order.save();    // Update user's orders
@@ -1452,7 +1452,7 @@ exports.authorizePayment = async (req, res) => {
       bagFee: bagFeeAmount,
       deliveryFee: deliveryFeeAmount,      total: totalAmount,
       paymentStatus: 'authorized', // Key difference - authorized not paid
-      status: 'pending',
+      status: 'new',
       transactionId: authResult.transactionId,
       authorizationCode: authResult.authCode,
       customerProfileId,

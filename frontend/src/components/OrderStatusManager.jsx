@@ -5,6 +5,7 @@ const OrderStatusManager = ({ orderId, currentStatus, onStatusUpdate }) => {
   const [loading, setLoading] = useState(false);
   
   const statusFlow = [
+    { key: 'new', label: 'New Order', color: 'bg-gray-100 text-gray-800' },
     { key: 'pending', label: 'Pending', color: 'bg-blue-100 text-blue-800' },
     { key: 'processing', label: 'Processing', color: 'bg-yellow-100 text-yellow-800' },
     { key: 'ready_for_pickup', label: 'Ready for Pickup', color: 'bg-purple-100 text-purple-800' },
@@ -18,6 +19,7 @@ const OrderStatusManager = ({ orderId, currentStatus, onStatusUpdate }) => {
 
   const getValidNextStatuses = (currentStatus) => {
     const transitions = {
+      'new': ['pending', 'processing', 'cancelled'],
       'pending': ['processing', 'cancelled'],
       'processing': ['ready_for_pickup', 'ready_for_delivery', 'cancelled'],
       'ready_for_pickup': ['delivered', 'cancelled'], // Customer picks up directly

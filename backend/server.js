@@ -6,8 +6,8 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const productRoutes = require('./routes/productRoutes');
-const cmsDataRoutes = require('./routes/CMSDataRoutes'); // Note: Keep this as CMSDataRoutes (file name)
-const cmsRoutes = require('./routes/cmsRoutes'); // Add new CMS routes
+// const cmsDataRoutes = require('./routes/CMSDataRoutes'); // Removed - using new CMS routes
+const cmsRoutes = require('./routes/cmsRoutes'); // New CMS routes using MongoDB
 const featuredproductRoutes = require('./routes/featuredproductRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const authRoutes = require('./routes/authRoutes');
@@ -171,6 +171,7 @@ const setupOrderChangeStreams = () => {
 // Helper function for customer status messages
 const getCustomerStatusMessage = (status, orderNumber) => {
   const messages = {
+    'new': `Your order #${orderNumber} has been placed successfully and is being reviewed`,
     'pending': `Your order #${orderNumber} has been placed and is awaiting confirmation`,
     'processing': `Great news! Your order #${orderNumber} is being prepared by the store`,
     'ready_for_pickup': `Your order #${orderNumber} is ready for pickup at the store`,
@@ -189,8 +190,8 @@ const getCustomerStatusMessage = (status, orderNumber) => {
 app.use('/api/products', productRoutes);
 app.use('/api/featured-products', featuredproductRoutes);
 app.use('/api/similar', similarProductRoutes);
-app.use('/api', cmsDataRoutes);
-app.use('/api/cms-data', cmsRoutes); // Add new CMS data route
+// app.use('/api', cmsDataRoutes); // Removed - using new CMS routes instead
+app.use('/api/cms-data', cmsRoutes); // New CMS data route using MongoDB
 app.use('/api', departmentRoutes);
 app.use('/api', authRoutes);
 app.use('/api/users', userRoutes); // Register user routes

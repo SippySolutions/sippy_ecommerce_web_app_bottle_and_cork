@@ -53,6 +53,5 @@ const cmsDataSchema = new mongoose.Schema({
   promo_banner: promoBannerSchema // Add promo banner with action support
 });
 
-// Explicitly define the collection name
-
-module.exports = mongoose.model("CMSData", cmsDataSchema, "cmsData");
+// Explicitly define the collection name to use 'cms'
+module.exports = mongoose.model("CMSData", cmsDataSchema, "cms");
