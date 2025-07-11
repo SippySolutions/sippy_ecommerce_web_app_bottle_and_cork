@@ -90,36 +90,6 @@ const AndroidDownloadLink = ({
     );
   }
 
-  // Banner variant
-  if (variant === "banner") {
-    return (
-      <div className={`
-        bg-gradient-to-r from-green-600 to-green-700 text-white p-4 rounded-lg
-        ${className}
-      `}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="bg-white/20 p-2 rounded-full">
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17,19H7V5H17M17,1H7C5.89,1 5,1.89 5,3V21C5,22.1 5.89,23 7,23H17C18.1,23 19,22.1 19,21V3C19,1.89 18.1,1 17,1Z"/>
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-semibold text-lg">Download Our Mobile App</h3>
-              <p className="text-green-100 text-sm">Get the best experience on your mobile device</p>
-            </div>
-          </div>
-          <button
-            onClick={handleDownload}
-            className="bg-white text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-          >
-            Download
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return null;
 };
 
