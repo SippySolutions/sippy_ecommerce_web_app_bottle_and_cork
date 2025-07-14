@@ -24,7 +24,7 @@ import AgeVerification from './components/AgeVerification.jsx';
 import AgeDenied from './components/AgeDenied.jsx';
 import {ToastContainer} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import './styles/pull-to-refresh.css';
+// import './styles/pull-to-refresh.css'; // Removed pull-to-refresh styles
 import ProtectedRoute from './components/ProtectedRoute';
 import Profile from './components/Profile';
 import Checkout from './pages/Checkout.jsx';
@@ -40,7 +40,7 @@ import InlineLoader from './components/InlineLoader.jsx';
 import LiveOrderNotifications from './components/LiveOrderNotifications.jsx';
 import UpdateDialog from './components/UpdateDialog.jsx';
 import useAppUpdate from './hooks/useAppUpdate.js';
-import PullToRefresh from './components/PullToRefreshSimple.jsx';
+// import PullToRefresh from './components/PullToRefreshSimple.jsx'; // Removed pull-to-refresh
 
 function AppContent() {
     const location = useLocation();
@@ -50,39 +50,6 @@ function AppContent() {
     
     // Initialize theme preview functionality
     useThemePreview();
-    
-    // Pull to refresh handler
-    const handleRefresh = async () => {
-        try {
-            console.log('Pull to refresh triggered on platform:', platform);
-            
-            // Different behavior for different platforms
-            if (isCapacitor) {
-                // For mobile app, show immediate feedback and reload
-                console.log('Refreshing mobile app...');
-                
-                // Add a small delay for better UX
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // Force reload for mobile app
-                window.location.reload();
-            } else {
-                // For web, we can implement more sophisticated refresh
-                console.log('Refreshing web app...');
-                
-                // Add a small delay for better UX
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Reload the page
-                window.location.reload();
-            }
-            
-        } catch (error) {
-            console.error('Refresh error:', error);
-            // Fallback to page reload
-            window.location.reload();
-        }
-    };
     
     // Animation variants for route transitions - Faster animations
     const pageVariants = {
@@ -132,10 +99,9 @@ function AppContent() {
             <iOSStatusBarFill />
             <NavbarHeightManager />
             <Navbar />
-            <PullToRefresh onRefresh={handleRefresh}>
-                <main className="min-h-screen mobile-full-height mobile-body-padding mobile-content-container mobile-long-content mobile-viewport-fix md:pb-0 ios-status-bar-integration">
-                    <AnimatePresence mode="wait">
-                        <Routes location={location} key={location.pathname}>
+            <main className="min-h-screen mobile-full-height mobile-body-padding mobile-content-container mobile-long-content mobile-viewport-fix md:pb-0 ios-status-bar-integration">
+                <AnimatePresence mode="wait">
+                    <Routes location={location} key={location.pathname}>
                         <Route
                             path="/"
                             element={
@@ -308,7 +274,6 @@ function AppContent() {
                 {/* Live Order Notifications */}
                 <LiveOrderNotifications />
             </main>
-            </PullToRefresh>
             <BottomNavigation />
             <Footer />
             <ToastContainer />
