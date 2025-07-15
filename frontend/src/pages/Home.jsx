@@ -28,7 +28,7 @@ function Home() {  const {
       
       {/* Desktop promo banner */}
       <div className="hidden md:block container mx-auto px-4 relative z-0">
-        <PromoBanner type="horizontal" />
+        <PromoBanner type="carousel" />
       </div>
       
       <HeroSection data={getHeroSection()} />
