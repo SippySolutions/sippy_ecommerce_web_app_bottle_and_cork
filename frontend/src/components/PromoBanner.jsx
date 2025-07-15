@@ -148,7 +148,7 @@ const PromoBanner = ({
     // Full-width carousel - for under navbar
     return (
       <div className={`full-width bg-gray-100 ${className}`}>
-        <div className="relative w-full h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 overflow-hidden">
+        <div className="relative w-full h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 overflow-hidden promo-banner-container promo-banner-mobile promo-banner-tablet promo-banner-desktop">
           <AnimatePresence initial={false} custom={currentIndex}>
             <motion.div
               key={currentIndex}
@@ -171,7 +171,7 @@ const PromoBanner = ({
               <img
                 src={promoItems[currentIndex]?.image}
                 alt={`Promotional Banner ${currentIndex + 1}`}
-                className="w-full h-full object-cover object-center"
+                className="promo-banner-image"
                 loading="lazy"
                 onError={(e) => {
                   console.error('PromoBanner: Image load error:', e.target.src);
@@ -240,11 +240,11 @@ const PromoBanner = ({
             handleBannerClick(randomPromoItem);
           }}
         >
-          <div className="relative w-full" style={{ paddingBottom: '25%' }}>
+          <div className="relative w-full aspect-[4/1] min-h-[120px] max-h-[300px] promo-banner-container">
             <img
               src={randomPromoItem?.image}
               alt="Promotional Banner"
-              className="absolute inset-0 w-full h-full object-cover object-center"
+              className="promo-banner-image"
               loading="lazy"
               onError={(e) => {
                 console.error('PromoBanner: Image load error:', e.target.src);
@@ -281,11 +281,11 @@ const PromoBanner = ({
                 handleBannerClick(promoItem);
               }}
             >
-              <div className="relative w-full" style={{ paddingBottom: '60%' }}>
+              <div className="relative w-full aspect-[3/2] min-h-[180px] max-h-[280px] promo-banner-container">
                 <img
                   src={promoItem?.image}
                   alt={`Promotional Banner ${index + 1}`}
-                  className="absolute inset-0 w-full h-full object-cover object-center"
+                  className="promo-banner-image"
                   loading="lazy"
                   onError={(e) => {
                     console.error('PromoBanner: Image load error:', e.target.src);
@@ -323,11 +323,11 @@ const PromoBanner = ({
               handleBannerClick(promoItem);
             }}
           >
-            <div className="relative w-full" style={{ paddingBottom: '40%' }}>
+            <div className="relative w-full aspect-[5/2] min-h-[120px] max-h-[250px] promo-banner-container">
               <img
                 src={promoItem?.image}
                 alt={`Promotional Banner ${index + 1}`}
-                className="absolute inset-0 w-full h-full object-cover object-center"
+                className="promo-banner-image"
                 loading="lazy"
                 onError={(e) => {
                   console.error('PromoBanner: Image load error:', e.target.src);
