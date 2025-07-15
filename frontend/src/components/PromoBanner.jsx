@@ -22,7 +22,11 @@ const PromoBanner = ({
     console.log('PromoBanner: Platform check:', {
       isCapacitor: window.Capacitor,
       userAgent: navigator.userAgent,
-      platform: navigator.platform
+      platform: navigator.platform,
+      screenWidth: window.screen.width,
+      screenHeight: window.screen.height,
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight
     });
   }, [type]);
 
@@ -145,10 +149,10 @@ const PromoBanner = ({
       opacity: 0
     })
   };  if (type === 'carousel') {
-    // Full-width carousel - for under navbar
+    // Full-width carousel - optimized for 1200x300 banners (4:1 aspect ratio)
     return (
       <div className={`full-width bg-gray-100 ${className}`}>
-        <div className="relative w-full h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 overflow-hidden promo-banner-container promo-banner-mobile promo-banner-tablet promo-banner-desktop">
+        <div className="relative w-full aspect-[4/1] min-h-[120px] max-h-[300px] overflow-hidden promo-banner-container">
           <AnimatePresence initial={false} custom={currentIndex}>
             <motion.div
               key={currentIndex}
@@ -173,6 +177,14 @@ const PromoBanner = ({
                 alt={`Promotional Banner ${currentIndex + 1}`}
                 className="promo-banner-image"
                 loading="lazy"
+                onLoad={(e) => {
+                  console.log('PromoBanner: Image loaded:', {
+                    src: e.target.src,
+                    naturalWidth: e.target.naturalWidth,
+                    naturalHeight: e.target.naturalHeight,
+                    aspectRatio: e.target.naturalWidth / e.target.naturalHeight
+                  });
+                }}
                 onError={(e) => {
                   console.error('PromoBanner: Image load error:', e.target.src);
                   e.target.style.display = 'none';
@@ -246,6 +258,14 @@ const PromoBanner = ({
               alt="Promotional Banner"
               className="promo-banner-image"
               loading="lazy"
+              onLoad={(e) => {
+                console.log('PromoBanner Single: Image loaded:', {
+                  src: e.target.src,
+                  naturalWidth: e.target.naturalWidth,
+                  naturalHeight: e.target.naturalHeight,
+                  aspectRatio: e.target.naturalWidth / e.target.naturalHeight
+                });
+              }}
               onError={(e) => {
                 console.error('PromoBanner: Image load error:', e.target.src);
                 e.target.style.display = 'none';
@@ -323,12 +343,20 @@ const PromoBanner = ({
               handleBannerClick(promoItem);
             }}
           >
-            <div className="relative w-full aspect-[5/2] min-h-[120px] max-h-[250px] promo-banner-container">
+            <div className="relative w-full aspect-[4/1] min-h-[120px] max-h-[250px] promo-banner-container">
               <img
                 src={promoItem?.image}
                 alt={`Promotional Banner ${index + 1}`}
                 className="promo-banner-image"
                 loading="lazy"
+                onLoad={(e) => {
+                  console.log('PromoBanner Horizontal: Image loaded:', {
+                    src: e.target.src,
+                    naturalWidth: e.target.naturalWidth,
+                    naturalHeight: e.target.naturalHeight,
+                    aspectRatio: e.target.naturalWidth / e.target.naturalHeight
+                  });
+                }}
                 onError={(e) => {
                   console.error('PromoBanner: Image load error:', e.target.src);
                   e.target.style.display = 'none';
