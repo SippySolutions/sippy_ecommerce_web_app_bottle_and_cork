@@ -199,6 +199,19 @@ body {
     display: none; /* Hide this element completely */
   }
   
+  /* Android-specific status bar background and safe area */
+  .capacitor-app[data-platform="android"] body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background: #ffffff;
+    z-index: 999;
+    display: block; /* Show for Android only */
+  }
+  
   .mobile-navbar-ios {
     background: #ffffff !important;
     position: fixed !important;
@@ -212,11 +225,21 @@ body {
     padding-top: 0px;
   }
   
+  /* Android-specific navbar with safe area */
+  .capacitor-app[data-platform="android"] .mobile-navbar-ios {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  
   .mobile-body-padding {
     /* Remove padding to eliminate white gap - was 80px */
     padding-top: 0px;
     /* Prevent keyboard from adding extra padding */
     transition: padding-top 0.1s ease-out;
+  }
+  
+  /* Android-specific body padding to account for status bar */
+  .capacitor-app[data-platform="android"] .mobile-body-padding {
+    padding-top: calc(80px + env(safe-area-inset-top, 0px));
   }
   
   /* Keyboard-specific handling (Capacitor apps only) - MODIFIED to remove padding */
