@@ -47,13 +47,22 @@ const SearchBar = ({ className = '', placeholder = "Search products, brands, cat
   const fetchSuggestions = async (query) => {
     try {
       setLoading(true);
+      console.log('Fetching suggestions for:', query); // Debug log
       const response = await getSearchSuggestions(query, 'all');
-      if (response.success) {
+      console.log('Search suggestions response:', response); // Debug log
+      
+      if (response && response.success) {
         setSuggestions(response.suggestions);
         setShowSuggestions(true);
+      } else {
+        console.warn('Search suggestions failed:', response);
+        setSuggestions(null);
+        setShowSuggestions(false);
       }
     } catch (error) {
       console.error('Error fetching suggestions:', error);
+      setSuggestions(null);
+      setShowSuggestions(false);
     } finally {
       setLoading(false);
     }
@@ -238,7 +247,7 @@ const SearchBar = ({ className = '', placeholder = "Search products, brands, cat
                   <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                   </div>
-                  <span className="text-sm">{dept}</span>
+                  <span className="text-sm">{dept.toUpperCase()}</span>
                 </button>
               ))}
             </div>
@@ -259,7 +268,7 @@ const SearchBar = ({ className = '', placeholder = "Search products, brands, cat
                   <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   </div>
-                  <span className="text-sm">{cat}</span>
+                  <span className="text-sm">{cat.toUpperCase()}</span>
                 </button>
               ))}
             </div>

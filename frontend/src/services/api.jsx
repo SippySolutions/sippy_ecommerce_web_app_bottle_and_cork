@@ -3,16 +3,69 @@ import axios from 'axios';
 // Use API base URL from environment variable, fallback to localhost if not set
 const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}/api`;
 
+// Get store database name from environment variable - REQUIRED
+const STORE_DB_NAME = import.meta.env.VITE_STORE_DB_NAME;
+
+// Check if store database name is provided
+if (!STORE_DB_NAME) {
+  throw new Error('VITE_STORE_DB_NAME environment variable is required');
+}
+
 // Helper to get token from localStorage
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+// Helper to get headers with database name and auth
+const getApiHeaders = () => {
+  return {
+    ...getAuthHeaders(),
+    'X-Store-DB': STORE_DB_NAME
+  };
+};
+
+// Add request interceptor to include store database header
+axios.interceptors.request.use(
+  (config) => {
+    // Add store database header to all requests
+    config.headers['X-Store-DB'] = STORE_DB_NAME;
+    
+    // Add auth token if available
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    // Enhanced logging for debugging
+    if (import.meta.env.VITE_MODE === 'development') {
+      console.log(`🗄️ API Request to: ${config.url} | Database: ${STORE_DB_NAME}`);
+      console.log(`📋 Headers:`, config.headers);
+    }
+    
+    return config;
+  },
+  (error) => {
+    console.error('❌ Axios request interceptor error:', error);
+    return Promise.reject(error);
+  }
+);
+
 // Add response interceptor to handle authentication errors
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Enhanced error logging for debugging
+    if (import.meta.env.VITE_MODE === 'development') {
+      console.error('❌ API Response Error:', {
+        url: error.config?.url,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.config?.headers
+      });
+    }
+    
     // Only handle 401 errors, don't force logout on other errors
     if (error.response?.status === 401) {
       // Only clear token if it's a genuine auth failure
@@ -53,13 +106,15 @@ export const fetchDepartments = async () => {
   return response.data;
 };
 
+export const fetchCategories = async () => {
+  const response = await axios.get(`${API_BASE_URL}/categories`);
+  return response.data;
+};
+
 export async function fetchCMSData() {
   try {
-    const response = await fetch(`${API_BASE_URL}/cms-data`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch CMS data');
-    }
-    return await response.json();
+    const response = await axios.get(`${API_BASE_URL}/cms-data`);
+    return response.data;
   } catch (error) {
     console.error('Error fetching CMS data:', error);
     return null;
@@ -109,11 +164,8 @@ export const fetchSimilarProducts = async (department, category, subcategory, pr
       params.append('subcategory', subcategory);
     }
 
-    const response = await fetch(`${API_BASE_URL}/similar?${params.toString()}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch similar products');
-    }
-    return await response.json();
+    const response = await axios.get(`${API_BASE_URL}/similar?${params.toString()}`);
+    return response.data;
   } catch (error) {
     console.error('Error fetching similar products:', error);
     return { products: [] }; // Return consistent structure
@@ -128,9 +180,7 @@ export const fetchSimilarProducts = async (department, category, subcategory, pr
  */
 export const processCheckout = async (checkoutData) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/checkout/process`, checkoutData, {
-      headers: getAuthHeaders()
-    });
+    const response = await axios.post(`${API_BASE_URL}/checkout/process`, checkoutData);
     return response.data;
   } catch (error) {
     console.error('Error during checkout:', error.response || error);
@@ -152,9 +202,7 @@ export const processCheckout = async (checkoutData) => {
 
 export const processSavedCardCheckout = async (checkoutData) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/checkout/process-saved-card`, checkoutData, {
-      headers: getAuthHeaders()
-    });
+    const response = await axios.post(`${API_BASE_URL}/checkout/process-saved-card`, checkoutData);
     return response.data;
   } catch (error) {
     console.error('Error during saved card checkout:', error.response || error);
@@ -196,32 +244,59 @@ export const processGuestCheckout = async (checkoutData) => {
   }
 };
 
+/**
+ * Process Authorization - For authorization-only transactions
+ * @param {Object} authorizationData - The authorization data to be sent to the backend.
+ * @returns {Object} - The response from the backend.
+ */
+export const processAuthorization = async (authorizationData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/checkout/authorize`, authorizationData);
+    return response.data;
+  } catch (error) {
+    console.error('Error during authorization:', error.response || error);
+    console.error('Error response data:', error.response?.data);
+    console.error('Error status:', error.response?.status);
+    
+    // Create a proper error object with message
+    const errorMessage = error.response?.data?.message || 
+                        error.response?.data?.error || 
+                        error.message || 
+                        'An error occurred while processing the payment authorization.';
+    
+    const errorObj = new Error(errorMessage);
+    errorObj.status = error.response?.status;
+    errorObj.data = error.response?.data;
+    throw errorObj;
+  }
+};
+
 export const fetchUserProfile = async () => {
-  const response = await axios.get(`${API_BASE_URL}/users/me`, { headers: getAuthHeaders() });
+  const response = await axios.get(`${API_BASE_URL}/users/me`);
   return response.data;
 };
 
 export const updateUserProfile = async (updates) => {
-  const response = await axios.put(`${API_BASE_URL}/users/me`, updates, { headers: getAuthHeaders() });
+  const response = await axios.put(`${API_BASE_URL}/users/me`, updates);
   return response.data;
 };
 
 export const deleteUserProfile = async () => {
-  const response = await axios.delete(`${API_BASE_URL}/users/me`, { headers: getAuthHeaders() });
+  const response = await axios.delete(`${API_BASE_URL}/users/me`);
   return response.data;
 };
 
 // ADDRESS
 export const addAddress = async (address) => {
-  const response = await axios.post(`${API_BASE_URL}/users/me/addresses`, address, { headers: getAuthHeaders() });
+  const response = await axios.post(`${API_BASE_URL}/users/me/addresses`, address);
   return response.data;
 };
 export const updateAddress = async (addressId, address) => {
-  const response = await axios.put(`${API_BASE_URL}/users/me/addresses/${addressId}`, address, { headers: getAuthHeaders() });
+  const response = await axios.put(`${API_BASE_URL}/users/me/addresses/${addressId}`, address);
   return response.data;
 };
 export const deleteAddress = async (addressId) => {
-  const response = await axios.delete(`${API_BASE_URL}/users/me/addresses/${addressId}`, { headers: getAuthHeaders() });
+  const response = await axios.delete(`${API_BASE_URL}/users/me/addresses/${addressId}`);
   return response.data;
 };
 
@@ -230,9 +305,7 @@ export const deleteAddress = async (addressId) => {
 // CHECKOUT CARD MANAGEMENT
 export const addPaymentMethod = async (paymentData) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/checkout/add-payment-method`, paymentData, {
-      headers: getAuthHeaders()
-    });
+    const response = await axios.post(`${API_BASE_URL}/checkout/add-payment-method`, paymentData);
     return response.data;
   } catch (error) {
     console.error('Error adding payment method:', error.response || error);
@@ -251,9 +324,7 @@ export const addPaymentMethod = async (paymentData) => {
 
 export const deletePaymentMethod = async (paymentMethodId) => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/checkout/payment-method/${paymentMethodId}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await axios.delete(`${API_BASE_URL}/checkout/payment-method/${paymentMethodId}`);
     return response.data;
   } catch (error) {
     console.error('Error deleting payment method:', error.response || error);
@@ -272,9 +343,7 @@ export const deletePaymentMethod = async (paymentMethodId) => {
 
 export const validatePaymentMethods = async () => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/checkout/validate-payment-methods`, {}, {
-      headers: getAuthHeaders()
-    });
+    const response = await axios.post(`${API_BASE_URL}/checkout/validate-payment-methods`, {});
     return response.data;
   } catch (error) {
     console.error('Error validating payment methods:', error.response || error);
@@ -284,9 +353,7 @@ export const validatePaymentMethods = async () => {
 
 export const syncPaymentMethods = async () => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/checkout/sync-payment-methods`, {}, {
-      headers: getAuthHeaders()
-    });
+    const response = await axios.post(`${API_BASE_URL}/checkout/sync-payment-methods`, {});
     return response.data;
   } catch (error) {
     console.error('Error syncing payment methods:', error.response || error);
@@ -296,9 +363,7 @@ export const syncPaymentMethods = async () => {
 
 export const getPaymentHistory = async (page = 1, limit = 10) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/checkout/payment-history?page=${page}&limit=${limit}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await axios.get(`${API_BASE_URL}/checkout/payment-history?page=${page}&limit=${limit}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching payment history:', error.response || error);
@@ -318,9 +383,7 @@ export const getPaymentHistory = async (page = 1, limit = 10) => {
 // Fetch user orders
 export const fetchUserOrders = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/orders/me`, {
-      headers: getAuthHeaders()
-    });
+    const response = await axios.get(`${API_BASE_URL}/orders/me`);
     return response.data;
   } catch (error) {
     console.error('Error fetching user orders:', error.response || error);
@@ -340,9 +403,7 @@ export const fetchUserOrders = async () => {
 // Fetch order by ID (supports both authenticated and guest orders)
 export const fetchOrderById = async (orderId) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching order:', error.response || error);
@@ -365,8 +426,21 @@ export const searchProducts = async (query, filters = {}, page = 1, limit = 20) 
     const params = new URLSearchParams({
       q: query,
       page: page.toString(),
-      limit: limit.toString(),
-      ...filters
+      limit: limit.toString()
+    });
+
+    // Handle single-value filters
+    Object.keys(filters).forEach(key => {
+      const value = filters[key];
+      if (Array.isArray(value)) {
+        // For array filters, add each value separately
+        value.forEach(item => {
+          params.append(key, item);
+        });
+      } else if (value !== undefined && value !== null && value !== '') {
+        // For single-value filters
+        params.set(key, value);
+      }
     });
 
     const response = await axios.get(`${API_BASE_URL}/products/search?${params}`);
@@ -413,9 +487,7 @@ export const getSearchSuggestions = async (query, type = 'all') => {
 // Wishlist API functions
 export const getWishlist = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/wishlist`, {
-      headers: getAuthHeaders()
-    });
+    const response = await axios.get(`${API_BASE_URL}/wishlist`);
     return response.data;
   } catch (error) {
     console.error('Get wishlist error:', error);
@@ -426,8 +498,7 @@ export const getWishlist = async () => {
 export const addToWishlist = async (productId) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/wishlist`, 
-      { productId }, 
-      { headers: getAuthHeaders() }
+      { productId }
     );
     return response.data;
   } catch (error) {
@@ -438,9 +509,7 @@ export const addToWishlist = async (productId) => {
 
 export const removeFromWishlist = async (productId) => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/wishlist/${productId}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await axios.delete(`${API_BASE_URL}/wishlist/${productId}`);
     return response.data;
   } catch (error) {
     console.error('Remove from wishlist error:', error);
@@ -450,9 +519,7 @@ export const removeFromWishlist = async (productId) => {
 
 export const clearWishlist = async () => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/wishlist`, {
-      headers: getAuthHeaders()
-    });
+    const response = await axios.delete(`${API_BASE_URL}/wishlist`);
     return response.data;
   } catch (error) {
     console.error('Clear wishlist error:', error);
@@ -462,9 +529,7 @@ export const clearWishlist = async () => {
 
 export const isInWishlist = async (productId) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/wishlist/check/${productId}`, {
-      headers: getAuthHeaders()
-    });
+    const response = await axios.get(`${API_BASE_URL}/wishlist/check/${productId}`);
     return response.data;
   } catch (error) {
     console.error('Check wishlist error:', error);
@@ -508,23 +573,3 @@ export const fetchProductsByGroupId = async (id, page = 1, limit = 20, sort = 'c
     throw error;
   }
 };
-
-// Create axios instance as default export
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
-
-// Add interceptor to include auth headers automatically
-api.interceptors.request.use((config) => {
-  const authHeaders = getAuthHeaders();
-  config.headers = {
-    ...config.headers,
-    ...authHeaders
-  };
-  return config;
-});
-
-export default api;

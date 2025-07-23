@@ -1,10 +1,20 @@
-const User = require('../models/User');
+// Helper function to get models for specific database connection
+const getModels = (connection) => {
+  try {
+    const User = connection.model('User');
+    return { User };
+  } catch (error) {
+    console.error('Error getting models:', error);
+    throw error;
+  }
+};
 
 // --- USER PROFILE MANAGEMENT ---
 
 // Get user profile (by ID)
 const getUserProfile = async (req, res) => {
   try {
+    const { User } = getModels(req.dbConnection);
     const user = await User.findById(req.user.id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
@@ -16,6 +26,7 @@ const getUserProfile = async (req, res) => {
 // Update user details (name, phone, dob, etc.)
 const updateUserDetails = async (req, res) => {
   try {
+    const { User } = getModels(req.dbConnection);
     const updates = {};
     const allowedFields = ['name', 'phone', 'dob', 'email'];
     allowedFields.forEach(field => {
@@ -37,6 +48,7 @@ const updateUserDetails = async (req, res) => {
 // Delete user account
 const deleteUser = async (req, res) => {
   try {
+    const { User } = getModels(req.dbConnection);
     await User.findByIdAndDelete(req.user.id);
     res.json({ success: true, message: 'User deleted' });
   } catch (error) {
@@ -49,9 +61,8 @@ const deleteUser = async (req, res) => {
 // Add address
 const addAddress = async (req, res) => {
   try {
-    console.log('req.user:', req.user);
-    console.log('req.body:', req.body);
-    const user = await User.findById(req.user.id);
+    const { User } = getModels(req.dbConnection);
+            const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     const address = req.body;
@@ -78,6 +89,7 @@ const addAddress = async (req, res) => {
 // Update address
 const updateAddress = async (req, res) => {
   try {
+    const { User } = getModels(req.dbConnection);
     const { addressId } = req.params;
     const user = await User.findById(req.user.id);
     const idx = user.addresses.findIndex(addr => addr.id === addressId);
@@ -96,6 +108,7 @@ const updateAddress = async (req, res) => {
 // Delete address
 const deleteAddress = async (req, res) => {
   try {
+    const { User } = getModels(req.dbConnection);
     const { addressId } = req.params;
     const user = await User.findById(req.user.id);
     user.addresses = user.addresses.filter(addr => addr.id !== addressId);

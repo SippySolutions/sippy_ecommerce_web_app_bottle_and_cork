@@ -1,40 +1,84 @@
-const ProductGroup = require('../models/ProductGroup');
-const Product = require('../models/Product');
+const { ObjectId } = require('mongodb');
+
+// Helper function to get models for specific database connection
+const getModels = (connection) => {
+  try {
+    const ProductGroup = connection.model('ProductGroup');
+    const Product = connection.model('Product');
+    return { ProductGroup, Product };
+  } catch (error) {
+    console.error('Error getting models:', error);
+    throw error;
+  }
+};
 
 // Get all active product groups
 exports.getProductGroups = async (req, res) => {
   try {
-    const productGroups = await ProductGroup.find({ isActive: true })
-      .populate('products')
-      .sort({ displayOrder: 1, createdAt: -1 });
+    const db = req.dbConnection.db;
+    if (!db) {
+      throw new Error('Database connection not available from middleware');
+    }
+    
+    const productGroupsCollection = db.collection('productgroups');
+    
+    // Simple query without sorting for now
+    const productGroups = await productGroupsCollection
+      .find({ isActive: true })
+      .toArray();
     
     res.json(productGroups);
   } catch (error) {
     console.error('Error fetching product groups:', error);
-    res.status(500).json({ message: 'Error fetching product groups', error: error.message });
+    // Return empty array to prevent frontend crashes
+    res.json([]);
   }
 };
 
 // Get a single product group by ID
 exports.getProductGroupById = async (req, res) => {
-  try {    const { id } = req.params;
+  try {
+    const db = req.dbConnection.db;
+    if (!db) {
+      throw new Error('Database connection not available from middleware');
+    }
     
-    const productGroup = await ProductGroup.findById(id)
-      .populate({
-        path: 'products',
-        select: 'name price productimg', // Use correct field names from Product model
-        options: { limit: 5 } // Limit to first 5 products for the group info
-      });
+    const { id } = req.params;
+    
+    // Validate ObjectId format
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid product group ID' });
+    }
+    
+    const productGroupsCollection = db.collection('productgroups');
+    const productsCollection = db.collection('products');
+    
+    // Find the product group
+    const productGroup = await productGroupsCollection.findOne({ 
+      _id: new ObjectId(id),
+      isActive: true 
+    });
     
     if (!productGroup) {
       return res.status(404).json({ message: 'Product group not found' });
     }
     
-    if (!productGroup.isActive) {
-      return res.status(404).json({ message: 'Product group is not active' });
-    }
+    // Get first 5 products for this group (for preview)
+    const products = await productsCollection
+      .find({ 
+        _id: { $in: (productGroup.products || []).map(pid => new ObjectId(pid)) }
+      })
+      .project({ name: 1, price: 1, productimg: 1 })
+      .limit(5)
+      .toArray();
     
-    res.json(productGroup);
+    // Add products to the response
+    const result = {
+      ...productGroup,
+      products: products
+    };
+    
+    res.json(result);
   } catch (error) {
     console.error('Error fetching product group:', error);
     res.status(500).json({ message: 'Error fetching product group', error: error.message });
@@ -44,17 +88,30 @@ exports.getProductGroupById = async (req, res) => {
 // Get products by group ID
 exports.getProductsByGroupId = async (req, res) => {
   try {
+    const db = req.dbConnection.db;
+    if (!db) {
+      throw new Error('Database connection not available from middleware');
+    }
+    
     const { id } = req.params;
     const { page = 1, limit = 20, sort = 'createdAt', order = 'desc' } = req.query;
     
-    const productGroup = await ProductGroup.findById(id);
+    // Validate ObjectId format
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid product group ID' });
+    }
+    
+    const productGroupsCollection = db.collection('productgroups');
+    const productsCollection = db.collection('products');
+    
+    // Find the product group
+    const productGroup = await productGroupsCollection.findOne({ 
+      _id: new ObjectId(id),
+      isActive: true 
+    });
     
     if (!productGroup) {
       return res.status(404).json({ message: 'Product group not found' });
-    }
-    
-    if (!productGroup.isActive) {
-      return res.status(404).json({ message: 'Product group is not active' });
     }
     
     // Create sort object
@@ -62,18 +119,21 @@ exports.getProductsByGroupId = async (req, res) => {
     sortObj[sort] = order === 'desc' ? -1 : 1;
     
     // Calculate pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);    // Get products from the group
-    const products = await Product.find({ 
-      _id: { $in: productGroup.products }
-    })
-    .sort(sortObj)
-    .skip(skip)
-    .limit(parseInt(limit));
+    const skip = (parseInt(page) - 1) * parseInt(limit);
     
-    // Get total count for pagination
-    const totalProducts = await Product.countDocuments({ 
-      _id: { $in: productGroup.products }
-    });
+    // Convert product IDs to ObjectIds
+    const productIds = (productGroup.products || []).map(pid => new ObjectId(pid));
+    
+    // Get products from the group with pagination
+    const [products, totalProducts] = await Promise.all([
+      productsCollection
+        .find({ _id: { $in: productIds } })
+        .sort(sortObj)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .toArray(),
+      productsCollection.countDocuments({ _id: { $in: productIds } })
+    ]);
     
     const totalPages = Math.ceil(totalProducts / parseInt(limit));
     
@@ -101,6 +161,7 @@ exports.getProductsByGroupId = async (req, res) => {
 // Create a new product group (admin only)
 exports.createProductGroup = async (req, res) => {
   try {
+    const { ProductGroup } = getModels(req.dbConnection);
     const { name, description, bannerImage, products, displayOrder } = req.body;
     
     const productGroup = new ProductGroup({
@@ -123,6 +184,7 @@ exports.createProductGroup = async (req, res) => {
 // Update a product group (admin only)
 exports.updateProductGroup = async (req, res) => {
   try {
+    const { ProductGroup } = getModels(req.dbConnection);
     const { id } = req.params;
     const updateData = req.body;
     
@@ -146,6 +208,7 @@ exports.updateProductGroup = async (req, res) => {
 // Delete a product group (admin only)
 exports.deleteProductGroup = async (req, res) => {
   try {
+    const { ProductGroup } = getModels(req.dbConnection);
     const { id } = req.params;
     
     const productGroup = await ProductGroup.findByIdAndDelete(id);
@@ -164,12 +227,10 @@ exports.deleteProductGroup = async (req, res) => {
 // Debug endpoint to check products by IDs
 exports.debugProductsByIds = async (req, res) => {
   try {
+    const { Product } = getModels(req.dbConnection);
     const { ids } = req.body; // Array of product IDs
     
-    console.log('Checking products with IDs:', ids);
-    
     const products = await Product.find({ _id: { $in: ids } });
-    console.log('Found products:', products.length);
     
     const foundIds = products.map(p => p._id.toString());
     const missingIds = ids.filter(id => !foundIds.includes(id.toString()));

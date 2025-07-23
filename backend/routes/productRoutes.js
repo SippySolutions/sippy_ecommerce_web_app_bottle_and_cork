@@ -9,6 +9,8 @@ const {
 } = require('../controllers/ProductContorller');
 const router = express.Router();
 
+// Database switching middleware is already applied in server.js
+
 // Search routes - put these before other routes to avoid conflicts
 router.get('/search', searchProducts);
 router.get('/search/suggestions', getSearchSuggestions);

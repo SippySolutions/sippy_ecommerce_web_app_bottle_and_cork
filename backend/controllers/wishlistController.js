@@ -1,9 +1,19 @@
-const User = require('../models/User');
-const Product = require('../models/Product');
+// Helper function to get models for specific database connection
+const getModels = (connection) => {
+  try {
+    const User = connection.model('User');
+    const Product = connection.model('Product');
+    return { User, Product };
+  } catch (error) {
+    console.error('Error getting models:', error);
+    throw error;
+  }
+};
 
 // Get user's wishlist
 exports.getWishlist = async (req, res) => {
   try {
+    const { User } = getModels(req.dbConnection);
     const user = await User.findById(req.user.id).populate('wishlist');
     
     if (!user) {
@@ -29,6 +39,7 @@ exports.getWishlist = async (req, res) => {
 // Add product to wishlist
 exports.addToWishlist = async (req, res) => {
   try {
+    const { User, Product } = getModels(req.dbConnection);
     const { productId } = req.body;
     
     if (!productId) {
@@ -88,6 +99,7 @@ exports.addToWishlist = async (req, res) => {
 // Remove product from wishlist
 exports.removeFromWishlist = async (req, res) => {
   try {
+    const { User } = getModels(req.dbConnection);
     const { productId } = req.params;
     
     if (!productId) {
@@ -133,6 +145,7 @@ exports.removeFromWishlist = async (req, res) => {
 // Clear entire wishlist
 exports.clearWishlist = async (req, res) => {
   try {
+    const { User } = getModels(req.dbConnection);
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({
@@ -160,6 +173,7 @@ exports.clearWishlist = async (req, res) => {
 // Check if product is in wishlist
 exports.isInWishlist = async (req, res) => {
   try {
+    const { User } = getModels(req.dbConnection);
     const { productId } = req.params;
     
     if (!productId) {

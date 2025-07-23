@@ -94,9 +94,14 @@ function ProductCard({ product }) {
     };
 
     const handleCardClick = (e) => {
-        if (e.target.tagName === 'BUTTON') 
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) 
             return;
         navigate(`/products/${product._id}`);
+    };
+
+    const handleWishlistClick = (e) => {
+        e.stopPropagation();
+        // WishlistIcon handles its own click logic
     };
 
     // Helper functions
@@ -123,215 +128,92 @@ function ProductCard({ product }) {
                 minimumFractionDigits: 2
             })
             .format(price);
-    };    return (
-        <div
-            className="group relative bg-white rounded-lg border border-gray-200 hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden w-full h-[280px] sm:h-[400px] flex flex-col"
-            onClick={handleCardClick}>            {/* Top Right Badges - Compact */}
-            <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10">
-                <div className="flex flex-col gap-0.5 sm:gap-1">
+    };
 
-                    {
-                        product.bestseller && (
-                            <span
-                                className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-accent/10 text-accent border border-accent/20">
-                                <StarIcon className="w-2 h-2 sm:w-3 sm:h-3"/>
-                                <span className="hidden sm:inline">Best Seller</span>
-                                <span className="sm:hidden">Best</span>
-                            </span>
-                        )
-                    }
-                    {
-                        product.exclusive && (
-                            <span
-                                className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                                <DiamondIcon className="w-2 h-2 sm:w-3 sm:h-3"/>
-                                <span className="hidden sm:inline">Exclusive</span>
-                                <span className="sm:hidden">Exc</span>
-                            </span>
-                        )
-                    }
-                    {
-                        product.staffpick && (
-                            <span
-                                className="inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-secondary/10 text-secondary border border-secondary/20">
-                                <UserGroupIcon className="w-2 h-2 sm:w-3 sm:h-3"/>
-                                <span className="hidden sm:inline">Staff Pick</span>
-                                <span className="sm:hidden">Staff</span>
-                            </span>
-                        )
-                    }
+    const hasDiscount = product.saleprice > 0 && product.price > product.saleprice;
+    const discountPercentage = getDiscountPercentage();
 
-                </div>
-            </div>            {/* Left Floating Icons for Extra Info - Compact */}
-            <div className="absolute top-1 sm:top-2 left-1 sm:left-2 z-10">
-                <div className="flex flex-col gap-0.5 sm:gap-1">
-                    {/* Vintage Icon */}
-                    {
-                        product.vintage && product.vintage !== "No Vintage" && (
-                            <div
-                                className="w-4 h-4 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-sm border border-white/20 hover:scale-110 transition-all duration-200"
-                                style={{
-                                    backgroundColor: `${theme.primary}CC`
-                                }}
-                                title={`Vintage: ${product.vintage}`}>
-                                <svg className="w-2 h-2 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path
-                                        d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zM4 7h12v9H4V7z"/>
-                                    <path d="M10 8a1 1 0 011 1v2a1 1 0 11-2 0V9a1 1 0 011-1z"/>
-                                </svg>
-                            </div>
-                        )
-                    }
-
-                    {/* ABV Icon */}
-                    {
-                        product.abv && (
-                            <div
-                                className="w-4 h-4 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-sm border border-white/20 hover:scale-110 transition-all duration-200"
-                                style={{
-                                    backgroundColor: `${theme.accent}CC`
-                                }}
-                                title={`ABV: ${product.abv}%`}>
-                                <svg className="w-2 h-2 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path
-                                        d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
-                                </svg>
-                            </div>
-                        )
-                    }
-
-                    {/* Country/Origin Icon */}
-                    {
-                        product.country && product.country !== "NAN" && (
-                            <div
-                                className="w-4 h-4 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-sm border border-white/20 hover:scale-110 transition-all duration-200"
-                                style={{
-                                    backgroundColor: `${theme.secondary}CC`
-                                }}
-                                title={`Origin: ${product.country}`}>
-                                <svg className="w-2 h-2 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path
-                                        fillRule="evenodd"
-                                        d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z"
-                                        clipRule="evenodd"/>
-                                </svg>
-                            </div>
-                        )
-                    }
-                </div>
-            </div>            {/* Product Image - Optimized with Lazy Loading */}
-            <div
-                className="relative h-32 sm:h-52 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-2 sm:p-3">
-                <LazyImage
-                    src={product.productimg || '/placeholder-image.png'}
+    return (
+        <div 
+            className="w-full h-auto p-2 sm:p-4 bg-[#FAFAFA] rounded-xl sm:rounded-2xl shadow-[0px_5px_20px_0px_rgba(0,0,0,0.05)] outline-1 outline-offset-[-1px] outline-slate-600/25 flex flex-col justify-start items-start gap-2 sm:gap-3 cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={handleCardClick}
+        >
+            {/* Image Section */}
+            <div className="self-stretch h-32 sm:h-48 relative rounded-lg outline-1 outline-offset-[-1px] outline-slate-600/25 overflow-hidden">
+                <LazyImage 
+                    src={product.productimg || "https://placehold.co/200x250"} 
                     alt={product.name}
-                    className="h-full w-auto object-contain transition-all duration-300 group-hover:scale-105"
-                    placeholder={
-                        <div className="animate-pulse bg-gray-300 rounded w-8 h-12 sm:w-12 sm:h-16"></div>
-                    }
+                    className="w-full h-full object-contain"
                 />
-
-                {/* Size Floating Badge - Bottom Right - Compact */}
-                {
-                    product.size && (
-                        <div
-                            className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 px-1 py-0.5 sm:px-2 sm:py-1 rounded-full text-white text-xs font-semibold shadow-lg backdrop-blur-sm border border-white/20"
-                            style={{
-                                backgroundColor: `${theme.accent}CC`
-                            }}
-                            title={`Size: ${product.size}`}>
-                            <span className="hidden sm:inline">{product.size} {product.packname!="Single"?product.packname: ''}</span>
-                            <span className="sm:hidden">{product.size}</span>
+                {hasDiscount && (
+                    <div className="w-10 h-5 sm:w-14 sm:h-6 px-1 py-0.5 right-0 top-0 absolute bg-green-700 rounded-tr-lg rounded-bl-lg flex justify-center items-center">
+                        <div className="text-white text-[10px] sm:text-xs font-bold font-['Play']">
+                            {discountPercentage}% off
                         </div>
-                    )
-                }
-            </div>            {/* Product Information - Compact */}
-            <div className="p-2 sm:p-3 flex-1 flex flex-col min-h-0">
-                {/* Product Name and Category Row - Compact */}
-                <div className="flex items-start justify-between gap-1 sm:gap-2 mb-1 sm:mb-2 flex-shrink-0">                    <h3
-                        className="font-semibold text-xs sm:text-base text-gray-900 line-clamp-2 group-hover:text-primary transition-colors flex-1">
-                        {product.name || 'Unnamed Product'}
-                    </h3>
-                    <div className="flex flex-col gap-0.5 sm:gap-1 flex-shrink-0">
-                        {
-                            product.category && (
-                                <span
-                                    className="text-xs text-gray-600 bg-gray-100 px-1 py-0.5 sm:px-2 sm:py-1 rounded-md whitespace-nowrap hidden sm:inline-block">
-                                    {product.category}
-                                </span>
-                            )
-                        }
-                        {
-                            product.subcategory && (
-                                <span
-                                    className="text-xs text-gray-600 bg-gray-50 px-1 py-0.5 sm:px-2 sm:py-1 rounded-md border whitespace-nowrap hidden sm:inline-block">
-                                    {product.subcategory}
-                                </span>
-                            )
-                        }
-                        {
-                            !product.category && !product.subcategory && product.department && (
-                                <span
-                                    className="text-xs text-gray-600 bg-gray-100 px-1 py-0.5 sm:px-2 sm:py-1 rounded-md whitespace-nowrap hidden sm:inline-block">
-                                    {product.department}
-                                </span>
-                            )
-                        }
                     </div>
-                </div>
-
-                {/* Price Section - Compact */}
-                <div className="mb-1 sm:mb-2 flex-shrink-0">
-                    {
-                        product.saleprice > 0
-                            ? (
-                                <div className="flex items-center gap-1 sm:gap-2">
-                                    <div className="text-sm sm:text-xl font-bold text-accent">
-                                        {formatPrice(product.saleprice)}
-                                    </div>
-                                    <div className="text-xs sm:text-sm text-gray-500 line-through">
-                                        {formatPrice(product.price)}
-                                    </div>
-                                </div>
-                            )
-                            : (
-                                <div className="text-sm sm:text-xl font-bold text-gray-900">
-                                    {formatPrice(product.price)}
-                                </div>
-                            )
-                    }
-                </div>
-
-                {/* Flexible space */}
-                <div className="flex-1 min-h-0"></div>
-                {/* Bottom Section - Action Buttons - Compact */}
-                <div className="space-y-1 sm:space-y-2 flex-shrink-0">
-                    <div className='flex items-center justify-between mt-1 sm:mt-2 gap-1 sm:gap-2'>
-                        {/* Add to Cart Button - Compact */}
-                        <button
-                            onClick={handleAddToCart}
-                            disabled={product.totalqty <= 0}
-                            className={`w-full py-1.5 sm:py-2.5 px-2 sm:px-4 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 shadow-md hover:shadow-lg ${
-                            'text-white hover:opacity-90 transform hover:scale-105'}`}
-                            style={{
-                                backgroundColor: theme.accent
-                            }}>
-
-                            <> <ShoppingCartIcon className="w-3 h-3 sm:w-4 sm:h-4"/>
-                            <span className="hidden sm:inline">Add to Cart</span>
-                            <span className="sm:hidden">Add</span>
+                )}
+            </div>
+            
+            {/* Product Name */}
+            <div className="self-stretch text-left text-neutral-800 text-xs sm:text-sm font-semibold line-clamp-2">
+                {product.name}
+            </div>
+            
+            {/* Price Section */}
+            <div className="self-stretch flex justify-between items-center">
+                <div className="flex items-center gap-1 sm:gap-2">
+                    {hasDiscount ? (
+                        <>
+                            <span className="text-zinc-800 text-xs sm:text-sm font-bold">
+                                {formatPrice(product.saleprice)}
+                            </span>
+                            <span className="text-red-700 text-[10px] sm:text-xs font-normal line-through">
+                                {formatPrice(product.price)}
+                            </span>
                         </>
-
-                    </button>
-
-                    {/* Wishlist Icon */}
-                    <div className="self-end">
-                        <WishlistIcon product={product} size="sm"/>
+                    ) : (
+                        <span className="text-zinc-800 text-xs sm:text-sm font-bold">
+                            {formatPrice(product.price)}
+                        </span>
+                    )}
+                </div>
+                
+                {/* Size and Pack Name */}
+                <div className="text-black text-[9px] sm:text-xs font-normal">
+                    {product.size} | {product.packname}
+                </div>
+            </div>
+            
+            {/* Featured/Special Tags */}
+            <div className="flex justify-start items-start gap-1 sm:gap-2 flex-wrap min-h-[16px] sm:min-h-[20px]">
+                {product.featured && (
+                    <div className="text-[10px] sm:text-xs font-semibold" style={{ color: '#A36F00' }}>
+                        {product.featured}
                     </div>
+                )}
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="self-stretch flex justify-start items-start gap-1 sm:gap-2">
+                <button 
+                    className="flex-1 h-6 sm:h-7 px-1 sm:px-2 py-1 bg-[var(--color-accent)] rounded flex justify-center items-center gap-1 sm:gap-2 hover:bg-red-800 transition-colors"
+                    onClick={handleAddToCart}
+                    disabled={product.totalqty === 0}
+                >
+                    <ShoppingCartIcon className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                    <div className="text-white text-[10px] sm:text-xs font-bold ">
+                        {product.totalqty === 0 ? 'OUT OF STOCK' : 'ADD TO CART'}
+                    </div>
+                </button>
+                
+                <div 
+                    className="flex justify-center items-center"
+                    onClick={handleWishlistClick}
+                >
+                    <WishlistIcon product={product} size="sm" />
                 </div>
             </div>
         </div>
-    </div>
     );
 }
 

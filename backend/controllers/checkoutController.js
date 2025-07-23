@@ -1,17 +1,63 @@
-const User = require('../models/User');
-const Order = require('../models/Order');
-const Product = require('../models/Product');
 const { APIContracts, APIControllers, Constants } = require('authorizenet');
+
+// Helper function to get models for specific database connection
+const getModels = (connection) => {
+  try {
+    // Check if models already exist on this connection
+    if (connection.models.User && connection.models.Order && connection.models.Product) {
+      return {
+        User: connection.models.User,
+        Order: connection.models.Order,
+        Product: connection.models.Product
+      };
+    }
+
+    // Define User schema if not exists
+    let User;
+    if (!connection.models.User) {
+      const UserSchema = require('../models/User').schema;
+      User = connection.model('User', UserSchema);
+    } else {
+      User = connection.models.User;
+    }
+
+    // Define Order schema if not exists
+    let Order;
+    if (!connection.models.Order) {
+      const OrderSchema = require('../models/Order').schema;
+      Order = connection.model('Order', OrderSchema);
+    } else {
+      Order = connection.models.Order;
+    }
+
+    // Define Product schema if not exists
+    let Product;
+    if (!connection.models.Product) {
+      const ProductSchema = require('../models/Product').schema;
+      Product = connection.model('Product', ProductSchema);
+    } else {
+      Product = connection.models.Product;
+    }
+
+    return { User, Order, Product };
+  } catch (error) {
+    console.error('Error getting models for connection:', error);
+    throw error;
+  }
+};
 
 // Utility: Get Authorize.Net credentials and endpoint
 function getAuthorizeNetConfig() {
-  return {
+  const config = {
     apiLoginId: process.env.AUTHORIZE_NET_API_LOGIN_ID,
     transactionKey: process.env.AUTHORIZE_NET_TRANSACTION_KEY,
-    endpoint: process.env.NODE_ENV === 'production' 
-      ? Constants.endpoint.production 
-      : Constants.endpoint.sandbox,
+    // Force production endpoint since credentials are production (test mode enabled on Authorize.Net side)
+    endpoint: Constants.endpoint.production,
   };
+  
+  // Debug logging for authentication issues
+    
+  return config;
 }
 
 // Helper function to retrieve card details from Authorize.Net
@@ -76,10 +122,7 @@ async function getCardDetailsFromAuthorizeNet(customerProfileId, customerPayment
 // Process payment with new card
 exports.processPayment = async (req, res) => {
   try {
-    console.log('=== CHECKOUT PROCESS START ===');
-    console.log('User ID:', req.user?.id);
-    console.log('Request body:', JSON.stringify(req.body, null, 2));
-    
+                
     // Helper function to round monetary values to 2 decimal places
     const roundToTwo = (num) => Math.round((num + Number.EPSILON) * 100) / 100;const {
       dataDescriptor,
@@ -97,39 +140,28 @@ exports.processPayment = async (req, res) => {
       ageVerifiedAt = null
     } = req.body;
 
-    console.log('Extracted data:');
-    console.log('- dataDescriptor:', dataDescriptor);
-    console.log('- dataValue:', dataValue ? dataValue.substring(0, 50) + '...' : 'undefined');
-    console.log('- amount:', amount);
-    console.log('- cartItems:', cartItems);
-    console.log('- orderType:', orderType);
-
+                        
     // Validate required fields
     if (!dataDescriptor || !dataValue) {
-      console.log('❌ Missing payment token data');
-      return res.status(400).json({ 
+            return res.status(400).json({ 
         success: false, 
         message: 'Missing payment token data' 
       });
     }
 
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-      console.log('❌ Invalid cart items');
-      return res.status(400).json({ 
+            return res.status(400).json({ 
         success: false, 
         message: 'Cart is empty or invalid' 
       });
     }
 
-    console.log('Cart items received:', cartItems);
-
+    
     const user = await User.findById(req.user.id);
     if (!user) {
-      console.log('❌ User not found');
-      return res.status(404).json({ success: false, message: 'User not found' });    }
+            return res.status(404).json({ success: false, message: 'User not found' });    }
 
-    console.log('✅ User found:', user.email);
-
+    
     // Check for duplicate transactions (prevent double charging)
     const duplicateWindow = 30000; // 30 seconds
     const recentOrders = await Order.find({
@@ -139,8 +171,7 @@ exports.processPayment = async (req, res) => {
     });
 
     if (recentOrders.length > 0) {
-      console.log('⚠️ Potential duplicate transaction detected');
-      return res.status(400).json({
+            return res.status(400).json({
         success: false,
         message: 'Duplicate transaction detected. Please wait before trying again.'
       });
@@ -148,27 +179,21 @@ exports.processPayment = async (req, res) => {
 
     // Validate cart items and calculate totals
     const productIds = cartItems.map(item => {
-      console.log('Processing cart item for ID extraction:', item);
-      return item.product || item._id;
+            return item.product || item._id;
     });
-    console.log('Product IDs to find:', productIds);
-    
+        
     // Initialize variables outside try block
     let subtotal = 0;
     let validatedItems = [];
     
     try {
       const products = await Product.find({ _id: { $in: productIds } });
-      console.log('Products found:', products.length);
-      console.log('Product details:', products.map(p => ({ id: p._id, name: p.name })));
-
+            
       for (const item of cartItems) {
-        console.log('Processing cart item:', item);
-        const productId = item.product || item._id;
+                const productId = item.product || item._id;
         const product = products.find(p => p._id.toString() === productId.toString());
         if (!product) {
-          console.log('❌ Product not found for ID:', productId);
-          return res.status(400).json({ 
+                    return res.status(400).json({ 
             success: false, 
             message: `Product not found: ${productId}` 
           });
@@ -185,8 +210,7 @@ exports.processPayment = async (req, res) => {
     }
 
     } catch (productError) {
-      console.log('❌ Error during product validation:', productError);
-      return res.status(500).json({ 
+            return res.status(500).json({ 
         success: false, 
         message: 'Error validating products' 
       });
@@ -204,12 +228,7 @@ exports.processPayment = async (req, res) => {
 
     // Process payment with Authorize.Net
     const { apiLoginId, transactionKey, endpoint } = getAuthorizeNetConfig();
-    console.log('Authorize.Net config:', { 
-      apiLoginId: apiLoginId ? 'SET' : 'MISSING', 
-      transactionKey: transactionKey ? 'SET' : 'MISSING',
-      endpoint 
-    });
-
+    
     if (!apiLoginId || !transactionKey) {
       return res.status(500).json({
         success: false,
@@ -286,21 +305,18 @@ exports.processPayment = async (req, res) => {
     const ctrl = new APIControllers.CreateTransactionController(createRequest.getJSON());
     ctrl.setEnvironment(endpoint);
 
-    console.log('Processing payment with Authorize.Net...');
-
+    
     const paymentResult = await new Promise((resolve, reject) => {
       ctrl.execute(() => {
         const apiResponse = ctrl.getResponse();
         const response = new APIContracts.CreateTransactionResponse(apiResponse);
         
-        console.log('Authorize.Net response result code:', response.getMessages().getResultCode());
-        
+                
         if (response.getMessages().getResultCode() === APIContracts.MessageTypeEnum.OK) {
           const transactionResponse = response.getTransactionResponse();
           
           if (transactionResponse.getMessages() && transactionResponse.getMessages().getMessage().length > 0) {
-            console.log('Transaction successful:', transactionResponse.getTransId());
-            resolve({
+                        resolve({
               transactionId: transactionResponse.getTransId(),
               success: true,
               message: transactionResponse.getMessages().getMessage()[0].getDescription(),
@@ -308,18 +324,16 @@ exports.processPayment = async (req, res) => {
               responseCode: transactionResponse.getResponseCode()
             });
           } else {
-            console.log('Transaction failed with errors');
-            const errors = transactionResponse.getErrors().getError();
+                        const errors = transactionResponse.getErrors().getError();
             const error = errors[0];
             reject(new Error(`Transaction Error: ${error.getErrorCode()} - ${error.getErrorText()}`));
           }
         } else {
-          console.log('API call failed');
-          const error = response.getMessages().getMessage()[0];
+                    const error = response.getMessages().getMessage()[0];
           reject(new Error(`API Error: ${error.getCode()} - ${error.getText()}`));
         }
       });
-    });    console.log('Payment processing completed successfully');    // Create order after successful payment
+    });        // Create order after successful payment
     const order = new Order({
       customer: user._id,
       customerType: 'user',
@@ -348,16 +362,14 @@ exports.processPayment = async (req, res) => {
     user.orders.push(order._id);
     await user.save();
 
-    console.log('Order created successfully:', order._id);
-
+    
     // If user wants to save card for future use, create customer profile
     if (saveCard) {
       try {
         const customerProfileId = await getOrCreateCustomerProfile(user);
         user.authorizeNetCustomerProfileId = customerProfileId;
         await user.save();
-        console.log('Customer profile created/retrieved:', customerProfileId);
-      } catch (error) {
+              } catch (error) {
         console.error('Error creating customer profile:', error);
         // Don't fail the order if profile creation fails
       }
@@ -411,8 +423,7 @@ exports.processPaymentWithSavedCard = async (req, res) => {
     });
 
     if (recentOrders.length > 0) {
-      console.log('⚠️ Potential duplicate transaction detected in saved card payment');
-      return res.status(400).json({
+            return res.status(400).json({
         success: false,
         message: 'Duplicate transaction detected. Please wait before trying again.'
       });
@@ -546,8 +557,7 @@ exports.processPaymentWithSavedCard = async (req, res) => {
     const ctrl = new APIControllers.CreateTransactionController(createRequest.getJSON());
     ctrl.setEnvironment(endpoint);
 
-    console.log('Processing saved card payment with Authorize.Net...');
-
+    
     const paymentResult = await new Promise((resolve, reject) => {
       ctrl.execute(() => {
         const apiResponse = ctrl.getResponse();
@@ -1297,10 +1307,7 @@ exports.processAuthorizeNetPayment = async ({ apiLoginId, transactionKey, endpoi
 // Authorize payment (put on hold) - called when order is placed
 exports.authorizePayment = async (req, res) => {
   try {
-    console.log('=== AUTHORIZATION PROCESS START ===');
-    console.log('User ID:', req.user?.id);
-    console.log('Request body:', JSON.stringify(req.body, null, 2));
-    
+                
     const roundToTwo = (num) => Math.round((num + Number.EPSILON) * 100) / 100;
 
     const {
@@ -1322,21 +1329,17 @@ exports.authorizePayment = async (req, res) => {
       transactionType = 'auth_only'
     } = req.body;
 
-    console.log('Extracted payment method:', paymentMethod);
-    console.log('Payment method ID:', paymentMethodId);
-
+        
     // Validate required fields
     if (!amount || amount <= 0) {
-      console.log('❌ Invalid amount:', amount);
-      return res.status(400).json({ 
+            return res.status(400).json({ 
         success: false, 
         message: 'Valid amount is required' 
       });
     }
 
     if (!cartItems || cartItems.length === 0) {
-      console.log('❌ No cart items provided');
-      return res.status(400).json({ 
+            return res.status(400).json({ 
         success: false, 
         message: 'Cart items are required' 
       });
@@ -1353,6 +1356,9 @@ exports.authorizePayment = async (req, res) => {
         message: 'Valid order type (delivery, pickup, or scheduled) is required'
       });
     }
+
+    // Get models for this database connection
+    const { User, Product, Order } = getModels(req.dbConnection);
 
     // Get user for authenticated requests
     const user = req.user ? await User.findById(req.user.id) : null;
@@ -1469,13 +1475,7 @@ exports.authorizePayment = async (req, res) => {
       await user.save();
     }
 
-    console.log('Authorization successful:', {
-      orderId: order._id,
-      transactionId: authResult.transactionId,
-      authCode: authResult.authCode,
-      amount: totalAmount
-    });
-
+    
     res.json({
       success: true,
       message: 'Payment authorized successfully. Funds will be captured when order is ready.',
@@ -1504,8 +1504,7 @@ exports.authorizePayment = async (req, res) => {
 // Capture authorized payment - called when order status is updated to 'delivered'
 exports.capturePayment = async (req, res) => {
   try {
-    console.log('=== CAPTURE PROCESS START ===');
-    const { orderId, transactionId, amount } = req.body;
+        const { orderId, transactionId, amount } = req.body;
 
     if (!orderId || !transactionId) {
       return res.status(400).json({
@@ -1566,8 +1565,7 @@ exports.capturePayment = async (req, res) => {
 // Void authorization - called to cancel order before capture
 exports.voidAuthorization = async (req, res) => {
   try {
-    console.log('=== VOID PROCESS START ===');
-    const { orderId, transactionId } = req.body;
+        const { orderId, transactionId } = req.body;
 
     if (!orderId || !transactionId) {
       return res.status(400).json({
@@ -1626,8 +1624,7 @@ exports.voidAuthorization = async (req, res) => {
 // Partial capture - called when order total changes
 exports.partialCapturePayment = async (req, res) => {
   try {
-    console.log('=== PARTIAL CAPTURE PROCESS START ===');
-    const { orderId, transactionId, amount } = req.body;
+        const { orderId, transactionId, amount } = req.body;
 
     if (!orderId || !transactionId || !amount) {
       return res.status(400).json({
@@ -1808,19 +1805,13 @@ async function processAuthorizeNetTransaction(options) {
         const apiResponse = ctrl.getResponse();
         const response = new APIContracts.CreateTransactionResponse(apiResponse);
         
-        console.log('🔍 Authorize.Net response:', JSON.stringify(apiResponse, null, 2));
-        
+                
         if (response.getMessages().getResultCode() === APIContracts.MessageTypeEnum.OK) {
           const transactionResponse = response.getTransactionResponse();
           
-          console.log('✅ Transaction response received');
-          console.log('Response code:', transactionResponse.getResponseCode());
-          console.log('Messages:', transactionResponse.getMessages()?.getMessage());
-          console.log('Errors:', transactionResponse.getErrors()?.getError());
-            // Check if transaction was approved (response code 1 = approved)
+                                                    // Check if transaction was approved (response code 1 = approved)
           if (transactionResponse.getResponseCode() === '1') {
-            console.log('✅ Transaction approved!');
-            
+                        
             const result = {
               transactionId: transactionResponse.getTransId(),
               success: true,
@@ -1845,8 +1836,7 @@ async function processAuthorizeNetTransaction(options) {
             resolve(result);
           } else if (transactionResponse.getResponseCode() === '4') {
             // Response code 4 = Held for Review (this is actually success for auth-only)
-            console.log('✅ Transaction held for review (authorization successful)');
-            
+                        
             const result = {
               transactionId: transactionResponse.getTransId(),
               success: true,
@@ -1858,31 +1848,25 @@ async function processAuthorizeNetTransaction(options) {
             resolve(result);
           } else {
             // Transaction was declined or had errors
-            console.log('❌ Transaction declined or failed');
-            console.log('Response code:', transactionResponse.getResponseCode());
-            const errors = transactionResponse.getErrors()?.getError();
+                                    const errors = transactionResponse.getErrors()?.getError();
             if (errors && errors.length > 0) {
               const error = errors[0];
-              console.log('Error details:', error.getErrorCode(), '-', error.getErrorText());
-              reject(new Error(`Transaction Error: ${error.getErrorCode()} - ${error.getErrorText()}`));
+                            reject(new Error(`Transaction Error: ${error.getErrorCode()} - ${error.getErrorText()}`));
             } else {
               reject(new Error('Transaction was declined or failed'));
             }
           }        } else {
-          console.log('❌ API call failed');
-          const errors = response.getMessages().getMessage();
+                    const errors = response.getMessages().getMessage();
           const error = errors[0];
           
           // Special handling for E00027 which might be misleading
           if (error.getCode() === 'E00027') {
-            console.log('⚠️  E00027 error detected - checking if transaction still succeeded...');
-            
+                        
             // Sometimes E00027 is returned even when the transaction succeeded
             // Check if we have a transaction response anyway
             const transactionResponse = response.getTransactionResponse();
             if (transactionResponse && transactionResponse.getTransId()) {
-              console.log('✅ Transaction ID found despite E00027 - treating as success');
-              const result = {
+                            const result = {
                 transactionId: transactionResponse.getTransId(),
                 success: true,
                 message: 'Authorization completed (despite warning message)',
@@ -1902,3 +1886,4 @@ async function processAuthorizeNetTransaction(options) {
     }
   });
 }
+

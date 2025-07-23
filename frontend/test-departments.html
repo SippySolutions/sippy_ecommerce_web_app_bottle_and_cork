@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Departments API</title>
+</head>
+<body>
+    <h1>Testing Departments API</h1>
+    <button onclick="testDepartments()">Test Departments API</button>
+    <div id="result"></div>
+
+    <script>
+        const STORE_DB_NAME = 'store_universal_liquors';
+        const API_BASE_URL = 'http://localhost:5001/api';
+
+        async function testDepartments() {
+            try {
+                console.log('🔍 Testing departments API...');
+                const response = await fetch(`${API_BASE_URL}/departments`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Store-DB': STORE_DB_NAME
+                    }
+                });
+
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', response.headers);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('📦 API Response:', data);
+
+                document.getElementById('result').innerHTML = `
+                    <h3>API Response:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('result').innerHTML = `
+                    <h3>Error:</h3>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

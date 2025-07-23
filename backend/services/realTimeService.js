@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const Order = require('../models/Order');
-const User = require('../models/User');
+const { getDbConnection } = require('../config/db');
 
 class RealTimeService {
   constructor() {
@@ -14,8 +14,7 @@ class RealTimeService {
     this.setupSocketAuthentication();
     this.setupConnectionHandlers();
     this.startOrderChangeStream();
-    console.log('🚀 Real-time service initialized');
-  }
+      }
 
   // JWT authentication for Socket.IO connections
   setupSocketAuthentication() {
@@ -29,6 +28,19 @@ class RealTimeService {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
+        // Get database connection - use default database for socket connections
+        const defaultDbName = process.env.DEFAULT_DB_NAME || 'store_universal_liquors';
+        const dbConnection = await getDbConnection(defaultDbName);
+        
+        // Get User model from the database connection
+        let User;
+        if (!dbConnection.models.User) {
+          const UserSchema = require('../models/User').schema;
+          User = dbConnection.model('User', UserSchema);
+        } else {
+          User = dbConnection.models.User;
+        }
+        
         // Validate user exists
         const user = await User.findById(decoded.id).select('-password');
         if (!user) {
@@ -40,6 +52,7 @@ class RealTimeService {
         socket.userRole = decoded.role || 'customer';
         socket.userName = user.firstName || user.name || 'Customer';
         socket.userEmail = user.email;
+        socket.dbConnection = dbConnection; // Store database connection for this socket
         
         next();
       } catch (error) {
@@ -52,8 +65,7 @@ class RealTimeService {
   // Setup connection and disconnection handlers
   setupConnectionHandlers() {
     this.io.on('connection', (socket) => {
-      console.log(`✅ User connected: ${socket.userName} (${socket.userId})`);
-      
+            
       // Track connected user
       this.connectedUsers.set(socket.userId, {
         socketId: socket.id,
@@ -75,18 +87,15 @@ class RealTimeService {
       // Handle custom events
       socket.on('join_order_room', (orderId) => {
         socket.join(`order_${orderId}`);
-        console.log(`User ${socket.userName} joined order room: ${orderId}`);
-      });
+              });
 
       socket.on('leave_order_room', (orderId) => {
         socket.leave(`order_${orderId}`);
-        console.log(`User ${socket.userName} left order room: ${orderId}`);
-      });
+              });
 
       // Handle disconnection
       socket.on('disconnect', (reason) => {
-        console.log(`❌ User disconnected: ${socket.userName} - Reason: ${reason}`);
-        this.connectedUsers.delete(socket.userId);
+                this.connectedUsers.delete(socket.userId);
       });
 
       // Send welcome message
@@ -106,8 +115,7 @@ class RealTimeService {
         fullDocumentBeforeChange: 'whenAvailable'
       });
 
-      console.log('📡 Order change stream started');
-
+      
       changeStream.on('change', async (change) => {
         try {
           await this.handleOrderChange(change);
@@ -120,8 +128,7 @@ class RealTimeService {
         console.error('Change stream error:', error);
         // Attempt to restart change stream after a delay
         setTimeout(() => {
-          console.log('Attempting to restart change stream...');
-          this.startOrderChangeStream();
+                    this.startOrderChangeStream();
         }, 5000);
       });
 
@@ -134,11 +141,7 @@ class RealTimeService {
   async handleOrderChange(change) {
     const { operationType, fullDocument, documentKey } = change;
     
-    console.log(`📬 Order change detected: ${operationType}`, {
-      orderId: documentKey._id,
-      newStatus: fullDocument?.status
-    });
-
+    
     switch (operationType) {
       case 'insert':
         await this.handleNewOrder(fullDocument);
@@ -188,8 +191,7 @@ class RealTimeService {
       timestamp: new Date()
     });
 
-    console.log(`📨 New order notifications sent for order: ${order.orderNumber}`);
-  }
+      }
 
   // Handle order updates (status changes, etc.)
   async handleOrderUpdate(order, change) {
@@ -253,8 +255,7 @@ class RealTimeService {
       changes: updatedFields
     });
 
-    console.log(`🔄 Order update notifications sent for order: ${order.orderNumber}`);
-  }
+      }
 
   // Handle order deletion
   async handleOrderDeletion(orderId) {
@@ -274,8 +275,7 @@ class RealTimeService {
       timestamp: new Date()
     });
 
-    console.log(`🗑️ Order deletion notifications sent for order: ${orderId}`);
-  }
+      }
 
   // Get customer-friendly status messages
   getStatusMessage(status, orderNumber) {
@@ -373,3 +373,4 @@ class RealTimeService {
 // Export singleton instance
 const realTimeService = new RealTimeService();
 module.exports = realTimeService;
+

@@ -1,17 +1,22 @@
 const express = require('express');
+const dbSwitcher = require('../middleware/dbSwitcher');
 const router = express.Router();
-const CMS = require('../models/CMSdata'); // Updated to use new model
 
 // GET /api/cms-data - Get CMS data from database
-router.get('/', async (req, res) => {
+router.get('/', dbSwitcher, async (req, res) => {
   try {
-    console.log('📊 Fetching CMS data from cms collection...');
+    // Use the connection to get the native database and access cms collection
+    const db = req.dbConnection.db;
+    if (!db) {
+      throw new Error('Database connection not available from middleware');
+    }
+    
+    const cmsCollection = db.collection('cms');
     
     // Find the first (and should be only) CMS document
-    const cmsData = await CMS.findOne();
+    const cmsData = await cmsCollection.findOne();
     
     if (!cmsData) {
-      console.log('⚠️ No CMS data found, returning 404');
       return res.status(404).json({
         success: false,
         message: 'CMS data not found',
@@ -19,11 +24,10 @@ router.get('/', async (req, res) => {
       });
     }
     
-    console.log('✅ CMS data found and returned');
     res.json(cmsData); // Return data directly to match existing frontend expectations
     
   } catch (error) {
-    console.error('❌ Error fetching CMS data:', error);
+    console.error(`❌ Error fetching CMS data from ${req.dbName}:`, error);
     res.status(500).json({
       success: false,
       message: 'Error fetching CMS data',
@@ -33,30 +37,34 @@ router.get('/', async (req, res) => {
 });
 
 // PUT /api/cms-data - Update CMS configuration (for admin panel)
-router.put('/', async (req, res) => {
+router.put('/', dbSwitcher, async (req, res) => {
   try {
-    console.log('📝 Updating CMS data in cms collection...');
+    // Use the connection to get the native database and access cms collection
+    const db = req.dbConnection.db;
+    if (!db) {
+      throw new Error('Database connection not available from middleware');
+    }
+    
+    const cmsCollection = db.collection('cms');
     
     // Update the first (and should be only) CMS document, or create if it doesn't exist
-    const updatedCMS = await CMS.findOneAndUpdate(
+    const updatedCMS = await cmsCollection.findOneAndUpdate(
       {}, // Find any document (there should only be one)
-      req.body, // Update with the request body
+      { $set: req.body }, // Update with the request body
       { 
-        new: true, // Return the updated document
-        upsert: true, // Create if it doesn't exist
-        runValidators: true // Run schema validation
+        returnDocument: 'after', // Return the updated document
+        upsert: true // Create if it doesn't exist
       }
     );
     
-    console.log('✅ CMS data updated successfully');
     res.json({
       success: true,
       message: 'CMS data updated successfully',
-      data: updatedCMS
+      data: updatedCMS.value
     });
     
   } catch (error) {
-    console.error('❌ Error updating CMS data:', error);
+    console.error(`❌ Error updating CMS data in ${req.dbName}:`, error);
     res.status(500).json({
       success: false,
       message: 'Error updating CMS data',

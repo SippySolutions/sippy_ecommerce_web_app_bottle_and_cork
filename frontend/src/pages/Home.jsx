@@ -21,32 +21,16 @@ function Home() {  const {
 
   return (
     <div className="min-h-screen bg-gray-50" style={{ backgroundColor: theme.muted || '#F5F5F5' }}>
-      {/* Mobile-optimized promo banner */}
-      <div className="block md:hidden relative z-0">
-        <PromoBanner type="carousel" />
-      </div>
-      
-      {/* Desktop promo banner */}
-      <div className="hidden md:block container mx-auto px-4 relative z-0">
-        <PromoBanner type="carousel" />
-      </div>
+   
       
       <HeroSection data={getHeroSection()} />
-      
-      {/* App Download Banner - Only show in web browsers */}
-      <div className="container mx-auto px-4 py-4">
-        <AndroidDownloadLink 
-          variant="banner"
-          className="mb-6"
-        />
-      </div>
+     
       
       <Categories categories={getCategories()} />
       <BestSellers /> 
-      <Banner data={getBanner()} />
-      
+      <PromoBanner type="carousel" />
       <Exclusive  />
-       <PromoBanner type="carousel" />
+      <Banner data={getBanner()} />
       <StaffPick />
       <div className="container mx-auto px-4">
         </div>

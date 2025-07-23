@@ -1,5 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Play:wght@400;700&display=swap');
 @import "tailwindcss";
-
+@theme {
+  --font-hero: "Play", sans-serif; 
+}
 /* Force light mode and prevent automatic theme switching */
 :root {
   color-scheme: light only;
@@ -332,6 +335,20 @@ body {
   .mobile-browser-friendly {
     /* Account for mobile browser address bar */
     min-height: calc(100vh - env(keyboard-inset-height, 0px));
+    /* Allow normal scrolling behavior */
+    overflow-y: auto;
+    /* Remove excessive padding that's meant for native apps */
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  
+  /* Mobile browser - ensure normal scrolling and no viewport constraints */
+  html:not(.capacitor-app) .mobile-browser-friendly {
+    min-height: auto;
+    overflow-y: visible;
+    /* Ensure no unwanted padding from mobile app classes */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
   }
   
   /* Compact mobile navbar */
@@ -592,5 +609,45 @@ body {
     height: 300px !important; /* Max 300px height for 1200px+ width */
     min-height: 300px !important;
     max-height: 300px !important;
+  }
+}
+
+/* Mobile browser specific - ensure normal content flow and remove app constraints */
+@media screen and (max-width: 1024px) {
+  /* Mobile browser specific - ensure normal content flow */
+  html:not(.capacitor-app) .mobile-browser-friendly {
+    /* Remove all viewport height constraints that might interfere with browser behavior */
+    min-height: auto !important;
+    height: auto !important;
+    /* Ensure normal document flow */
+    position: relative;
+    /* Remove any transformations that might affect scrolling */
+    transform: none;
+    /* Ensure proper overflow behavior */
+    overflow: visible;
+    /* Remove any fixed positioning effects */
+    contain: none;
+  }
+  
+  /* Ensure mobile browsers don't inherit app-specific constraints */
+  html:not(.capacitor-app) main {
+    /* Override any min-height constraints from mobile app classes */
+    min-height: auto !important;
+    /* Ensure content can flow naturally */
+    height: auto !important;
+    /* Remove excessive padding meant for native apps */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  
+  /* Specific overrides for mobile browser experience */
+  html:not(.capacitor-app) .min-h-screen {
+    min-height: auto !important;
+  }
+  
+  /* Remove iOS-specific constraints for mobile browsers */
+  html:not(.capacitor-app) .ios-status-bar-integration {
+    min-height: auto !important;
+    background-image: none !important;
   }
 }

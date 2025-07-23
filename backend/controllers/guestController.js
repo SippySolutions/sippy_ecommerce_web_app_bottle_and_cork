@@ -1,6 +1,16 @@
-const Guest = require('../models/Guest');
-const Order = require('../models/Order');
-const Product = require('../models/Product');
+// Helper function to get models for specific database connection
+const getModels = (connection) => {
+  try {
+    const Guest = connection.model('Guest');
+    const Order = connection.model('Order');
+    const Product = connection.model('Product');
+    return { Guest, Order, Product };
+  } catch (error) {
+    console.error('Error getting models:', error);
+    throw error;
+  }
+};
+
 const { processAuthorizeNetPayment, getAuthorizeNetConfig } = require('./checkoutController');
 
 // Helper function to round monetary values to 2 decimal places
@@ -9,8 +19,7 @@ const roundToTwo = (num) => Math.round((num + Number.EPSILON) * 100) / 100;
 // Process guest checkout with new payment method
 exports.processGuestPayment = async (req, res) => {
   try {
-    console.log('=== GUEST CHECKOUT PROCESS START ===');
-    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    const { Guest, Order, Product } = getModels(req.dbConnection);
     
     const {
       dataDescriptor,
@@ -28,17 +37,8 @@ exports.processGuestPayment = async (req, res) => {
       guestInfo // { email, phone }
     } = req.body;
 
-    console.log('Extracted data:');
-    console.log('- dataDescriptor:', dataDescriptor);
-    console.log('- dataValue:', dataValue ? dataValue.substring(0, 50) + '...' : 'undefined');
-    console.log('- amount:', amount);
-    console.log('- cartItems:', cartItems);
-    console.log('- orderType:', orderType);
-    console.log('- guestInfo:', guestInfo);
-
     // Validate required fields
     if (!dataDescriptor || !dataValue) {
-      console.log('❌ Missing payment token data');
       return res.status(400).json({ 
         success: false, 
         message: 'Missing payment token data' 
@@ -59,7 +59,6 @@ exports.processGuestPayment = async (req, res) => {
     });
 
     if (recentGuestOrders.length > 0) {
-      console.log('⚠️ Potential duplicate guest transaction detected');
       return res.status(400).json({
         success: false,
         message: 'Duplicate transaction detected. Please wait before trying again.'
@@ -67,18 +66,14 @@ exports.processGuestPayment = async (req, res) => {
     }
 
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-      console.log('❌ Invalid cart items');
       return res.status(400).json({ 
         success: false, 
         message: 'Cart is empty or invalid' 
       });
     }
 
-    console.log('Cart items received:', cartItems);
-
     // Validate cart items and calculate totals
     const productIds = cartItems.map(item => item.product || item._id);
-    console.log('Product IDs to validate:', productIds);
     
     // Initialize variables outside try block
     let subtotal = 0;
@@ -86,16 +81,12 @@ exports.processGuestPayment = async (req, res) => {
     
     try {
       const products = await Product.find({ _id: { $in: productIds } });
-      console.log('Products found:', products.length);
-      console.log('Product details:', products.map(p => ({ id: p._id, name: p.name })));
-
+            
       for (const item of cartItems) {
-        console.log('Processing cart item:', item);
-        const productId = item.product || item._id;
+                const productId = item.product || item._id;
         const product = products.find(p => p._id.toString() === productId.toString());
         if (!product) {
-          console.log('❌ Product not found for ID:', productId);
-          return res.status(400).json({ 
+                    return res.status(400).json({ 
             success: false, 
             message: `Product not found: ${productId}` 
           });
@@ -114,8 +105,7 @@ exports.processGuestPayment = async (req, res) => {
       }
 
     } catch (productError) {
-      console.log('❌ Error during product validation:', productError);
-      return res.status(500).json({ 
+            return res.status(500).json({ 
         success: false, 
         message: 'Error validating products' 
       });
@@ -134,12 +124,7 @@ exports.processGuestPayment = async (req, res) => {
 
     // Process payment with Authorize.Net
     const { apiLoginId, transactionKey, endpoint } = getAuthorizeNetConfig();
-    console.log('Authorize.Net config:', { 
-      apiLoginId: apiLoginId ? 'SET' : 'MISSING', 
-      transactionKey: transactionKey ? 'SET' : 'MISSING',
-      endpoint 
-    });
-
+    
     if (!apiLoginId || !transactionKey) {
       return res.status(500).json({
         success: false,
@@ -147,8 +132,7 @@ exports.processGuestPayment = async (req, res) => {
       });
     }
 
-    console.log('Processing payment with Authorize.Net...');
-    let paymentResult;
+        let paymentResult;
     
     try {
       paymentResult = await processAuthorizeNetPayment({
@@ -161,8 +145,7 @@ exports.processGuestPayment = async (req, res) => {
         billingAddress
       });
 
-      console.log('Payment result:', paymentResult);
-
+      
       if (!paymentResult.success) {
         return res.status(400).json({
           success: false,
@@ -177,8 +160,7 @@ exports.processGuestPayment = async (req, res) => {
       });
     }
 
-    console.log('Payment processing completed successfully');
-
+    
     // Find or create guest record
     let guest = await Guest.findOne({ email: guestInfo.email });
     if (!guest) {
@@ -187,15 +169,13 @@ exports.processGuestPayment = async (req, res) => {
         phone: guestInfo.phone
       });
       await guest.save();
-      console.log('Created new guest record:', guest._id);
-    } else {
+          } else {
       // Update phone if different
       if (guest.phone !== guestInfo.phone) {
         guest.phone = guestInfo.phone;
         await guest.save();
       }
-      console.log('Using existing guest record:', guest._id);
-    }
+          }
 
     // Create order
     const order = new Order({
@@ -233,8 +213,7 @@ exports.processGuestPayment = async (req, res) => {
     guest.orders.push(order._id);
     await guest.save();
 
-    console.log('Guest order created successfully:', order._id);
-
+    
     res.json({
       success: true,
       message: 'Order placed successfully',
@@ -254,3 +233,4 @@ exports.processGuestPayment = async (req, res) => {
     });
   }
 };
+

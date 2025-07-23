@@ -9,6 +9,7 @@ import { fetchCMSData } from "./services/api"; // Import fetchCMSData from api.j
 // Server health check function
 async function checkServerHealth() {
   const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}/api`;
+  const STORE_DB_NAME = import.meta.env.VITE_STORE_DB_NAME;
   const maxRetries = 5;
   const retryDelay = 2000; // 2 seconds
 
@@ -16,11 +17,12 @@ async function checkServerHealth() {
     try {
       console.log(`Server health check attempt ${attempt}/${maxRetries}`);
       
-      // Try to fetch a simple endpoint
+      // Try to fetch a simple endpoint with proper headers
       const response = await fetch(`${API_BASE_URL}/cms-data`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Store-DB': STORE_DB_NAME  // Add the required database header
         },
         timeout: 10000 // 10 second timeout
       });

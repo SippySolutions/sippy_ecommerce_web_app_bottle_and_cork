@@ -1,5 +1,4 @@
 const express = require('express');
-const router = express.Router();
 const { 
   getWishlist, 
   addToWishlist, 
@@ -9,6 +8,9 @@ const {
 } = require('../controllers/wishlistController');
 const authMiddleware = require('../middleware/authMiddleware');
 
+const router = express.Router();
+
+// Database switching middleware is already applied in server.js
 // All routes require authentication
 router.use(authMiddleware);
 

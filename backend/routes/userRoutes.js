@@ -7,6 +7,9 @@ const {
 const auth = require('../middleware/authMiddleware');
 const router = express.Router();
 
+// Database switching middleware is already applied in server.js
+// No need to apply it again here
+
 router.get('/me', auth, getUserProfile);
 router.put('/me', auth, updateUserDetails);
 router.delete('/me', auth, deleteUser);

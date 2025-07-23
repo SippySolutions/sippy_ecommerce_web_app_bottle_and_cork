@@ -4,12 +4,13 @@ const { Server } = require('socket.io');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const connectDB = require('./config/db');
+// No longer importing connectDB - all requests use dynamic database connections
 const productRoutes = require('./routes/productRoutes');
 // const cmsDataRoutes = require('./routes/CMSDataRoutes'); // Removed - using new CMS routes
 const cmsRoutes = require('./routes/cmsRoutes'); // New CMS routes using MongoDB
 const featuredproductRoutes = require('./routes/featuredproductRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
 const authRoutes = require('./routes/authRoutes');
 const similarProductRoutes = require('./routes/similarProductRoutes');
 const userRoutes = require('./routes/userRoutes'); // Import user routes
@@ -18,12 +19,26 @@ const checkoutRoutes = require('./routes/checkoutRoutes'); // Import checkout ro
 const wishlistRoutes = require('./routes/wishlistRoutes'); // Import wishlist routes
 const guestRoutes = require('./routes/guestRoutes'); // Import guest routes
 const productGroupRoutes = require('./routes/productGroupRoutes'); // Import product group routes
+const databaseRoutes = require('./routes/databaseRoutes'); // Import database routes
+const dbSwitcher = require('./middleware/dbSwitcher'); // Import database switcher middleware
 
 dotenv.config();
-connectDB();
 
 const app = express();
 const server = http.createServer(app);
+
+// Initialize database connection
+const initializeApp = async () => {
+  try {
+    // Application initialized - multi-store backend ready
+  } catch (error) {
+    console.error('Failed to initialize application:', error);
+    process.exit(1);
+  }
+};
+
+// Call initialization
+initializeApp();
 
 // Configure Socket.IO with CORS - Updated to match store owner configuration
 const io = new Server(server, {
@@ -41,7 +56,7 @@ const io = new Server(server, {
     ].filter(Boolean),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Store-DB'],
     exposedHeaders: ['Set-Cookie']
   },
   transports: ['websocket', 'polling'],
@@ -50,7 +65,7 @@ const io = new Server(server, {
 
 // Socket.IO connection handling - Synchronized with store owner implementation
 io.on('connection', (socket) => {
-  console.log('New client connected:', socket.id);
+  // New client connected
 
   // Join store owner room (for receiving order notifications)
   socket.join('store-owners');
@@ -58,35 +73,64 @@ io.on('connection', (socket) => {
   // Join customer room based on user authentication
   if (socket.userId) {
     socket.join(`customer_${socket.userId}`);
-    console.log(`Customer ${socket.userId} joined their personal room`);
   }
   
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+    // Client disconnected
   });
 });
 
 // Make io available to routes and services
 app.set('io', io);
 
-app.use(cors());
+// Configure CORS to allow X-Store-DB header
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, Postman, file://)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3001',
+      'http://localhost:5173',
+      'http://127.0.0.1:3001',
+      'http://127.0.0.1:5173',
+      'http://localhost:3000',
+      'http://localhost:3002',
+      'http://localhost:3003',
+      process.env.FRONTEND_URL,
+      process.env.CUSTOMER_APP_URL
+    ].filter(Boolean);
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // For development, allow all origins
+    if (process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+    
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Store-DB'],
+  exposedHeaders: ['Set-Cookie'],
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
+}));
 app.use(express.json());
 
-// Connect to MongoDB and setup Change Streams
-mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => {
-    console.log('MongoDB connected');
-    setupOrderChangeStreams(); // Start monitoring
-  })
-  .catch((err) => console.error('MongoDB connection error:', err));
-
-// Setup MongoDB Change Streams to watch for order changes - Synchronized with store owner
-const setupOrderChangeStreams = () => {
+// Setup MongoDB Change Streams for a specific database - Called per database as needed
+const setupOrderChangeStreams = (dbConnection, dbName) => {
   try {
-    const Order = require('./models/Order');
+    if (!dbConnection || !dbName) {
+      return;
+    }
+
+    // Get the Order model for this specific database
+    const Order = dbConnection.model('Order', require('./models/Order').schema);
     
-    // Watch for changes in the orders collection
+    // Watch for changes in the orders collection for this database
     const orderChangeStream = Order.watch([
       {
         $match: {
@@ -95,26 +139,22 @@ const setupOrderChangeStreams = () => {
       }
     ], { fullDocument: 'updateLookup' });
 
-    console.log('MongoDB Change Streams initialized for orders collection');
-
     orderChangeStream.on('change', async (change) => {
       try {
-        console.log('Order collection change detected:', change.operationType);
-        
         if (change.operationType === 'insert') {
           // New order inserted
           const newOrder = change.fullDocument;
-          console.log('New order inserted via Change Stream:', newOrder.orderNumber);
           
           // Populate customer data if needed
           await Order.populate(newOrder, { path: 'customer', select: 'firstName lastName email' });
           
-          // Emit real-time notification to store owners
+          // Emit real-time notification to store owners (include store info)
           io.to('store-owners').emit('newOrder', {
             order: newOrder,
+            store: dbName,
             notification: {
               title: 'New Order Received!',
-              message: `Order ${newOrder.orderNumber} from ${newOrder.shippingAddress?.firstName || 'Customer'} ${newOrder.shippingAddress?.lastName || ''}`,
+              message: `Order ${newOrder.orderNumber} from ${newOrder.shippingAddress?.firstName || 'Customer'} ${newOrder.shippingAddress?.lastName || ''} (${dbName})`,
               type: 'success',
               timestamp: new Date()
             }
@@ -123,19 +163,19 @@ const setupOrderChangeStreams = () => {
         } else if (change.operationType === 'update') {
           // Order updated
           const updatedOrder = change.fullDocument;
-          console.log('Order updated via Change Stream:', updatedOrder.orderNumber, 'Status:', updatedOrder.status);
           
           // Only emit if status was changed
           if (change.updateDescription?.updatedFields?.status) {
             // Populate customer data if needed
             await Order.populate(updatedOrder, { path: 'customer', select: 'firstName lastName email' });
             
-            // Emit to store owners
+            // Emit to store owners (include store info)
             io.to('store-owners').emit('orderStatusUpdated', {
               orderId: updatedOrder._id,
               orderNumber: updatedOrder.orderNumber,
               status: updatedOrder.status,
-              order: updatedOrder
+              order: updatedOrder,
+              store: dbName
             });
 
             // Emit to customer
@@ -145,26 +185,28 @@ const setupOrderChangeStreams = () => {
                 order: updatedOrder,
                 message: getCustomerStatusMessage(updatedOrder.status, updatedOrder.orderNumber),
                 timestamp: new Date(),
-                newStatus: updatedOrder.status
+                newStatus: updatedOrder.status,
+                store: dbName
               });
             }
           }
         }
       } catch (error) {
-        console.error('Error processing order change stream event:', error);
+        console.error(`❌ Error processing order change stream event for ${dbName}:`, error);
       }
     });
 
     orderChangeStream.on('error', (error) => {
-      console.error('Order change stream error:', error);
+      console.error(`❌ Order change stream error for ${dbName}:`, error);
       // Attempt to restart change stream after a delay
       setTimeout(() => {
-        console.log('Attempting to restart order change stream...');
-        setupOrderChangeStreams();
+        setupOrderChangeStreams(dbConnection, dbName);
       }, 5000);
     });
+
+    return orderChangeStream;
   } catch (error) {
-    console.error('Failed to setup order change streams:', error);
+    console.error(`❌ Failed to setup order change streams for ${dbName}:`, error);
   }
 };
 
@@ -186,20 +228,22 @@ const getCustomerStatusMessage = (status, orderNumber) => {
   return messages[status] || `Your order #${orderNumber} status has been updated to ${status}`;
 };
 
-// Routes
-app.use('/api/products', productRoutes);
-app.use('/api/featured-products', featuredproductRoutes);
-app.use('/api/similar', similarProductRoutes);
+// Routes - Apply dbSwitcher middleware to routes that need database access
+app.use('/api/products', dbSwitcher, productRoutes);
+app.use('/api/featured-products', dbSwitcher, featuredproductRoutes);
+app.use('/api/similar', dbSwitcher, similarProductRoutes);
 // app.use('/api', cmsDataRoutes); // Removed - using new CMS routes instead
-app.use('/api/cms-data', cmsRoutes); // New CMS data route using MongoDB
-app.use('/api', departmentRoutes);
-app.use('/api', authRoutes);
-app.use('/api/users', userRoutes); // Register user routes
-app.use('/api/orders', orderRoutes); // Register order routes
-app.use('/api/checkout', checkoutRoutes); // Register checkout routes
-app.use('/api/wishlist', wishlistRoutes); // Register wishlist routes
-app.use('/api/guest', guestRoutes); // Register guest routes
-app.use('/api/product-groups', productGroupRoutes); // Register product group routes
+app.use('/api/cms-data', dbSwitcher, cmsRoutes); // New CMS data route using MongoDB
+app.use('/api', dbSwitcher, departmentRoutes);
+app.use('/api', dbSwitcher, categoryRoutes);
+app.use('/api', authRoutes); // Auth routes don't need database switching
+app.use('/api/users', dbSwitcher, userRoutes); // Register user routes
+app.use('/api/orders', dbSwitcher, orderRoutes); // Register order routes
+app.use('/api/checkout', dbSwitcher, checkoutRoutes); // Register checkout routes
+app.use('/api/wishlist', dbSwitcher, wishlistRoutes); // Register wishlist routes
+app.use('/api/guest', dbSwitcher, guestRoutes); // Register guest routes
+app.use('/api/product-groups', dbSwitcher, productGroupRoutes); // Register product group routes
+app.use('/api/database', databaseRoutes); // Register database routes (doesn't need db switching)
 
 // Initialize real-time service
 const realTimeService = require('./services/realTimeService');
@@ -209,5 +253,4 @@ const PORT = process.env.PORT || 5001;
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log('Socket.IO server initialized for real-time order updates');
 });

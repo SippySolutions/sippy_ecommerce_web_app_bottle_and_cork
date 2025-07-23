@@ -10,6 +10,8 @@ const {
 const auth = require('../middleware/authMiddleware');
 const router = express.Router();
 
+// Database switching middleware is already applied in server.js
+
 // Optional auth middleware - checks for authentication but doesn't require it
 const optionalAuth = (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -21,8 +23,7 @@ const optionalAuth = (req, res, next) => {
       req.user = decoded;
     } catch (error) {
       // Token is invalid, but we continue without authentication
-      console.log('Invalid token, continuing as guest');
-    }
+          }
   }
   
   next();
@@ -47,3 +48,4 @@ router.put('/:orderId/accept', auth, acceptOrder);
 router.put('/:orderId/status', auth, updateOrderStatus);
 
 module.exports = router;
+

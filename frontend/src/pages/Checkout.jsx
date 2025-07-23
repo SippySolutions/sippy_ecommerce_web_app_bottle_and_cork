@@ -9,7 +9,7 @@ import { useAgeVerification } from '../Context/AgeVerificationContext';
 import AcceptJSForm from '../components/Payment/AcceptJSForm';
 import AuthorizationOnlyPaymentForm from '../components/Payment/AuthorizationOnlyPaymentForm';
 import axios from 'axios';
-import { processCheckout, processSavedCardCheckout, processGuestCheckout } from '../services/api';
+import { processCheckout, processSavedCardCheckout, processGuestCheckout, processAuthorization } from '../services/api';
 
 // AddressForm component moved outside to prevent re-mounting issues
 const AddressForm = ({ address, onChange, title, type }) => (
@@ -424,26 +424,9 @@ const Checkout = () => {
 
       console.log('Sending authorization request:', authorizationRequest);
 
-      // Use the authorization API endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}/api/checkout/authorize`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(authorizationRequest)      });
+      // Use the authorization API function from api.jsx
+      const result = await processAuthorization(authorizationRequest);
 
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-
-      // Check if HTTP request was successful
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('HTTP Error Response:', errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json();
       console.log('Authorization response:', result);
 
       if (result.success) {

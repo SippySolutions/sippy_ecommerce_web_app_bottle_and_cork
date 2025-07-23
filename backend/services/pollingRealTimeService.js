@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const Order = require('../models/Order');
-const User = require('../models/User');
+const { getDbConnection } = require('../config/db');
 
 class PollingRealTimeService {
   constructor() {
@@ -17,8 +17,7 @@ class PollingRealTimeService {
     this.setupSocketAuthentication();
     this.setupConnectionHandlers();
     this.startOrderPolling();
-    console.log('🚀 Polling-based real-time service initialized');
-  }
+      }
 
   // JWT authentication for Socket.IO connections (same as before)
   setupSocketAuthentication() {
@@ -32,6 +31,19 @@ class PollingRealTimeService {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
+        // Get database connection - use default database for socket connections
+        const defaultDbName = process.env.DEFAULT_DB_NAME || 'store_universal_liquors';
+        const dbConnection = await getDbConnection(defaultDbName);
+        
+        // Get User model from the database connection
+        let User;
+        if (!dbConnection.models.User) {
+          const UserSchema = require('../models/User').schema;
+          User = dbConnection.model('User', UserSchema);
+        } else {
+          User = dbConnection.models.User;
+        }
+        
         const user = await User.findById(decoded.id).select('-password');
         if (!user) {
           return next(new Error('User not found'));
@@ -41,6 +53,7 @@ class PollingRealTimeService {
         socket.userRole = decoded.role || 'customer';
         socket.userName = user.firstName || user.name || 'Customer';
         socket.userEmail = user.email;
+        socket.dbConnection = dbConnection; // Store database connection for this socket
         
         next();
       } catch (error) {
@@ -53,8 +66,7 @@ class PollingRealTimeService {
   // Setup connection handlers (same as before)
   setupConnectionHandlers() {
     this.io.on('connection', (socket) => {
-      console.log(`✅ User connected: ${socket.userName} (${socket.userId})`);
-      
+            
       this.connectedUsers.set(socket.userId, {
         socketId: socket.id,
         userName: socket.userName,
@@ -79,8 +91,7 @@ class PollingRealTimeService {
       });
 
       socket.on('disconnect', (reason) => {
-        console.log(`❌ User disconnected: ${socket.userName}`);
-        this.connectedUsers.delete(socket.userId);
+                this.connectedUsers.delete(socket.userId);
       });
 
       socket.emit('connection_status', {
@@ -93,8 +104,7 @@ class PollingRealTimeService {
 
   // Poll for order changes instead of using Change Streams
   startOrderPolling() {
-    console.log(`📡 Starting order polling every ${this.pollingRate}ms`);
-    
+        
     this.pollingInterval = setInterval(async () => {
       try {
         await this.checkForOrderUpdates();
@@ -119,8 +129,7 @@ class PollingRealTimeService {
         return; // No updates
       }
 
-      console.log(`📬 Found ${updatedOrders.length} order updates`);
-
+      
       for (const order of updatedOrders) {
         await this.processOrderUpdate(order);
       }
@@ -154,8 +163,7 @@ class PollingRealTimeService {
 
   // Handle new order (same logic as Change Stream version)
   async handleNewOrder(order) {
-    console.log(`📨 Processing new order: ${order.orderNumber}`);
-
+    
     // Emit to store owners/admins
     this.io.to('store_notifications').emit('order_notification', {
       type: 'new_order',
@@ -186,8 +194,7 @@ class PollingRealTimeService {
 
   // Handle order update (same logic as Change Stream version)
   async handleOrderUpdate(order) {
-    console.log(`🔄 Processing order update: ${order.orderNumber} - ${order.status}`);
-
+    
     const statusMessage = this.getStatusMessage(order.status, order.orderNumber);
 
     // Emit to store owners/admins
@@ -321,11 +328,11 @@ class PollingRealTimeService {
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
       this.pollingInterval = null;
-      console.log('📡 Order polling stopped');
-    }
+          }
   }
 }
 
 // Export singleton instance
 const pollingRealTimeService = new PollingRealTimeService();
 module.exports = pollingRealTimeService;
+

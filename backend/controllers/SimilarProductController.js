@@ -1,4 +1,28 @@
-const Product = require('../models/Product');
+// Helper function to get models for specific database connection
+const getModels = (connection) => {
+  try {
+    // Check if models already exist on this connection
+    if (connection.models.Product) {
+      return {
+        Product: connection.models.Product
+      };
+    }
+
+    // Define Product schema if not exists
+    let Product;
+    if (!connection.models.Product) {
+      const ProductSchema = require('../models/Product').schema;
+      Product = connection.model('Product', ProductSchema);
+    } else {
+      Product = connection.models.Product;
+    }
+
+    return { Product };
+  } catch (error) {
+    console.error('Error getting models for connection:', error);
+    throw error;
+  }
+};
 
 const fetchSimilarProducts = async (req, res) => {
   try {
@@ -26,7 +50,10 @@ const fetchSimilarProducts = async (req, res) => {
       query.subcategory = subcategory;
     }
 
-    console.log('Similar products query:', query); // Debug log
+     // Debug log
+
+    // Get models for this database connection
+    const { Product } = getModels(req.dbConnection);
 
     // Fetch similar products
     const similarProducts = await Product.find(query).limit(10); // Limit to 10 products

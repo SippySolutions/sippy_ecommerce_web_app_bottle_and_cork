@@ -1,3 +1,4 @@
+import React from 'react';
 import {BrowserRouter as Router, Routes, Route, useLocation} from 'react-router-dom';
 import {AnimatePresence, motion} from 'framer-motion'; // Import framer-motion components
 import Home from './pages/Home.jsx';
@@ -28,6 +29,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import ProtectedRoute from './components/ProtectedRoute';
 import Profile from './components/Profile';
 import Checkout from './pages/Checkout.jsx';
+import { applyStoreBranding } from './config/storeConfig.js';
 import Wishlist from './pages/Wishlist.jsx';
 import OrderTracking from './pages/OrderTracking.jsx';
 import NetworkStatus from './components/NetworkStatus.jsx';
@@ -50,6 +52,11 @@ function AppContent() {
     
     // Initialize theme preview functionality
     useThemePreview();
+    
+    // Initialize store branding
+    React.useEffect(() => {
+        applyStoreBranding();
+    }, []);
     
     // Animation variants for route transitions - Faster animations
     const pageVariants = {
@@ -96,10 +103,14 @@ function AppContent() {
         <NetworkStatus>
             <StatusBarManager />
             <KeyboardManager />
-            <iOSStatusBarFill />
+            <div className="ios-status-bar-fill" />
             <NavbarHeightManager />
             <Navbar />
-            <main className="min-h-screen mobile-full-height mobile-body-padding mobile-content-container mobile-long-content mobile-viewport-fix md:pb-0 ios-status-bar-integration">
+            <main className={`min-h-screen md:pb-0 ${
+                isCapacitor 
+                    ? 'mobile-full-height mobile-body-padding mobile-content-container mobile-long-content mobile-viewport-fix ios-status-bar-integration'
+                    : 'mobile-browser-friendly'
+            }`}>
                 <AnimatePresence mode="wait">
                     <Routes location={location} key={location.pathname}>
                         <Route

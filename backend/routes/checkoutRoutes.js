@@ -16,6 +16,9 @@ const { optionalAuth } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
+// Database switching middleware is already applied in server.js
+// No need to apply it again here
+
 // POST /api/checkout/process - Process payment with new card
 router.post('/process', authMiddleware, processPayment);
 

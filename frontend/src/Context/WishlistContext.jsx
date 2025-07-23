@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../components/AuthContext';
-import api from '../services/api';
+import { getWishlist, addToWishlist, removeFromWishlist, clearWishlist } from '../services/api';
 
 const WishlistContext = createContext();
 
@@ -31,9 +31,9 @@ export const WishlistProvider = ({ children }) => {
     
     setLoading(true);
     try {
-      const response = await api.get('/wishlist');
-      if (response.data.success) {
-        setWishlistItems(response.data.wishlist);
+      const response = await getWishlist();
+      if (response.success) {
+        setWishlistItems(response.wishlist);
       }
     } catch (error) {
       console.error('Error loading wishlist:', error);
@@ -41,7 +41,7 @@ export const WishlistProvider = ({ children }) => {
       setLoading(false);
     }
   };
-  const addToWishlist = async (product) => {
+  const addItemToWishlist = async (product) => {
     if (!isAuthenticated) {
       // Could show login prompt here
       return { success: false, message: 'Please login to add items to wishlist' };
@@ -52,12 +52,12 @@ export const WishlistProvider = ({ children }) => {
     }
 
     try {
-      const response = await api.post('/wishlist', { productId: product._id });
-      if (response.data.success) {
-        setWishlistItems(prev => [...prev, response.data.product]);
+      const response = await addToWishlist(product._id);
+      if (response.success) {
+        setWishlistItems(prev => [...prev, response.product]);
         return { success: true, message: 'Added to wishlist' };
       }
-      return { success: false, message: response.data.message };
+      return { success: false, message: response.message };
     } catch (error) {
       console.error('Error adding to wishlist:', error);
       return { 
@@ -66,7 +66,7 @@ export const WishlistProvider = ({ children }) => {
       };
     }
   };
-  const removeFromWishlist = async (productId) => {
+  const removeItemFromWishlist = async (productId) => {
     if (!isAuthenticated) return { success: false, message: 'Not authenticated' };
     
     if (!productId) {
@@ -74,12 +74,12 @@ export const WishlistProvider = ({ children }) => {
     }
 
     try {
-      const response = await api.delete(`/wishlist/${productId}`);
-      if (response.data.success) {
+      const response = await removeFromWishlist(productId);
+      if (response.success) {
         setWishlistItems(prev => prev.filter(item => item && item._id !== productId));
         return { success: true, message: 'Removed from wishlist' };
       }
-      return { success: false, message: response.data.message };
+      return { success: false, message: response.message };
     } catch (error) {
       console.error('Error removing from wishlist:', error);
       return { 
@@ -89,16 +89,16 @@ export const WishlistProvider = ({ children }) => {
     }
   };
 
-  const clearWishlist = async () => {
+  const clearAllWishlist = async () => {
     if (!isAuthenticated) return { success: false, message: 'Not authenticated' };
 
     try {
-      const response = await api.delete('/wishlist');
-      if (response.data.success) {
+      const response = await clearWishlist();
+      if (response.success) {
         setWishlistItems([]);
         return { success: true, message: 'Wishlist cleared' };
       }
-      return { success: false, message: response.data.message };
+      return { success: false, message: response.message };
     } catch (error) {
       console.error('Error clearing wishlist:', error);
       return { 
@@ -119,9 +119,9 @@ export const WishlistProvider = ({ children }) => {
   const value = {
     wishlistItems,
     loading,
-    addToWishlist,
-    removeFromWishlist,
-    clearWishlist,
+    addToWishlist: addItemToWishlist,
+    removeFromWishlist: removeItemFromWishlist,
+    clearWishlist: clearAllWishlist,
     isInWishlist,
     getWishlistCount,
     loadWishlist

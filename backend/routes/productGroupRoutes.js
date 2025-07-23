@@ -1,4 +1,5 @@
 const express = require('express');
+const dbSwitcher = require('../middleware/dbSwitcher');
 const router = express.Router();
 const {
   getProductGroups,
@@ -11,16 +12,16 @@ const {
 } = require('../controllers/productGroupController');
 
 // Public routes
-router.get('/', getProductGroups);
-router.get('/:id', getProductGroupById);
-router.get('/:id/products', getProductsByGroupId);
+router.get('/', dbSwitcher, getProductGroups);
+router.get('/:id', dbSwitcher, getProductGroupById);
+router.get('/:id/products', dbSwitcher, getProductsByGroupId);
 
 // Admin routes (add authentication middleware as needed)
-router.post('/', createProductGroup);
-router.put('/:id', updateProductGroup);
-router.delete('/:id', deleteProductGroup);
+router.post('/', dbSwitcher, createProductGroup);
+router.put('/:id', dbSwitcher, updateProductGroup);
+router.delete('/:id', dbSwitcher, deleteProductGroup);
 
 // Debug routes
-router.post('/debug/products', debugProductsByIds);
+router.post('/debug/products', dbSwitcher, debugProductsByIds);
 
 module.exports = router;

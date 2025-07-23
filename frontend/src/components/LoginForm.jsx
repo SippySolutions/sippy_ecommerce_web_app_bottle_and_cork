@@ -16,16 +16,25 @@ const LoginForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);    try {
+    setError(null);
+    
+    console.log('🔄 Starting login process...', formData);
+    
+    try {
+      console.log('📡 Calling loginUser API...');
       const response = await loginUser(formData); // Call the API function
+      console.log('✅ Login API response:', response);
 
       // Save user and token in AuthContext
+      console.log('💾 Saving to AuthContext...');
       login(response.user, response.token);
 
       // Navigate to the home page
+      console.log('🏠 Navigating to home...');
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+      console.error('❌ Login error:', err);
+      setError(err.response?.data?.message || err.message || 'Something went wrong. Please try again.');
     }
   };
   return (

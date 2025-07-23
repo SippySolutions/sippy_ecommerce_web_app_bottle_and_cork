@@ -459,7 +459,12 @@ const OrderTracking = () => {
               <div className="space-y-2">
                 <p className="font-medium text-gray-900">Store Pickup</p>
                 <p className="text-gray-600">{cmsData?.storeInfo?.name || 'Universal Liquors'}</p>
-                <p className="text-gray-600">{cmsData?.storeInfo?.address || 'Store Address'}</p>
+                <p className="text-gray-600">
+                  {cmsData?.storeInfo?.address?.street || 'Store Address'}
+                  {cmsData?.storeInfo?.address?.city && `, ${cmsData.storeInfo.address.city}`}
+                  {cmsData?.storeInfo?.address?.state && `, ${cmsData.storeInfo.address.state}`}
+                  {cmsData?.storeInfo?.address?.zipCode && ` ${cmsData.storeInfo.address.zipCode}`}
+                </p>
                 <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-800">
                     <strong>Pickup Hours:</strong> {cmsData?.storeInfo?.pickupHours || 'Contact store for pickup hours'}

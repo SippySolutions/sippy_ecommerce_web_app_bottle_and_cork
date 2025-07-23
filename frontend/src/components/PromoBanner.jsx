@@ -15,23 +15,20 @@ const PromoBanner = ({
   const theme = getTheme();
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Debug logging for mobile
+  // Check if mobile view
   useEffect(() => {
-    console.log('PromoBanner: Component mounted with type:', type);
-    console.log('PromoBanner: Platform check:', {
-      isCapacitor: window.Capacitor,
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      screenWidth: window.screen.width,
-      screenHeight: window.screen.height,
-      viewportWidth: window.innerWidth,
-      viewportHeight: window.innerHeight
-    });
-  }, [type]);
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (!cmsData?.promo_banner) {
-    console.warn('PromoBanner: No promo_banner data in CMS');
     return null;
   }
 
@@ -40,23 +37,29 @@ const PromoBanner = ({
   // Extract promo items with both image and action data
   const promoItems = [promo_1, promo_2, promo_3].filter(item => item && item.image);
 
-  console.log('PromoBanner: CMS data:', cmsData.promo_banner);
-  console.log('PromoBanner: Filtered promo items:', promoItems);
-
   if (promoItems.length === 0) {
-    console.warn('PromoBanner: No valid promo items found');
     return null;
   }
+
+  // Get fallback text for promo items
+  const getPromoContent = (promoItem, index) => {
+    const defaultTitles = ['Special Offer', 'Limited Time', 'Exclusive Deal'];
+    const defaultDescriptions = ['Amazing deals await you', 'Don\'t miss out on savings', 'Premium products at great prices'];
+    const defaultCTA = ['Shop Now', 'Unlock Deal', 'Get Started'];
+    
+    return {
+      title: promoItem.title || title || defaultTitles[index] || 'Special Offer',
+      description: promoItem.description || description || defaultDescriptions[index] || 'Amazing deals await you',
+      ctaText: promoItem.cta_text || ctaText || defaultCTA[index] || 'Shop Now'
+    };
+  };
 
   // Handle click navigation based on action
   const handleBannerClick = (promoItem) => {
     try {
       if (!promoItem?.action) {
-        console.warn('PromoBanner: No action defined for promo item');
         return;
       }
-
-      console.log('PromoBanner: Navigating with action:', promoItem.action, promoItem);
 
       switch (promoItem.action) {
         case 'products':
@@ -95,22 +98,20 @@ const PromoBanner = ({
           break;
       }
     } catch (error) {
-      console.error('PromoBanner: Navigation error:', error);
       // Fallback navigation
       navigate('/products');
     }
   };
 
-  // Auto-advance carousel for full-width banners
+  // Auto-advance carousel for mobile and carousel type
   useEffect(() => {
-    if (type === 'carousel' && promoItems.length > 1) {
+    if ((isMobile || type === 'carousel') && promoItems.length > 1) {
       const interval = setInterval(() => {
         setCurrentIndex((prevIndex) => (prevIndex + 1) % promoItems.length);
-      }, 5000); // Change every 5 seconds
-
+      }, 5000);
       return () => clearInterval(interval);
     }
-  }, [type, promoItems.length]);
+  }, [isMobile, type, promoItems.length]);
 
   // Animation variants
   const containerVariants = {
@@ -135,9 +136,10 @@ const PromoBanner = ({
       }
     }
   };
+
   const slideVariants = {
     enter: (direction) => ({
-      x: direction > 0 ? 1000 : -1000,
+      x: direction > 0 ? 300 : -300,
       opacity: 0
     }),
     center: {
@@ -145,182 +147,22 @@ const PromoBanner = ({
       opacity: 1
     },
     exit: (direction) => ({
-      x: direction < 0 ? 1000 : -1000,
+      x: direction < 0 ? 300 : -300,
       opacity: 0
     })
-  };  if (type === 'carousel') {
-    // Full-width carousel - optimized for 1200x300 banners (4:1 aspect ratio)
-    return (
-      <div className={`full-width bg-gray-100 ${className}`}>
-        <div className="relative w-full aspect-[4/1] min-h-[120px] max-h-[300px] overflow-hidden promo-banner-container">
-          <AnimatePresence initial={false} custom={currentIndex}>
-            <motion.div
-              key={currentIndex}
-              custom={currentIndex}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{
-                x: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 }
-              }}
-              className="absolute inset-0 cursor-pointer touch-manipulation"
-              onClick={() => handleBannerClick(promoItems[currentIndex])}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                handleBannerClick(promoItems[currentIndex]);
-              }}
-            >
-              <img
-                src={promoItems[currentIndex]?.image}
-                alt={`Promotional Banner ${currentIndex + 1}`}
-                className="promo-banner-image"
-                loading="lazy"
-                onLoad={(e) => {
-                  console.log('PromoBanner: Image loaded:', {
-                    src: e.target.src,
-                    naturalWidth: e.target.naturalWidth,
-                    naturalHeight: e.target.naturalHeight,
-                    aspectRatio: e.target.naturalWidth / e.target.naturalHeight
-                  });
-                }}
-                onError={(e) => {
-                  console.error('PromoBanner: Image load error:', e.target.src);
-                  e.target.style.display = 'none';
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-            </motion.div>
-          </AnimatePresence>          {/* Navigation dots */}
-          {promoItems.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-3 z-10">
-              {promoItems.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  onTouchEnd={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setCurrentIndex(index);
-                  }}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 border-2 touch-manipulation ${
-                    index === currentIndex 
-                      ? 'bg-white border-white scale-125 shadow-lg' 
-                      : 'bg-transparent border-white/70 hover:border-white hover:bg-white/30'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
+  };
 
-          {/* Progress bar */}
-          {promoItems.length > 1 && (
-            <div className="absolute bottom-0 left-0 w-full h-1 bg-black/20">
-              <motion.div
-                className="h-full bg-white"
-                initial={{ width: "0%" }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 5, ease: "linear" }}
-                key={currentIndex}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-  if (type === 'single') {
-    // Single banner display - good for between products
-    const randomPromoItem = promoItems[Math.floor(Math.random() * promoItems.length)];
-    return (
-      <motion.div
-        className={`w-full my-8 ${className}`}
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-      >
-        <motion.div
-          className="relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer touch-manipulation"
-          variants={itemVariants}
-          whileHover={{ scale: 1.02 }}
-          transition={{ duration: 0.3 }}
-          onClick={() => handleBannerClick(randomPromoItem)}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            handleBannerClick(randomPromoItem);
-          }}
-        >
-          <div className="relative w-full aspect-[4/1] min-h-[120px] max-h-[300px] promo-banner-container">
-            <img
-              src={randomPromoItem?.image}
-              alt="Promotional Banner"
-              className="promo-banner-image"
-              loading="lazy"
-              onLoad={(e) => {
-                console.log('PromoBanner Single: Image loaded:', {
-                  src: e.target.src,
-                  naturalWidth: e.target.naturalWidth,
-                  naturalHeight: e.target.naturalHeight,
-                  aspectRatio: e.target.naturalWidth / e.target.naturalHeight
-                });
-              }}
-              onError={(e) => {
-                console.error('PromoBanner: Image load error:', e.target.src);
-                e.target.style.display = 'none';
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-          </div>
-        </motion.div>
-      </motion.div>
-    );
-  }
-  if (type === 'grid') {
-    // Grid layout for multiple banners
-    return (
-      <motion.div
-        className={`w-full my-8 ${className}`}
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {promoItems.map((promoItem, index) => (
-            <motion.div
-              key={index}
-              className="relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer touch-manipulation"
-              variants={itemVariants}
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.3 }}
-              onClick={() => handleBannerClick(promoItem)}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                handleBannerClick(promoItem);
-              }}
-            >
-              <div className="relative w-full aspect-[3/2] min-h-[180px] max-h-[280px] promo-banner-container">
-                <img
-                  src={promoItem?.image}
-                  alt={`Promotional Banner ${index + 1}`}
-                  className="promo-banner-image"
-                  loading="lazy"
-                  onError={(e) => {
-                    console.error('PromoBanner: Image load error:', e.target.src);
-                    e.target.style.display = 'none';
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-    );
-  }
-  // Horizontal carousel layout - default
+  // Handle swipe navigation on mobile
+  const handleSwipe = (direction) => {
+    if (isMobile && promoItems.length > 1) {
+      if (direction === 'left') {
+        setCurrentIndex((prev) => (prev + 1) % promoItems.length);
+      } else if (direction === 'right') {
+        setCurrentIndex((prev) => (prev - 1 + promoItems.length) % promoItems.length);
+      }
+    }
+  };
+  // Main horizontal layout - new design inspired by the example
   return (
     <motion.div
       className={`w-full my-8 ${className}`}
@@ -329,44 +171,152 @@ const PromoBanner = ({
       whileInView="visible"
       viewport={{ once: true, amount: 0.3 }}
     >
-      <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-        {promoItems.map((promoItem, index) => (
-          <motion.div
-            key={index}
-            className="flex-1 relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer touch-manipulation"
-            variants={itemVariants}
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.3 }}
-            onClick={() => handleBannerClick(promoItem)}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              handleBannerClick(promoItem);
-            }}
-          >
-            <div className="relative w-full aspect-[4/1] min-h-[120px] max-h-[250px] promo-banner-container">
-              <img
-                src={promoItem?.image}
-                alt={`Promotional Banner ${index + 1}`}
-                className="promo-banner-image"
-                loading="lazy"
-                onLoad={(e) => {
-                  console.log('PromoBanner Horizontal: Image loaded:', {
-                    src: e.target.src,
-                    naturalWidth: e.target.naturalWidth,
-                    naturalHeight: e.target.naturalHeight,
-                    aspectRatio: e.target.naturalWidth / e.target.naturalHeight
-                  });
+      {isMobile ? (
+        // Mobile Carousel View
+        <div className="relative px-4">
+          <div className="relative h-44 overflow-hidden rounded-2xl">
+            <AnimatePresence initial={false} custom={currentIndex} mode="wait">
+              <motion.div
+                key={currentIndex}
+                custom={currentIndex}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: "spring", stiffness: 300, damping: 30 },
+                  opacity: { duration: 0.2 }
                 }}
-                onError={(e) => {
-                  console.error('PromoBanner: Image load error:', e.target.src);
-                  e.target.style.display = 'none';
+                className="absolute inset-0"
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={1}
+                onDragEnd={(e, { offset, velocity }) => {
+                  const swipe = Math.abs(offset.x) * velocity.x;
+                  if (swipe < -10000) {
+                    handleSwipe('left');
+                  } else if (swipe > 10000) {
+                    handleSwipe('right');
+                  }
                 }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+              >
+                {(() => {
+                  const promoItem = promoItems[currentIndex];
+                  const content = getPromoContent(promoItem, currentIndex);
+                  return (
+                    <div
+                      className="w-full h-full relative bg-zinc-800/60 rounded-2xl overflow-hidden cursor-pointer group"
+                      onClick={() => handleBannerClick(promoItem)}
+                    >
+                      {/* Background Image */}
+                      <div className="absolute inset-0">
+                        <img
+                          src={promoItem?.image}
+                          alt={content.title}
+                          className="w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity duration-300"
+                          loading="lazy"
+                        />
+                      </div>
+                      
+                      {/* Content Overlay */}
+                      <div className="relative z-10 h-full px-6 py-5 flex flex-col justify-between">
+                        <div className="space-y-3">
+                          <h3 className="text-white text-2xl font-medium font-['Play'] leading-tight">
+                            {content.title}
+                          </h3>
+                          <p className="text-white/90 text-xs font-normal font-['Play'] leading-relaxed">
+                            {content.description}
+                          </p>
+                        </div>
+                        
+                        <button className="w-fit px-6 py-2 bg-red-500 hover:bg-red-600 rounded-lg transition-colors duration-200 group-hover:scale-105 transform">
+                          <span className="text-white text-xs font-bold font-['Play'] uppercase tracking-wide">
+                            {content.ctaText}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Navigation dots for mobile */}
+          {promoItems.length > 1 && (
+            <div className="flex justify-center mt-4 space-x-2">
+              {promoItems.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentIndex(index)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index === currentIndex 
+                      ? 'bg-red-500 w-6' 
+                      : 'bg-gray-400 hover:bg-gray-600'
+                  }`}
+                />
+              ))}
             </div>
-          </motion.div>
-        ))}
-      </div>
+          )}
+
+          {/* Swipe indicators */}
+          {promoItems.length > 1 && (
+            <div className="absolute inset-y-0 left-2 right-2 flex items-center justify-between pointer-events-none">
+              <div className="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center">
+                <span className="text-white text-xs">‹</span>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center">
+                <span className="text-white text-xs">›</span>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        // Desktop Horizontal Layout
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 px-4 lg:px-8">
+          {promoItems.map((promoItem, index) => {
+            const content = getPromoContent(promoItem, index);
+            return (
+              <motion.div
+                key={index}
+                className="flex-1 relative h-44 bg-black rounded-2xl overflow-hidden cursor-pointer group"
+                variants={itemVariants}
+                whileHover={{ scale: 1.02, y: -2 }}
+                transition={{ duration: 0.3 }}
+                onClick={() => handleBannerClick(promoItem)}
+              >
+                {/* Background Image */}
+                <div className="absolute inset-0">
+                  <img
+                    src={promoItem?.image}
+                    alt={content.title}
+                    className="w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity duration-300"
+                    loading="lazy"
+                  />
+                </div>
+                
+                {/* Content Overlay */}
+                <div className="relative z-10 h-full px-6 py-5 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <h3 className="text-white text-2xl font-medium font-['Play'] leading-tight">
+                      {content.title}
+                    </h3>
+                    <p className="text-white/90 text-xs font-normal font-['Play'] leading-relaxed max-w-80">
+                      {content.description}
+                    </p>
+                  </div>
+                  
+                  <button className="w-fit px-6 py-2 bg-red-500 hover:bg-red-600 rounded-lg transition-colors duration-200 group-hover:scale-105 transform">
+                    <span className="text-white text-xs font-bold font-['Play'] uppercase tracking-wide">
+                      {content.ctaText}
+                    </span>
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
     </motion.div>
   );
 };

@@ -72,12 +72,17 @@ function Footer() {
           <div>
             <img src={logo} alt="Store Logo" className="h-16 mx-auto lg:mx-0 mb-4" />
             <div className="text-sm text-[var(--color-muted-foreground)] font-bold">
-              {storeInfo.address &&
-                storeInfo.address
-                  .split(',')
-                  .map((line, idx) => (
-                    <div key={idx}>{line.trim()}</div>
-                  ))}
+              {storeInfo.address && (
+                <>
+                  <div>{storeInfo.address.street || storeInfo.address.address || ''}</div>
+                  <div>
+                    {storeInfo.address.city && storeInfo.address.state 
+                      ? `${storeInfo.address.city}, ${storeInfo.address.state}${storeInfo.address.zipCode ? ` ${storeInfo.address.zipCode}` : ''}`
+                      : (storeInfo.address.city || '')
+                    }
+                  </div>
+                </>
+              )}
             </div>
             <p className="text-sm text-[var(--color-muted-foreground)] mt-2">
               <a
