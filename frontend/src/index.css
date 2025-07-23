@@ -193,7 +193,7 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 24px; /* Simple fixed height for status bar */
+    height: 32px; /* Increased from 24px to 32px for bigger status bar */
     background: #ffffff; /* White background */
     z-index: 999;
     display: block; /* Always show for capacitor apps */
@@ -214,7 +214,7 @@ body {
   
   /* Capacitor apps need some top padding for status bar */
   .capacitor-app .mobile-body-padding {
-    padding-top: 24px; /* Just status bar height, navbar is sticky */
+    padding-top: 32px; /* Increased from 24px to 32px to match status bar */
   }
   
   /* Keyboard-specific handling (Capacitor apps only) - MODIFIED to remove padding */
