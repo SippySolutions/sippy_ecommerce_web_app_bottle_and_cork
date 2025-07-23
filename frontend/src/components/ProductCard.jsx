@@ -163,28 +163,27 @@ function ProductCard({ product }) {
                 
                 {/* Price and Size Section */}
                 <div className="space-y-0.5">
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-1">
-                            {hasDiscount ? (
-                                <>
-                                    <span className="text-zinc-800 text-xs sm:text-sm font-bold">
-                                        {formatPrice(product.saleprice)}
-                                    </span>
-                                    <span className="text-red-700 text-[10px] sm:text-xs font-normal line-through">
-                                        {formatPrice(product.price)}
-                                    </span>
-                                </>
-                            ) : (
+                    {/* Price Section - Full width */}
+                    <div className="flex items-center gap-1 flex-wrap">
+                        {hasDiscount ? (
+                            <>
                                 <span className="text-zinc-800 text-xs sm:text-sm font-bold">
+                                    {formatPrice(product.saleprice)}
+                                </span>
+                                <span className="text-red-700 text-[9px] sm:text-[10px] font-normal line-through">
                                     {formatPrice(product.price)}
                                 </span>
-                            )}
-                        </div>
-                        
-                        {/* Size and Pack Name */}
-                        <div className="text-black text-[9px] sm:text-xs font-normal whitespace-nowrap">
-                            {product.size} | {product.packname}
-                        </div>
+                            </>
+                        ) : (
+                            <span className="text-zinc-800 text-xs sm:text-sm font-bold">
+                                {formatPrice(product.price)}
+                            </span>
+                        )}
+                    </div>
+                    
+                    {/* Size and Pack Name - Separate row */}
+                    <div className="text-black text-[9px] sm:text-xs font-normal">
+                        {product.size} | {product.packname}
                     </div>
                     
                     {/* Featured/Special Tags - Fixed height */}
