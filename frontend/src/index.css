@@ -86,9 +86,9 @@ body {
   overflow-x: hidden;
 }
 
-/* Safe area utilities for mobile devices - MODIFIED to prevent white gaps */
+/* Safe area utilities for mobile devices */
 .pt-safe-area-inset-top {
-  padding-top: 0px; /* Disabled: env(safe-area-inset-top) */
+  padding-top: env(safe-area-inset-top);
 }
 
 .pb-safe-area-inset-bottom {
@@ -109,14 +109,14 @@ body {
     padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
   }
   
-  /* iOS specific navbar - integrated with safe area - MODIFIED to remove top gap */
+  /* iOS specific navbar - integrated with safe area */
   .ios-seamless-navbar {
     position: sticky;
     top: 0;
     z-index: 1000;
     background: #ffffff !important;
-    /* Remove safe area padding to eliminate white gap */
-    padding-top: 0px;
+    /* Only add safe area padding if not using fixed positioning */
+    padding-top: env(safe-area-inset-top, 0px);
   }
   
   /* Alternative approach: ensure full screen coverage */
@@ -186,32 +186,16 @@ body {
     min-height: auto;
   }
   
-  /* Ensure status bar area is white - only for native apps - DISABLED to remove white gap */
+  /* Ensure status bar area is white - only for native apps */
   .capacitor-app body::before {
     content: '';
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: 0px; /* Changed from env(safe-area-inset-top, 0px) to 0px */
-    background: transparent; /* Changed from #ffffff to transparent */
+    height: env(safe-area-inset-top, 0px);
+    background: #ffffff;
     z-index: 999;
-    display: none; /* Hide this element completely */
-  }
-  
-  /* Android-specific status bar background - using media query for Android detection */
-  @media screen and (max-width: 768px) and (orientation: portrait) {
-    .capacitor-app.android-app body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: env(safe-area-inset-top, 24px); /* fallback to 24px for typical Android status bar */
-      background: #ffffff;
-      z-index: 999;
-      display: block;
-    }
   }
   
   .mobile-navbar-ios {
@@ -223,34 +207,20 @@ body {
     width: 100%;
     z-index: 1000;
     box-shadow: 0 calc(-100vh) 0 0 #ffffff;
-    /* Remove safe area inset to eliminate white gap */
-    padding-top: 0px;
-  }
-  
-  /* Android-specific navbar with safe area - using class detection */
-  @media screen and (max-width: 768px) {
-    .android-app .mobile-navbar-ios {
-      padding-top: env(safe-area-inset-top, 24px);
-    }
+    /* Use safe area inset only for native apps */
+    padding-top: env(safe-area-inset-top, 0px);
   }
   
   .mobile-body-padding {
-    /* Remove padding to eliminate white gap - was 80px */
-    padding-top: 0px;
+    /* Minimal fallback - will be overridden by NavbarHeightManager */
+    padding-top: 80px;
     /* Prevent keyboard from adding extra padding */
     transition: padding-top 0.1s ease-out;
   }
   
-  /* Android-specific body padding - using class detection */
-  @media screen and (max-width: 768px) {
-    .android-app .mobile-body-padding {
-      padding-top: calc(80px + env(safe-area-inset-top, 24px));
-    }
-  }
-  
-  /* Keyboard-specific handling (Capacitor apps only) - MODIFIED to remove padding */
+  /* Keyboard-specific handling (Capacitor apps only) */
   .capacitor-app .mobile-body-padding.keyboard-open {
-    padding-top: 0px; /* Removed calc(80px + var(--status-bar-height, 0px)) */
+    padding-top: calc(80px + var(--status-bar-height, 0px));
   }
   
   .navbar-transition {
