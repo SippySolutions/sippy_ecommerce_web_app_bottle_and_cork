@@ -193,7 +193,7 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 32px; /* Increased from 24px to 32px for bigger status bar */
+    height: 36px; /* Increased from 24px to 32px for bigger status bar */
     background: #ffffff; /* White background */
     z-index: 999;
     display: block; /* Always show for capacitor apps */
