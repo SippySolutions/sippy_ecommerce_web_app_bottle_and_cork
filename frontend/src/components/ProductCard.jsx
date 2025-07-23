@@ -139,11 +139,11 @@ function ProductCard({ product }) {
             onClick={handleCardClick}
         >
             {/* Image Section */}
-            <div className="w-full h-28 sm:h-40 relative rounded-lg outline-1 outline-offset-[-1px] outline-slate-600/25 overflow-hidden flex-shrink-0">
+            <div className="w-full h-28 sm:h-40 relative rounded-lg outline-1 outline-offset-[-1px] outline-slate-600/25 overflow-hidden flex-shrink-0 bg-white">
                 <LazyImage 
                     src={product.productimg || "https://placehold.co/200x250"} 
                     alt={product.name}
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain p-1"
                 />
                 {hasDiscount && (
                     <div className="w-12 h-5 sm:w-16 sm:h-6 px-1 py-0.5 right-0 top-0 absolute bg-green-700 rounded-tr-lg rounded-bl-lg flex justify-center items-center">
