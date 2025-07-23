@@ -35,7 +35,6 @@ import OrderTracking from './pages/OrderTracking.jsx';
 import NetworkStatus from './components/NetworkStatus.jsx';
 import StatusBarManager from './components/StatusBarManager.jsx';
 import KeyboardManager from './components/KeyboardManager.jsx';
-import iOSStatusBarFill from './components/iOSStatusBarFill.jsx';
 import NavbarHeightManager from './components/NavbarHeightManager.jsx';
 import BottomNavigation from './components/BottomNavigation.jsx';
 import InlineLoader from './components/InlineLoader.jsx';
