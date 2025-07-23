@@ -21,7 +21,7 @@ import ViewListIcon from '@mui/icons-material/ViewList';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PhoneIcon from '@mui/icons-material/Phone';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import { fetchDepartments } from '../services/api.jsx';
+import { fetchDepartments, fetchProductGroups } from '../services/api.jsx';
 
 function Navbar() {
   const { user, logout } = useContext(AuthContext);
@@ -39,6 +39,7 @@ function Navbar() {
   
   // State hooks
   const [departments, setDepartments] = useState([]);
+  const [collections, setCollections] = useState([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -57,6 +58,18 @@ function Navbar() {
     name: dept.department,
     subcategories: dept.categories || []
   })) : [];
+
+  // Mock featured items - replace with actual API call when available
+  const getFeaturedItems = () => {
+    return [
+      'Best Sellers',
+      'Staff Pick',
+      'Exclusives',
+      'New Arrivals',
+      'Sale Items',
+      'Top Rated'
+    ];
+  };
 
   // useEffect must be called before any conditional returns
   useEffect(() => {
@@ -78,7 +91,25 @@ function Navbar() {
       }
     };
 
+    // Fetch collections from API
+    const getCollections = async () => {
+      try {
+        const collectionsData = await fetchProductGroups();
+        // Transform the data to include only the names for the dropdown
+        const collectionNames = collectionsData.map(collection => ({
+          id: collection._id,
+          name: collection.name
+        }));
+        setCollections(collectionNames);
+      } catch (error) {
+        console.error('Failed to fetch collections:', error);
+        // Fallback to empty array if API fails
+        setCollections([]);
+      }
+    };
+
     getDepartments();
+    getCollections();
   }, []);
 
   // Helper functions
@@ -348,7 +379,7 @@ function Navbar() {
                       Shop
                     </Link>
                     <Link
-                      to="/collections"
+                      to="/all-collections"
                       className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -460,24 +491,14 @@ function Navbar() {
                       <motion.div
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        onMouseEnter={() => setHoveredDepartment('all-products')}
+                        onMouseLeave={() => setHoveredDepartment(null)}
                       >
                         <Link 
                           to="/products" 
                           className="flex items-center text-gray-700 hover:text-[var(--color-accent)] font-bold transition-colors duration-200 px-4 py-2 rounded-md hover:bg-gray-100"
                         >
                           All PRODUCTS
-                        </Link>
-                      </motion.div>
-                      
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Link 
-                          to="/collections" 
-                          className="flex items-center text-gray-700 hover:text-[var(--color-accent)] font-bold transition-colors duration-200 px-4 py-2 rounded-md hover:bg-gray-100"
-                        >
-                          COLLECTIONS
                         </Link>
                       </motion.div>
                       
@@ -545,18 +566,6 @@ function Navbar() {
                           All Products
                         </Link>
                       </motion.div>
-                      
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Link 
-                          to="/collections" 
-                          className="flex items-center text-gray-700 hover:text-[var(--color-accent)] font-bold transition-colors duration-200 px-4 py-2 rounded-md hover:bg-gray-100"
-                        >
-                          Collections
-                        </Link>
-                      </motion.div>
                     </motion.div>
 
                     <motion.div 
@@ -621,9 +630,9 @@ function Navbar() {
 
             {/* Full Width Mega Menu Dropdown - Positioned correctly */}
             <AnimatePresence>
-              {hoveredDepartment !== null && departments[hoveredDepartment] && departments[hoveredDepartment].categories && departments[hoveredDepartment].categories.length > 0 && (
+              {hoveredDepartment !== null && (
                 <motion.div 
-                  className="h-[70vh] w-[50vw] absolute left-[25vw] bg-white  shadow-lg z-50 overflow-hidden"
+                  className="h-[70vh] w-[50vw] absolute left-[25vw] bg-white shadow-lg z-50 overflow-hidden"
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
@@ -632,13 +641,18 @@ function Navbar() {
                   onMouseLeave={() => setHoveredDepartment(null)}
                 >
                   <div className="p-4 h-full overflow-y-auto">
-                    <div className="grid grid-cols-7 gap-2">
-                      {departments[hoveredDepartment].categories
+                    <div className="grid grid-cols-7 gap-4">
+                      {/* Show department categories if it's a valid department */}
+                      {hoveredDepartment !== 'all-products' && 
+                       departments[hoveredDepartment] && 
+                       departments[hoveredDepartment].categories && 
+                       departments[hoveredDepartment].categories.length > 0 && 
+                       departments[hoveredDepartment].categories
                         .filter(cat => cat.category && cat.category !== null)
                         .map((category, catIndex) => (
-                        <div key={catIndex} className=" pr-4">
+                        <div key={catIndex} className="pr-2">
                           <h3 
-                            className="font-semibold text-gray-950 mb-2 cursor-pointer hover:text-[var(--color-accent)]"
+                            className="font-semibold text-gray-950 mb-2 cursor-pointer hover:text-[var(--color-accent)] text-sm"
                             onClick={() => {
                               navigate(`/products?department=${departments[hoveredDepartment].department}&category=${category.category}`);
                               setHoveredDepartment(null);
@@ -649,10 +663,10 @@ function Navbar() {
                           
                           {category.subcategories && category.subcategories.length > 0 && (
                             <div className="space-y-1">
-                              {category.subcategories.map((subcategory, subIndex) => (
+                              {category.subcategories.slice(0, 8).map((subcategory, subIndex) => (
                                 <div
                                   key={subIndex}
-                                  className="text-sm text-gray-600 cursor-pointer hover:text-[var(--color-accent)]"
+                                  className="text-xs text-gray-600 cursor-pointer hover:text-[var(--color-accent)] leading-relaxed"
                                   onClick={() => {
                                     navigate(`/products?department=${departments[hoveredDepartment].department}&category=${category.category}&subcategory=${subcategory}`);
                                     setHoveredDepartment(null);
@@ -661,10 +675,111 @@ function Navbar() {
                                   {subcategory}
                                 </div>
                               ))}
+                              {category.subcategories.length > 8 && (
+                                <div
+                                  className="text-xs text-[var(--color-accent)] cursor-pointer font-medium"
+                                  onClick={() => {
+                                    navigate(`/products?department=${departments[hoveredDepartment].department}&category=${category.category}`);
+                                    setHoveredDepartment(null);
+                                  }}
+                                >
+                                  View All →
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
                       ))}
+                      
+                      {/* Show all departments when hovering "All PRODUCTS" */}
+                      {hoveredDepartment === 'all-products' && 
+                       safeCategories && safeCategories.length > 0 && 
+                       safeCategories.slice(0, 6).map((department, deptIndex) => (
+                        <div key={deptIndex} className="pr-2">
+                          <h3 
+                            className="font-semibold text-gray-950 mb-2 cursor-pointer hover:text-[var(--color-accent)] text-sm"
+                            onClick={() => {
+                              navigate(`/products?department=${department.department}`);
+                              setHoveredDepartment(null);
+                            }}
+                          >
+                            {department.department.toUpperCase()}
+                          </h3>
+                          
+                          {department.subcategories && department.subcategories.length > 0 && (
+                            <div className="space-y-1">
+                              {department.subcategories.slice(0, 8).map((subcategory, subIndex) => (
+                                <div
+                                  key={subIndex}
+                                  className="text-xs text-gray-600 cursor-pointer hover:text-[var(--color-accent)] leading-relaxed"
+                                  onClick={() => {
+                                    navigate(`/products?department=${department.department}&category=${subcategory.category || subcategory}`);
+                                    setHoveredDepartment(null);
+                                  }}
+                                >
+                                  {subcategory.category || subcategory}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      
+                      {/* Collections Column - Always show */}
+                      <div className="border-l border-gray-200 pl-4">
+                        <h3 
+                          className="font-semibold text-gray-950 mb-2 cursor-pointer hover:text-[var(--color-accent)] text-sm"
+                          onClick={() => {
+                            navigate('/all-collections');
+                            setHoveredDepartment(null);
+                          }}
+                        >
+                          COLLECTIONS
+                        </h3>
+                        
+                        <div className="space-y-1 mb-4">
+                          {collections.map((collection, index) => (
+                            <div
+                              key={collection.id || index}
+                              className="text-xs text-gray-600 cursor-pointer hover:text-[var(--color-accent)] leading-relaxed"
+                              onClick={() => {
+                                navigate(`/collections/${collection.id}`);
+                                setHoveredDepartment(null);
+                              }}
+                            >
+                              {collection.name}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Featured Section */}
+                        <div className="border-t border-gray-100 pt-3">
+                          <h3 
+                            className="font-semibold text-gray-950 mb-2 cursor-pointer hover:text-[var(--color-accent)] text-sm"
+                            onClick={() => {
+                              navigate('/featured');
+                              setHoveredDepartment(null);
+                            }}
+                          >
+                            FEATURED
+                          </h3>
+                          
+                          <div className="space-y-1">
+                            {getFeaturedItems().map((featured, index) => (
+                              <div
+                                key={index}
+                                className="text-xs text-gray-600 cursor-pointer hover:text-[var(--color-accent)] leading-relaxed"
+                                onClick={() => {
+                                  navigate(`/featured?type=${encodeURIComponent(featured.toLowerCase().replace(' ', ''))}`);
+                                  setHoveredDepartment(null);
+                                }}
+                              >
+                                {featured}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
