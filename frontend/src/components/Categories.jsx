@@ -72,15 +72,15 @@ function Categories() {
         </div>
 
         {/* Departments Section */}
-        <div className="flex overflow-x-auto gap-3 justify-center sm:gap-6 mt-4 pb-2 hide-scrollbar">
+        <div className="grid grid-cols-6 sm:grid-cols-7 md:flex md:overflow-x-auto gap-1 sm:gap-3 md:gap-6 md:justify-center mt-4 pb-2 hide-scrollbar">
           {departments.map((department) => (
             <div
               key={department._id}
-              className="flex flex-col items-center text-center group cursor-pointer min-w-[100px] sm:min-w-[120px] p-3 hover:bg-white/50 rounded-lg transition-all"
+              className="flex flex-col items-center text-center group cursor-pointer min-w-0 md:min-w-[120px] p-1 sm:p-2 md:p-3 hover:bg-white/50 rounded-lg transition-all"
               onClick={() => navigate(`/products?department=${department.name}`)}
             >
               {/* Department Image or Icon */}
-              <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-[var(--color-background)] rounded-full flex items-center justify-center mb-3 transition-transform transform group-hover:scale-110 shadow-lg overflow-hidden">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-20 md:h-20 lg:w-24 lg:h-24 bg-[var(--color-background)] rounded-full flex items-center justify-center mb-1 sm:mb-2 md:mb-3 transition-transform transform group-hover:scale-110 shadow-lg overflow-hidden">
                 {department.image ? (
                   <img
                     src={department.image}
@@ -88,12 +88,12 @@ function Categories() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
+                  <span className="text-sm sm:text-lg md:text-2xl lg:text-3xl font-bold text-white">
                     {department.name?.charAt(0)?.toUpperCase()}
                   </span>
                 )}
               </div>
-              <span className="text-xs sm:text-sm font-medium text-[var(--color-primary)] group-hover:text-[var(--color-accent)] truncate w-full">
+              <span className="text-[9px] sm:text-[10px] md:text-sm font-medium text-[var(--color-primary)] group-hover:text-[var(--color-accent)] truncate w-full leading-tight">
                 {department.name.toUpperCase()}
               </span>
             </div>
