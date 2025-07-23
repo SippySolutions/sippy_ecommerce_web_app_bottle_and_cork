@@ -33,20 +33,61 @@ const NavbarHeightManager = () => {
       }
     };
 
+    const createAndroidStatusBarFill = () => {
+      // Only create for Android native apps
+      if (Capacitor.isNativePlatform() && 
+          Capacitor.getPlatform() === 'android' &&
+          document.documentElement.classList.contains('capacitor-app') &&
+          document.documentElement.classList.contains('android-app')) {
+        
+        // Check if status bar fill already exists
+        let statusBarFill = document.getElementById('android-status-bar-fill');
+        
+        if (!statusBarFill) {
+          // Create status bar fill element
+          statusBarFill = document.createElement('div');
+          statusBarFill.id = 'android-status-bar-fill';
+          statusBarFill.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background-color: #ffffff;
+            z-index: 999;
+            pointer-events: none;
+          `;
+          
+          // Insert at the beginning of body
+          document.body.insertBefore(statusBarFill, document.body.firstChild);
+          console.log('NavbarHeightManager: Created Android status bar fill');
+        }
+      }
+    };
+
     // Small delay to ensure DOM is ready
-    const timeoutId = setTimeout(adjustBodyPadding, 50);
+    const timeoutId = setTimeout(() => {
+      adjustBodyPadding();
+      createAndroidStatusBarFill();
+    }, 50);
 
     // Adjust padding on window resize (debounced)
     let resizeTimeout;
     const handleResize = () => {
       clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(adjustBodyPadding, 100);
+      resizeTimeout = setTimeout(() => {
+        adjustBodyPadding();
+        createAndroidStatusBarFill();
+      }, 100);
     };
     window.addEventListener('resize', handleResize);
     
     // Adjust padding on orientation change (mobile)
     window.addEventListener('orientationchange', () => {
-      setTimeout(adjustBodyPadding, 200); // Longer delay for orientation change
+      setTimeout(() => {
+        adjustBodyPadding();
+        createAndroidStatusBarFill();
+      }, 200); // Longer delay for orientation change
     });
 
     // Cleanup
@@ -55,6 +96,12 @@ const NavbarHeightManager = () => {
       clearTimeout(resizeTimeout);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', adjustBodyPadding);
+      
+      // Remove status bar fill on cleanup
+      const statusBarFill = document.getElementById('android-status-bar-fill');
+      if (statusBarFill) {
+        statusBarFill.remove();
+      }
     };
   }, []);
 
