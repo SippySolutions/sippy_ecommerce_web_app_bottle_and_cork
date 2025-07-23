@@ -86,9 +86,9 @@ body {
   overflow-x: hidden;
 }
 
-/* Safe area utilities for mobile devices */
+/* Safe area utilities for mobile devices - MODIFIED to prevent white gaps */
 .pt-safe-area-inset-top {
-  padding-top: env(safe-area-inset-top);
+  padding-top: 0px; /* Disabled: env(safe-area-inset-top) */
 }
 
 .pb-safe-area-inset-bottom {
@@ -109,14 +109,14 @@ body {
     padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
   }
   
-  /* iOS specific navbar - integrated with safe area */
+  /* iOS specific navbar - integrated with safe area - MODIFIED to remove top gap */
   .ios-seamless-navbar {
     position: sticky;
     top: 0;
     z-index: 1000;
     background: #ffffff !important;
-    /* Only add safe area padding if not using fixed positioning */
-    padding-top: env(safe-area-inset-top, 0px);
+    /* Remove safe area padding to eliminate white gap */
+    padding-top: 0px;
   }
   
   /* Alternative approach: ensure full screen coverage */
@@ -186,41 +186,41 @@ body {
     min-height: auto;
   }
   
-  /* Ensure status bar area is white - only for native apps */
+  /* Ensure status bar area is white - only for native apps - DISABLED to remove white gap */
   .capacitor-app body::before {
     content: '';
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: env(safe-area-inset-top, 0px);
-    background: #ffffff;
+    height: 24px; /* Simple fixed height for status bar */
+    background: #ffffff; /* White background */
     z-index: 999;
+    display: block; /* Always show for capacitor apps */
   }
   
   .mobile-navbar-ios {
     background: #ffffff !important;
     position: fixed !important;
-    top: 0;
+    top: 24px; /* Push navbar below status bar */
     left: 0;
     right: 0;
     width: 100%;
     z-index: 1000;
     box-shadow: 0 calc(-100vh) 0 0 #ffffff;
-    /* Use safe area inset only for native apps */
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: 0px;
   }
   
   .mobile-body-padding {
-    /* Minimal fallback - will be overridden by NavbarHeightManager */
-    padding-top: 80px;
+    /* Add padding for status bar + navbar */
+    padding-top: calc(24px + 80px); /* 24px status bar + 80px navbar */
     /* Prevent keyboard from adding extra padding */
     transition: padding-top 0.1s ease-out;
   }
   
-  /* Keyboard-specific handling (Capacitor apps only) */
+  /* Keyboard-specific handling (Capacitor apps only) - MODIFIED to remove padding */
   .capacitor-app .mobile-body-padding.keyboard-open {
-    padding-top: calc(80px + var(--status-bar-height, 0px));
+    padding-top: 0px; /* Removed calc(80px + var(--status-bar-height, 0px)) */
   }
   
   .navbar-transition {
