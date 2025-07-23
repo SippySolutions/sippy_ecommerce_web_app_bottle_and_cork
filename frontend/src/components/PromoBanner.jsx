@@ -16,6 +16,7 @@ const PromoBanner = ({
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Check if mobile view
   useEffect(() => {
@@ -152,7 +153,7 @@ const PromoBanner = ({
     })
   };
 
-  // Handle swipe navigation on mobile
+  // Handle swipe navigation on mobile with better touch sensitivity
   const handleSwipe = (direction) => {
     if (isMobile && promoItems.length > 1) {
       if (direction === 'left') {
@@ -161,6 +162,12 @@ const PromoBanner = ({
         setCurrentIndex((prev) => (prev - 1 + promoItems.length) % promoItems.length);
       }
     }
+  };
+
+  // Handle banner click with drag detection
+  const handleBannerClickWithDrag = (promoItem, isDragging) => {
+    if (isDragging) return; // Don't navigate if user was dragging
+    handleBannerClick(promoItem);
   };
   // Main horizontal layout - new design inspired by the example
   return (
@@ -190,14 +197,21 @@ const PromoBanner = ({
                 className="absolute inset-0"
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={1}
+                dragElastic={0.3}
+                dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+                onDragStart={() => setIsDragging(true)}
                 onDragEnd={(e, { offset, velocity }) => {
                   const swipe = Math.abs(offset.x) * velocity.x;
-                  if (swipe < -10000) {
+                  const swipeThreshold = 15000; // Increased threshold for less sensitivity
+                  
+                  if (swipe < -swipeThreshold) {
                     handleSwipe('left');
-                  } else if (swipe > 10000) {
+                  } else if (swipe > swipeThreshold) {
                     handleSwipe('right');
                   }
+                  
+                  // Reset dragging state after a short delay
+                  setTimeout(() => setIsDragging(false), 100);
                 }}
               >
                 {(() => {
@@ -205,8 +219,8 @@ const PromoBanner = ({
                   const content = getPromoContent(promoItem, currentIndex);
                   return (
                     <div
-                      className="w-full h-full relative bg-zinc-800/60 rounded-2xl overflow-hidden cursor-pointer group"
-                      onClick={() => handleBannerClick(promoItem)}
+                      className="w-full h-full relative bg-zinc-800 rounded-2xl overflow-hidden cursor-pointer group"
+                      onClick={() => handleBannerClickWithDrag(promoItem, isDragging)}
                     >
                       {/* Background Image */}
                       <div className="absolute inset-0">
@@ -258,18 +272,6 @@ const PromoBanner = ({
               ))}
             </div>
           )}
-
-          {/* Swipe indicators */}
-          {promoItems.length > 1 && (
-            <div className="absolute inset-y-0 left-2 right-2 flex items-center justify-between pointer-events-none">
-              <div className="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center">
-                <span className="text-white text-xs">‹</span>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center">
-                <span className="text-white text-xs">›</span>
-              </div>
-            </div>
-          )}
         </div>
       ) : (
         // Desktop Horizontal Layout
@@ -279,7 +281,7 @@ const PromoBanner = ({
             return (
               <motion.div
                 key={index}
-                className="flex-1 relative h-44 bg-black rounded-2xl overflow-hidden cursor-pointer group"
+                className="flex-1 relative h-44 bg-zinc-800 rounded-2xl overflow-hidden cursor-pointer group"
                 variants={itemVariants}
                 whileHover={{ scale: 1.02, y: -2 }}
                 transition={{ duration: 0.3 }}

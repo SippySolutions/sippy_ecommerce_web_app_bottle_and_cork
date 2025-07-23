@@ -481,38 +481,36 @@ function Navbar() {
                         </Link>
                       </motion.div>
                       
-                      {departmentsLoading ? (
-                        <InlineLoader 
-                          size="small" 
-                          text="Loading departments..." 
-                          className="flex items-center space-x-2"
-                        />
-                      ) : safeCategories && safeCategories.length > 0 ? (
-                        <AnimatePresence>
-                          {safeCategories.map((department, deptIndex) => (
-                            <motion.div
-                              key={deptIndex}
-                              className="relative"
-                              onMouseEnter={() => setHoveredDepartment(deptIndex)}
-                              onMouseLeave={() => setHoveredDepartment(null)}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ duration: 0.3, delay: deptIndex * 0.1 }}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <button
-                                className="px-4 py-2 text-gray-700 hover:text-[var(--color-accent)] font-bold transition-colors duration-200  border-b-white border-b-2 hover:border-b-[var(--color-accent)]"
-                                onClick={() => navigate(`/products?department=${department.department}`)}
-                              >
-                                {department.department.toUpperCase()}
-                              </button>
-                            </motion.div>
-                          ))}
-                        </AnimatePresence>
-                      ) : (
-                        <div className="text-gray-500 text-sm">No departments available</div>
-                      )}
+                      {
+     safeCategories && safeCategories.length > 0
+            ? (<AnimatePresence>
+                {
+                    safeCategories.map((department, deptIndex) => (<motion.div key={deptIndex} className="relative" onMouseEnter={() => setHoveredDepartment(deptIndex)} onMouseLeave={() => setHoveredDepartment(null)} initial={{
+                            opacity: 0,
+                            x: -20
+                        }} animate={{
+                            opacity: 1,
+                            x: 0
+                        }} transition={{
+                            duration: 0.3,
+                            delay: deptIndex * 0.1
+                        }} whileHover={{
+                            scale: 1.05
+                        }} whileTap={{
+                            scale: 0.95
+                        }}>
+                        <button className="px-4 py-2 text-gray-700 hover:text-[var(--color-accent)] font-bold transition-colors duration-200  border-b-white border-b-2 hover:border-b-[var(--color-accent)]" onClick={() => navigate(`/products?department=${department.department}`)}>
+                            {
+                                department
+                                    .department
+                                    .toUpperCase()
+                            }
+                        </button>
+                    </motion.div>))
+                }
+            </AnimatePresence>)
+            : (<div className="text-gray-500 text-sm"></div>)
+}
                     </motion.div>
                   </div>
                 ) : (
