@@ -135,82 +135,87 @@ function ProductCard({ product }) {
 
     return (
         <div 
-            className="w-full h-auto p-2 sm:p-4 bg-[#FAFAFA] rounded-xl sm:rounded-2xl shadow-[0px_5px_20px_0px_rgba(0,0,0,0.05)] outline-1 outline-offset-[-1px] outline-slate-600/25 flex flex-col justify-start items-start gap-2 sm:gap-3 cursor-pointer hover:shadow-lg transition-shadow"
+            className="w-full h-56 sm:h-80 p-2 sm:p-4 bg-[#FAFAFA] rounded-xl sm:rounded-2xl shadow-[0px_5px_20px_0px_rgba(0,0,0,0.05)] outline-1 outline-offset-[-1px] outline-slate-600/25 flex flex-col justify-between cursor-pointer hover:shadow-lg transition-shadow"
             onClick={handleCardClick}
         >
             {/* Image Section */}
-            <div className="self-stretch h-32 sm:h-48 relative rounded-lg outline-1 outline-offset-[-1px] outline-slate-600/25 overflow-hidden">
+            <div className="w-full h-28 sm:h-40 relative rounded-lg outline-1 outline-offset-[-1px] outline-slate-600/25 overflow-hidden flex-shrink-0">
                 <LazyImage 
                     src={product.productimg || "https://placehold.co/200x250"} 
                     alt={product.name}
                     className="w-full h-full object-contain"
                 />
                 {hasDiscount && (
-                    <div className="w-10 h-5 sm:w-14 sm:h-6 px-1 py-0.5 right-0 top-0 absolute bg-green-700 rounded-tr-lg rounded-bl-lg flex justify-center items-center">
-                        <div className="text-white text-[10px] sm:text-xs font-bold font-['Play']">
+                    <div className="w-12 h-5 sm:w-16 sm:h-6 px-1 py-0.5 right-0 top-0 absolute bg-green-700 rounded-tr-lg rounded-bl-lg flex justify-center items-center">
+                        <div className="text-white text-[10px] sm:text-xs font-bold font-['Play'] whitespace-nowrap">
                             {discountPercentage}% off
                         </div>
                     </div>
                 )}
             </div>
             
-            {/* Product Name */}
-            <div className="self-stretch text-left text-neutral-800 text-xs sm:text-sm font-semibold line-clamp-2">
-                {product.name}
-            </div>
-            
-            {/* Price Section */}
-            <div className="self-stretch flex justify-between items-center">
-                <div className="flex items-center gap-1 sm:gap-2">
-                    {hasDiscount ? (
-                        <>
-                            <span className="text-zinc-800 text-xs sm:text-sm font-bold">
-                                {formatPrice(product.saleprice)}
-                            </span>
-                            <span className="text-red-700 text-[10px] sm:text-xs font-normal line-through">
-                                {formatPrice(product.price)}
-                            </span>
-                        </>
-                    ) : (
-                        <span className="text-zinc-800 text-xs sm:text-sm font-bold">
-                            {formatPrice(product.price)}
-                        </span>
-                    )}
+            {/* Content Section - Fixed height container */}
+            <div className="flex-1 flex flex-col justify-between min-h-0 pt-1">
+                {/* Product Name - Fixed height with line clamp */}
+                <div className="h-7 sm:h-8 text-left text-neutral-800 text-xs sm:text-sm font-semibold line-clamp-2 leading-tight">
+                    {product.name}
                 </div>
                 
-                {/* Size and Pack Name */}
-                <div className="text-black text-[9px] sm:text-xs font-normal">
-                    {product.size} | {product.packname}
-                </div>
-            </div>
-            
-            {/* Featured/Special Tags */}
-            <div className="flex justify-start items-start gap-1 sm:gap-2 flex-wrap min-h-[16px] sm:min-h-[20px]">
-                {product.featured && (
-                    <div className="text-[10px] sm:text-xs font-semibold" style={{ color: '#A36F00' }}>
-                        {product.featured}
+                {/* Price and Size Section */}
+                <div className="space-y-0.5">
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-1">
+                            {hasDiscount ? (
+                                <>
+                                    <span className="text-zinc-800 text-xs sm:text-sm font-bold">
+                                        {formatPrice(product.saleprice)}
+                                    </span>
+                                    <span className="text-red-700 text-[10px] sm:text-xs font-normal line-through">
+                                        {formatPrice(product.price)}
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="text-zinc-800 text-xs sm:text-sm font-bold">
+                                    {formatPrice(product.price)}
+                                </span>
+                            )}
+                        </div>
+                        
+                        {/* Size and Pack Name */}
+                        <div className="text-black text-[9px] sm:text-xs font-normal whitespace-nowrap">
+                            {product.size} | {product.packname}
+                        </div>
                     </div>
-                )}
-            </div>
-            
-            {/* Action Buttons */}
-            <div className="self-stretch flex justify-start items-start gap-1 sm:gap-2">
-                <button 
-                    className="flex-1 h-6 sm:h-7 px-1 sm:px-2 py-1 bg-[var(--color-accent)] rounded flex justify-center items-center gap-1 sm:gap-2 hover:bg-red-800 transition-colors"
-                    onClick={handleAddToCart}
-                    disabled={product.totalqty === 0}
-                >
-                    <ShoppingCartIcon className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                    <div className="text-white text-[10px] sm:text-xs font-bold ">
-                        {product.totalqty === 0 ? 'OUT OF STOCK' : 'ADD TO CART'}
+                    
+                    {/* Featured/Special Tags - Fixed height */}
+                    <div className="h-3 sm:h-4 flex justify-start items-center gap-1 flex-wrap">
+                        {product.featured && (
+                            <div className="text-[9px] sm:text-[10px] font-semibold" style={{ color: '#A36F00' }}>
+                                {product.featured}
+                            </div>
+                        )}
                     </div>
-                </button>
-                
-                <div 
-                    className="flex justify-center items-center"
-                    onClick={handleWishlistClick}
-                >
-                    <WishlistIcon product={product} size="sm" />
+                    
+                    {/* Action Buttons */}
+                    <div className="flex justify-start items-start gap-1">
+                        <button 
+                            className="flex-1 h-7 sm:h-8 px-1 sm:px-2 py-1 bg-[var(--color-accent)] rounded flex justify-center items-center gap-1 hover:bg-red-800 transition-colors"
+                            onClick={handleAddToCart}
+                        >
+                            <ShoppingCartIcon className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                            <div className="text-white text-[10px] sm:text-xs font-bold">
+                                <span className="sm:hidden">ADD</span>
+                                <span className="hidden sm:inline">ADD TO CART</span>
+                            </div>
+                        </button>
+                        
+                        <div 
+                            className="flex justify-center items-center"
+                            onClick={handleWishlistClick}
+                        >
+                            <WishlistIcon product={product} size="sm" />
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
