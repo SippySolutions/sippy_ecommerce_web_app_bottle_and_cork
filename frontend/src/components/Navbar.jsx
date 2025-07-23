@@ -170,7 +170,11 @@ function Navbar() {
           </div>
 
           {/* Main Navigation */}
-          <nav className="bg-white shadow-md sticky top-0 z-40">
+          <nav className={`bg-white shadow-md sticky z-40 ${
+            typeof window !== 'undefined' && document.documentElement.classList.contains('capacitor-app') 
+              ? 'top-6' // 24px = 1.5rem = top-6 for status bar height in Capacitor apps
+              : 'top-0' // Normal top-0 for web browsers
+          }`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-2 md:py-3">
               {/* Logo */}
               <Link to="/" className="flex items-center text-3xl font-bold text-[var(--color-accent)]">

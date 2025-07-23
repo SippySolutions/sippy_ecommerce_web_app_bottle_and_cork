@@ -201,21 +201,20 @@ body {
   
   .mobile-navbar-ios {
     background: #ffffff !important;
-    position: fixed !important;
-    top: 24px; /* Push navbar below status bar */
-    left: 0;
-    right: 0;
-    width: 100%;
-    z-index: 1000;
-    box-shadow: 0 calc(-100vh) 0 0 #ffffff;
+    /* Let the navbar component handle positioning with sticky + conditional top value */
     padding-top: 0px;
   }
   
   .mobile-body-padding {
-    /* Add padding for status bar + navbar */
-    padding-top: calc(24px + 80px); /* 24px status bar + 80px navbar */
+    /* Only add status bar padding for Capacitor apps - navbar handles itself with sticky */
+    padding-top: 0px;
     /* Prevent keyboard from adding extra padding */
     transition: padding-top 0.1s ease-out;
+  }
+  
+  /* Capacitor apps need some top padding for status bar */
+  .capacitor-app .mobile-body-padding {
+    padding-top: 24px; /* Just status bar height, navbar is sticky */
   }
   
   /* Keyboard-specific handling (Capacitor apps only) - MODIFIED to remove padding */
