@@ -4,6 +4,17 @@ import { BrowserRouter as Router } from 'react-router-dom'; // Import BrowserRou
 import App from './App';
 import './index.css';
 
+// Detect Android platform and add class
+function detectAndroidPlatform() {
+  const userAgent = navigator.userAgent.toLowerCase();
+  if (userAgent.includes('android')) {
+    document.documentElement.classList.add('android-app');
+  }
+}
+
+// Run detection immediately
+detectAndroidPlatform();
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(

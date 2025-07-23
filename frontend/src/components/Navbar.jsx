@@ -169,11 +169,11 @@ function Navbar() {
             </div>
           </div>
 
-          {/* Main Navigation - SIMPLE APPROACH */}
+          {/* Main Navigation - ANDROID-SPECIFIC STATUS BAR OFFSET */}
           <nav className={`bg-white shadow-md sticky z-40 ${
-            typeof window !== 'undefined' && document.documentElement.classList.contains('capacitor-app') 
-              ? 'top-10' // 40px status bar = top-10 in Tailwind
-              : 'top-0'  // Normal web browsers
+            typeof window !== 'undefined' && document.documentElement.classList.contains('capacitor-app') && document.documentElement.classList.contains('android-app')
+              ? 'top-10' // 40px status bar = top-10 in Tailwind (Android only)
+              : 'top-0'  // Normal web browsers and iOS
           }`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-2 md:py-3">
               {/* Logo */}

@@ -186,8 +186,8 @@ body {
     min-height: auto;
   }
   
-  /* SIMPLE STATUS BAR FOR MOBILE APPS */
-  .capacitor-app body::before {
+  /* SIMPLE STATUS BAR FOR ANDROID ONLY - iOS looks good without extra padding */
+  .capacitor-app.android-app body::before {
     content: '';
     position: fixed;
     top: 0;
@@ -199,8 +199,8 @@ body {
     display: block;
   }
   
-  /* SIMPLE BODY PADDING - NO COMPLEXITY */
-  .capacitor-app .mobile-body-padding {
+  /* SIMPLE BODY PADDING FOR ANDROID ONLY - iOS doesn't need extra padding */
+  .capacitor-app.android-app .mobile-body-padding {
     padding-top: 40px; /* Just status bar height */
   }
   
