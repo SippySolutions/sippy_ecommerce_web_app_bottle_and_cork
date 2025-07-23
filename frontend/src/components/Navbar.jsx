@@ -362,30 +362,33 @@ function Navbar() {
                     <SearchBar className="w-full" placeholder="Search products, brands, categories..." />
                   </div>
 
-                  <div className="flex space-x-2">
-                    <Link
-                      to="/"
-                      className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <HomeIcon fontSize="small" className="mr-1" />
-                      Home
-                    </Link>
-                    <Link
-                      to="/products"
-                      className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Shop
-                    </Link>
-                    <Link
-                      to="/all-collections"
-                      className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Collections
-                    </Link>
-                  </div>
+                  {/* Quick Navigation - Hide on mobile platforms (Android/iOS), show on mobile browsers */}
+                  {!Capacitor.isNativePlatform() && (
+                    <div className="flex space-x-2">
+                      <Link
+                        to="/"
+                        className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <HomeIcon fontSize="small" className="mr-1" />
+                        Home
+                      </Link>
+                      <Link
+                        to="/products"
+                        className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Shop
+                      </Link>
+                      <Link
+                        to="/all-collections"
+                        className="flex-1 text-center py-2 px-4 border border-gray-200 rounded-lg text-gray-600 hover:text-[var(--color-accent)] font-medium text-sm transition-colors duration-200"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Collections
+                      </Link>
+                    </div>
+                  )}
 
                   <div>
                     <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
