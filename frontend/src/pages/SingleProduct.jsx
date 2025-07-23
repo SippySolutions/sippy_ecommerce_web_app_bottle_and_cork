@@ -195,46 +195,51 @@ function SingleProduct() {
               )}
             </div>
 
-            {/* Size Selection */}
-            {product.size && (
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-gray-900">Size</h3>
-                <div className="flex gap-2">
-                  <button className="px-4 py-2 border-2 border-gray-900 rounded-md font-medium bg-gray-900 text-white">
-                    {product.size}
-                  </button>
-                  {/* Additional size options could be added here */}
-                </div>
-              </div>
-            )}
-
-            {/* Pack Selection */}
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-900">Pack</h3>
-              <div className="flex gap-2 flex-wrap">
-                {product.packname ? (
-                  <button className="px-4 py-2 border-2 border-gray-900 rounded-md font-medium bg-gray-900 text-white">
-                    {product.packname}
-                  </button>
-                ) : (
-                  <>
-                    <button className="px-4 py-2 border border-gray-300 rounded-md hover:border-gray-400 transition-colors">
-                      Single
-                    </button>
-                    <button className="px-4 py-2 border border-gray-300 rounded-md hover:border-gray-400 transition-colors">
-                      4
-                    </button>
-                    <button className="px-4 py-2 border border-gray-300 rounded-md hover:border-gray-400 transition-colors">
-                      6
-                    </button>
-                    <button className="px-4 py-2 border border-gray-300 rounded-md hover:border-gray-400 transition-colors">
-                      12
-                    </button>
-                    <button className="px-4 py-2 border border-gray-300 rounded-md hover:border-gray-400 transition-colors">
-                      18
-                    </button>
-                  </>
+            {/* Size and Pack Selection - Combined for mobile */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:gap-8 gap-4">
+                {/* Size Selection */}
+                {product.size && (
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Size</h3>
+                    <div className="flex gap-2">
+                      <button className="px-4 py-2 border-2 border-gray-900 rounded-md font-medium bg-gray-900 text-white">
+                        {product.size}
+                      </button>
+                      {/* Additional size options could be added here */}
+                    </div>
+                  </div>
                 )}
+
+                {/* Pack Selection */}
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Pack</h3>
+                  <div className="flex gap-2 flex-wrap">
+                    {product.packname ? (
+                      <button className="px-4 py-2 border-2 border-gray-900 rounded-md font-medium bg-gray-900 text-white">
+                        {product.packname}
+                      </button>
+                    ) : (
+                      <>
+                        <button className="px-4 py-2 border border-gray-300 rounded-md hover:border-gray-400 transition-colors">
+                          Single
+                        </button>
+                        <button className="px-4 py-2 border border-gray-300 rounded-md hover:border-gray-400 transition-colors">
+                          4
+                        </button>
+                        <button className="px-4 py-2 border border-gray-300 rounded-md hover:border-gray-400 transition-colors">
+                          6
+                        </button>
+                        <button className="px-4 py-2 border border-gray-300 rounded-md hover:border-gray-400 transition-colors">
+                          12
+                        </button>
+                        <button className="px-4 py-2 border border-gray-300 rounded-md hover:border-gray-400 transition-colors">
+                          18
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
