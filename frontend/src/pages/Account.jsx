@@ -66,29 +66,38 @@ const Account = () => {
             </div>
         );
     }return (
-        <div className="flex min-h-screen overflow-hidden">
+        <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden">
             {isAuthenticated ? (
                 // Show Profile component if logged in
                 <Profile />
             ) : (
-                <>                    {/* Left Section: Form */}
-                    <div className="w-full lg:w-1/2 flex items-center justify-center bg-gray-100 p-4 sm:p-8 min-h-screen lg:min-h-0">
-                        <div className="w-full max-w-md">
-                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-4 sm:mb-6">
-                                {isLogin ? 'Welcome Back!' : 'Create an Account'}
-                            </h1>                            {/* Mobile Toggle Button - Only visible on mobile */}
-                            <div className="lg:hidden text-center mb-4 sm:mb-6 p-4 bg-white rounded-lg shadow-sm">
-                                <p className="text-gray-600 mb-3 text-sm sm:text-base">
+                <>                    {/* Left Section: Form - Full screen on mobile */}
+                    <div className="flex-1 flex flex-col justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4 min-h-screen lg:min-h-0 lg:w-1/2">
+                        <div className="w-full max-w-md mx-auto space-y-6">
+                            {/* Header */}
+                            <div className="text-center">
+                                <h1 className="text-3xl font-bold text-[var(--color-accent)] mb-2">
+                                    {isLogin ? 'Welcome Back' : 'Join Us'}
+                                </h1>
+                                <p className="text-gray-600 text-sm">
+                                    {isLogin ? 'Sign in to your account' : 'Create your account today'}
+                                </p>
+                            </div>
+
+                            {/* Mobile Toggle Card - Only visible on mobile */}
+                            <div className="lg:hidden bg-white rounded-2xl shadow-lg p-4 border border-gray-100">
+                                <p className="text-gray-600 mb-3 text-center text-sm">
                                     {isLogin ? "Don't have an account?" : 'Already have an account?'}
                                 </p>
                                 <button
                                     onClick={toggleForm}
-                                    className="bg-[var(--color-accent)] text-white font-bold py-3 px-8 rounded-md shadow-md hover:bg-opacity-90 transition-all duration-200 text-sm sm:text-base min-h-[44px] min-w-[120px]"
+                                    className="w-full bg-gray-100 text-[var(--color-accent)] font-semibold py-3 px-4 rounded-xl hover:bg-gray-200 transition-all duration-200 text-base"
                                 >
-                                    {isLogin ? 'Sign Up Instead' : 'Log In Instead'}
+                                    {isLogin ? 'Create Account' : 'Sign In Instead'}
                                 </button>
                             </div>
                             
+                            {/* Form Container */}
                             <AnimatePresence mode="wait">
                                 {isLogin ? (
                                     <motion.div
@@ -97,7 +106,7 @@ const Account = () => {
                                         animate="visible"
                                         exit="exit"
                                         variants={formVariants}
-                                        transition={{ duration: 0.5 }}
+                                        transition={{ duration: 0.3 }}
                                     >
                                         <LoginForm onLoginSuccess={handleLoginSuccess} />
                                     </motion.div>
@@ -108,10 +117,11 @@ const Account = () => {
                                         animate="visible"
                                         exit="exit"
                                         variants={formVariants}
-                                        transition={{ duration: 0.5 }}
+                                        transition={{ duration: 0.3 }}
                                     >
                                         <SignupForm />
-                                    </motion.div>                                )}
+                                    </motion.div>
+                                )}
                             </AnimatePresence>
                         </div>
                     </div>
