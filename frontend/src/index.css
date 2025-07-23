@@ -186,35 +186,22 @@ body {
     min-height: auto;
   }
   
-  /* Ensure status bar area is white - only for native apps - DISABLED to remove white gap */
+  /* SIMPLE STATUS BAR FOR MOBILE APPS */
   .capacitor-app body::before {
     content: '';
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: 36px; /* Increased from 24px to 32px for bigger status bar */
-    background: #ffffff; /* White background */
+    height: 40px; /* Status bar height */
+    background: #ffffff;
     z-index: 999;
-    display: block; /* Always show for capacitor apps */
+    display: block;
   }
   
-  .mobile-navbar-ios {
-    background: #ffffff !important;
-    /* Let the navbar component handle positioning with sticky + conditional top value */
-    padding-top: 0px;
-  }
-  
-  .mobile-body-padding {
-    /* Only add status bar padding for Capacitor apps - navbar handles itself with sticky */
-    padding-top: 0px;
-    /* Prevent keyboard from adding extra padding */
-    transition: padding-top 0.1s ease-out;
-  }
-  
-  /* Capacitor apps need some top padding for status bar */
+  /* SIMPLE BODY PADDING - NO COMPLEXITY */
   .capacitor-app .mobile-body-padding {
-    padding-top: 32px; /* Increased from 24px to 32px to match status bar */
+    padding-top: 40px; /* Just status bar height */
   }
   
   /* Keyboard-specific handling (Capacitor apps only) - MODIFIED to remove padding */
