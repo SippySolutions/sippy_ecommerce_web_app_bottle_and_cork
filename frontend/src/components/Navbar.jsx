@@ -192,29 +192,25 @@ function Navbar() {
 
               {/* Mobile Navigation Icons */}
               <div className="lg:hidden flex items-center space-x-3 ml-auto">
-                {!Capacitor.isNativePlatform() && (
-                  <>
-                    <Link to="/cart" className="relative flex flex-col items-center">
-                      <ShoppingCartIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
-                      {cartItems.length > 0 && (
-                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
-                          {cartItems.reduce((total, item) => total + item.quantity, 0)}
-                        </span>
-                      )}
-                    </Link>
-                    <Link to="/wishlist" className="relative flex flex-col items-center">
-                      <FavoriteIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
-                      {wishlistCount > 0 && (
-                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
-                          {wishlistCount}
-                        </span>
-                      )}
-                    </Link>
-                    <Link to="/account" className="flex flex-col items-center">
-                      <AccountCircleIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
-                    </Link>
-                  </>
-                )}
+                <Link to="/cart" className="relative flex flex-col items-center">
+                  <ShoppingCartIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
+                  {cartItems.length > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
+                      {cartItems.reduce((total, item) => total + item.quantity, 0)}
+                    </span>
+                  )}
+                </Link>
+                <Link to="/wishlist" className="relative flex flex-col items-center">
+                  <FavoriteIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Link>
+                <Link to="/account" className="flex flex-col items-center">
+                  <AccountCircleIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
+                </Link>
                 
                 <button
                   className="text-gray-600 hover:text-[var(--color-accent)]"
