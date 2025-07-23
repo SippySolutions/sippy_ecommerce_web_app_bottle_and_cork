@@ -51,6 +51,8 @@ const io = new Server(server, {
       'http://localhost:3000',
       'http://localhost:3002',
       'http://localhost:3003',
+      'https://www.universalliquorsnj.com',
+      'https://universalliquorsnj.com',
       process.env.FRONTEND_URL,
       process.env.CUSTOMER_APP_URL
     ].filter(Boolean),
@@ -97,6 +99,8 @@ app.use(cors({
       'http://localhost:3000',
       'http://localhost:3002',
       'http://localhost:3003',
+      'https://www.universalliquorsnj.com',
+      'https://universalliquorsnj.com',
       process.env.FRONTEND_URL,
       process.env.CUSTOMER_APP_URL
     ].filter(Boolean);
