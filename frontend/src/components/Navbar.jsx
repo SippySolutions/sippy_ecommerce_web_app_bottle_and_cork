@@ -465,7 +465,7 @@ function Navbar() {
                           to="/products" 
                           className="flex items-center text-gray-700 hover:text-[var(--color-accent)] font-bold transition-colors duration-200 px-4 py-2 rounded-md hover:bg-gray-100"
                         >
-                          All Products
+                          All PRODUCTS
                         </Link>
                       </motion.div>
                       
@@ -477,7 +477,7 @@ function Navbar() {
                           to="/collections" 
                           className="flex items-center text-gray-700 hover:text-[var(--color-accent)] font-bold transition-colors duration-200 px-4 py-2 rounded-md hover:bg-gray-100"
                         >
-                          Collections
+                          COLLECTIONS
                         </Link>
                       </motion.div>
                       
