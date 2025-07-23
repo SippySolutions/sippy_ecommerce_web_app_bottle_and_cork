@@ -23,6 +23,12 @@ const StatusBarManager = () => {
         if (Capacitor.isNativePlatform()) {
           document.documentElement.classList.add('capacitor-app');
           console.log('StatusBar: Added capacitor-app class for native platform');
+          
+          // Add platform-specific class for Android
+          if (platform === 'android') {
+            document.documentElement.classList.add('android-app');
+            console.log('StatusBar: Added android-app class for Android platform');
+          }
         }
         
         // Get status bar info first
@@ -37,22 +43,6 @@ const StatusBarManager = () => {
         console.log('StatusBar: Theme data:', theme);
         
         // Unified configuration for both iOS and Android
-        // Get status bar info first
-        const statusBarInfo = await StatusBar.getInfo();
-        console.log('StatusBar: Status bar info:', statusBarInfo);
-        
-        // Calculate the status bar height for CSS
-        let statusBarHeight = 0;
-        
-        if (platform === 'ios') {
-          // iOS: Use safe area inset or default
-          statusBarHeight = statusBarInfo.height || 44; // Common iOS status bar height
-        } else if (platform === 'android') {
-          // Android: Use reported height or default
-          statusBarHeight = statusBarInfo.height || 24; // Common Android status bar height
-        }
-        
-        // Configure status bar for both platforms
         await StatusBar.setOverlaysWebView({ overlay: false });
         await StatusBar.setBackgroundColor({ color: '#ffffff' });
         await StatusBar.setStyle({ style: 'LIGHT' }); // LIGHT = dark content on light background
@@ -60,10 +50,7 @@ const StatusBarManager = () => {
         // Force show the status bar to ensure it's visible
         await StatusBar.show();
         
-        // Set unified CSS custom property for both platforms
-        document.documentElement.style.setProperty('--status-bar-height', `${statusBarHeight}px`);
-        
-        console.log(`StatusBar: Applied unified styling - Platform: ${platform}, Height: ${statusBarHeight}px, Background: white`);
+        console.log(`StatusBar: Applied unified styling - Platform: ${platform}, Background: white`);
         
         // Verify the configuration
         const finalInfo = await StatusBar.getInfo();
