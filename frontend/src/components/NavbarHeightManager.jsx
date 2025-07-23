@@ -6,7 +6,7 @@ const NavbarHeightManager = () => {
     const adjustBodyPadding = () => {
       // Only run on mobile devices
       if (window.innerWidth <= 768) {
-        const navbar = document.querySelector('.mobile-navbar-ios');
+        const navbar = document.querySelector('.mobile-navbar');
         const mainContent = document.querySelector('.mobile-body-padding');
         
         if (navbar && mainContent) {
