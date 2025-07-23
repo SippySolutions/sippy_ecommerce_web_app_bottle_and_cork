@@ -199,17 +199,19 @@ body {
     display: none; /* Hide this element completely */
   }
   
-  /* Android-specific status bar background and safe area */
-  .capacitor-app[data-platform="android"] body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: env(safe-area-inset-top, 0px);
-    background: #ffffff;
-    z-index: 999;
-    display: block; /* Show for Android only */
+  /* Android-specific status bar background - using media query for Android detection */
+  @media screen and (max-width: 768px) and (orientation: portrait) {
+    .capacitor-app.android-app body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: env(safe-area-inset-top, 24px); /* fallback to 24px for typical Android status bar */
+      background: #ffffff;
+      z-index: 999;
+      display: block;
+    }
   }
   
   .mobile-navbar-ios {
@@ -225,9 +227,11 @@ body {
     padding-top: 0px;
   }
   
-  /* Android-specific navbar with safe area */
-  .capacitor-app[data-platform="android"] .mobile-navbar-ios {
-    padding-top: env(safe-area-inset-top, 0px);
+  /* Android-specific navbar with safe area - using class detection */
+  @media screen and (max-width: 768px) {
+    .android-app .mobile-navbar-ios {
+      padding-top: env(safe-area-inset-top, 24px);
+    }
   }
   
   .mobile-body-padding {
@@ -237,9 +241,11 @@ body {
     transition: padding-top 0.1s ease-out;
   }
   
-  /* Android-specific body padding to account for status bar */
-  .capacitor-app[data-platform="android"] .mobile-body-padding {
-    padding-top: calc(80px + env(safe-area-inset-top, 0px));
+  /* Android-specific body padding - using class detection */
+  @media screen and (max-width: 768px) {
+    .android-app .mobile-body-padding {
+      padding-top: calc(80px + env(safe-area-inset-top, 24px));
+    }
   }
   
   /* Keyboard-specific handling (Capacitor apps only) - MODIFIED to remove padding */
