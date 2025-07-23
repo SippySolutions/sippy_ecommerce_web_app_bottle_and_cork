@@ -634,7 +634,7 @@ function Navbar() {
                   onMouseLeave={() => setHoveredDepartment(null)}
                 >
                   <div className="p-4 h-full overflow-y-auto">
-                    <div className="grid grid-cols-5 gap-4">
+                    <div className="grid grid-cols-7 gap-2">
                       {departments[hoveredDepartment].categories
                         .filter(cat => cat.category && cat.category !== null)
                         .map((category, catIndex) => (
