@@ -46,9 +46,39 @@ const BasePaymentForm = ({
     // Accept.js is always required for real payment processing
     // Backend determines if using Authorize.Net sandbox or production mode
 
+    console.log('🔐 Attempting to load Accept.js...');
+    console.log('   Protocol:', window.location.protocol);
+    console.log('   Host:', window.location.host);
+
+    // Check if Accept.js is already available
+    if (window.Accept) {
+      console.log('✅ Accept.js already available in window');
+      setAcceptJSLoaded(true);
+      return;
+    }
+
     const existingScript = document.querySelector('script[src*="accept.js"]');
     if (existingScript) {
-      setAcceptJSLoaded(true);
+      console.log('✅ Accept.js script already exists in DOM, waiting for it to load...');
+      
+      // Wait for Accept.js to be available
+      const checkAcceptAvailable = setInterval(() => {
+        if (window.Accept) {
+          console.log('✅ Accept.js now available');
+          setAcceptJSLoaded(true);
+          clearInterval(checkAcceptAvailable);
+        }
+      }, 100);
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        if (!window.Accept) {
+          console.error('⏱️ Timeout waiting for Accept.js');
+          clearInterval(checkAcceptAvailable);
+          setAcceptJSLoaded(false);
+        }
+      }, 10000);
+
       return;
     }
 
@@ -58,24 +88,49 @@ const BasePaymentForm = ({
     script.charset = 'utf-8';
     
     script.onload = () => {
-      console.log('✅ Accept.js loaded successfully');
-      setAcceptJSLoaded(true);
+      console.log('✅ Accept.js script loaded');
+      
+      // Wait for Accept object to be available
+      const checkAcceptAvailable = setInterval(() => {
+        if (window.Accept) {
+          console.log('✅ window.Accept now available');
+          setAcceptJSLoaded(true);
+          clearInterval(checkAcceptAvailable);
+        }
+      }, 100);
+
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        if (!window.Accept) {
+          console.error('⏱️ Timeout: Accept.js loaded but window.Accept not available');
+          clearInterval(checkAcceptAvailable);
+          setAcceptJSLoaded(false);
+        }
+      }, 5000);
     };
 
-    script.onerror = () => {
+    script.onerror = (error) => {
       console.error('❌ Failed to load Accept.js');
-      onError?.(new Error('Failed to load payment processor'));
+      console.error('   Error:', error);
+      console.error('   This may be due to:');
+      console.error('   1. Network connectivity issues');
+      console.error('   2. HTTPS required (you are on:', window.location.protocol, ')');
+      console.error('   3. CORS or Content Security Policy blocking');
+      console.error('   4. Authorize.Net servers are down');
+      onError?.(new Error('Failed to load payment processor. Please check your connection and try again.'));
       setAcceptJSLoaded(false);
     };
 
     document.body.appendChild(script);
+    console.log('📝 Accept.js script added to DOM');
 
     return () => {
       if (script && document.body.contains(script)) {
         document.body.removeChild(script);
+        console.log('🗑️ Accept.js script removed from DOM');
       }
     };
-  }, [useAcceptJS, onError]);
+  }, [onError]);
 
   // Auto-fill billing info
   useEffect(() => {
@@ -250,6 +305,19 @@ const BasePaymentForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Accept.js Loading Indicator */}
+      {!acceptJSLoaded && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center space-x-3">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+            <div>
+              <p className="text-sm font-medium text-blue-800">Loading Payment Processor...</p>
+              <p className="text-xs text-blue-600 mt-1">Please wait while we securely connect to Authorize.Net</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Card Information Section */}
       <div className="bg-white p-6 rounded-lg border" style={{ borderColor: theme.secondary }}>
         <h3 className="text-lg font-semibold mb-4" style={{ color: theme.headingText }}>
