@@ -1,9 +1,26 @@
 import React from 'react';
 import { ArrowBack } from '@mui/icons-material';
 import { useNavigate, Link } from 'react-router-dom';
+import { useCMS } from '../Context/CMSContext';
 
 const PrivacyPolicy = () => {
   const navigate = useNavigate();
+  const { cmsData } = useCMS();
+  const storeName = cmsData?.storeInfo?.name || 'Bottle and Cork';
+  const storeEmail = cmsData?.storeInfo?.email || 'info@sippysolutions.com';
+  
+  // Format address - handle both object and string formats
+  const formatAddress = (address) => {
+    if (!address) return '';
+    if (typeof address === 'string') return address;
+    if (typeof address === 'object') {
+      const { street, city, state, zipCode, country } = address;
+      return `${street || ''}, ${city || ''}, ${state || ''} ${zipCode || ''}${country ? ', ' + country : ''}`.replace(/,\s*,/g, ',').trim();
+    }
+    return '';
+  };
+  
+  const storeAddress = formatAddress(cmsData?.storeInfo?.address);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -17,7 +34,7 @@ const PrivacyPolicy = () => {
             <ArrowBack className="w-5 h-5 mr-2" />
             Back
           </button>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Universal Liquors Privacy Policy</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">{storeName} Privacy Policy</h1>
           <p className="text-gray-600">Last Updated: June 23, 2025</p>
         </div>
       </div>
@@ -33,7 +50,7 @@ const PrivacyPolicy = () => {
                 1. Introduction
               </h2>
               <p className="text-gray-700 leading-relaxed">
-                Universal Liquors ("we," "us," or "our") respects your privacy. This Privacy Policy describes our practices regarding the information we collect from you when you use or access our website and mobile application (the "Site"). Our Site is powered in part by Sippy Solution LLC, an independent company whose own website is currently under development. Sippy Solution LLC processes certain data on our behalf to enable site functionality, analytics, and support. Please note that this Privacy Policy does not reference or apply to any other websites or companies with similar names.
+                {storeName} ("we," "us," or "our") respects your privacy. This Privacy Policy describes our practices regarding the information we collect from you when you use or access our website and mobile application (the "Site"). Our Site is powered in part by Sippy Solution LLC, an independent company whose own website is currently under development. Sippy Solution LLC processes certain data on our behalf to enable site functionality, analytics, and support. Please note that this Privacy Policy does not reference or apply to any other websites or companies with similar names.
               </p>
             </section>
 
@@ -210,12 +227,17 @@ const PrivacyPolicy = () => {
               <p className="text-gray-700 leading-relaxed">
                 If you have questions about this Privacy Policy, please contact us at:{' '}
                 <a 
-                  href="mailto:info@sippysolutions.com" 
+                  href={`mailto:${storeEmail}`}
                   className="text-blue-600 hover:text-blue-800 underline"
                 >
-                  info@sippysolutions.com
+                  {storeEmail}
                 </a>
               </p>
+              {storeAddress && (
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  <strong>Store Location:</strong> {storeAddress}
+                </p>
+              )}
               <p className="text-gray-700 leading-relaxed mt-4">
                 You can also review our{' '}
                 <Link to="/terms-and-conditions" className="text-blue-600 hover:text-blue-800 underline">

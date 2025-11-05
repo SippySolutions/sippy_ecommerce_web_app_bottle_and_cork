@@ -15,7 +15,7 @@ const removedCmsIntegration = {
   cmsData: {
     logo: 'https://sippysolutionsbucket.s3.us-east-2.amazonaws.com/universal_liquors/Logo.png',
     storeInfo: {
-      name: 'Universal Liquors',
+      name: 'Store Name',
       tagline: 'Your premium liquor destination'
     }
   }
@@ -66,7 +66,7 @@ const LoadingScreen = ({ onLoadingComplete, serverHealthCheck = null, error = nu
 // TO RESTORE CMS INTEGRATION:
 // ===================================================================
 // 1. Add cmsData prop back to LoadingScreen component
-// 2. Replace hardcoded "Universal Liquors" with cmsData?.storeInfo?.name
+// 2. Replace hardcoded store name with cmsData?.storeInfo?.name
 // 3. Replace hardcoded store icon with cmsData?.logo
 // 4. Replace hardcoded tagline with cmsData?.storeInfo?.tagline
 // 5. Update parent components to pass cmsData prop

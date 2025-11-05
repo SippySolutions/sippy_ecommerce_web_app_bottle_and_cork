@@ -15,6 +15,7 @@ import AuthProvider from './components/AuthContext.jsx';
 import Cart from './pages/Cart.jsx';
 import {CartProvider} from './Context/CartContext.jsx';
 import {CMSProvider} from './Context/CMSContext.jsx';
+import {useCMS} from './Context/CMSContext.jsx';
 import {AgeVerificationProvider, useAgeVerification} from './Context/AgeVerificationContext.jsx';
 import {WishlistProvider} from './Context/WishlistContext.jsx';
 import {NotificationProvider} from './Context/NotificationContext.jsx';
@@ -48,6 +49,7 @@ function AppContent() {
     const {isVerified, isDenied, isLoading, handleVerified, handleDenied} = useAgeVerification();
     const { updateAvailable, updateInfo, redirectToPlayStore, dismissUpdate } = useAppUpdate();
     const { isCapacitor, platform, isAndroid } = useCapacitor();
+    const { cmsData } = useCMS();
     
     // Initialize theme preview functionality
     useThemePreview();
@@ -82,7 +84,7 @@ function AppContent() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-white">
                 <InlineLoader 
-                    text="Initializing Universal Liquors..." 
+                    text={`Initializing ${cmsData?.storeInfo?.name || 'Store'}...`}
                     size="lg"
                 />
             </div>

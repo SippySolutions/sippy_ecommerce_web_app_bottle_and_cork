@@ -22,7 +22,7 @@ const InlineLoader = ({
 
   return (
     <div className={`flex flex-col items-center justify-center space-y-3 ${className}`}>
-      {/* Universal Liquors branded spinner */}
+      {/* Store branded spinner */}
       <div className="relative">
         <motion.div
           className={`${sizeClasses[size]} border-2 border-gray-200 border-t-gray-800 rounded-full`}

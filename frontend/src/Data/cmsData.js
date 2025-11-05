@@ -11,8 +11,8 @@ const defaultCmsData = {
     linkText: '#FF5722',
   },
   storeInfo: {
-    name: 'Universal Liquors',
-    email: 'universalliquors@gmail.com',
+    name: 'Bottle and Cork',
+    email: 'info@bottleandcork.com',
     phone: '(201) 863-96544',
     address: '2117 Bergenline Ave #1, Union City, NJ 07087',
     storeHours: {

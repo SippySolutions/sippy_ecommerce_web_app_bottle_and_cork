@@ -1,5 +1,5 @@
 @echo off
-echo Building Universal Liquors Android App (Live Server Mode)
+echo Building Sippy E-Commerce Android App (Live Server Mode)
 echo ============================================================
 
 echo Step 1: Building mobile-optimized frontend...
@@ -15,7 +15,7 @@ echo ============================================================
 echo Build complete! 
 echo.
 echo Your app is now configured to load from:
-echo https://www.universalliquorsnj.com
+echo https://www.bottlecork.com/
 echo.
 echo In Android Studio:
 echo 1. Build > Generate Signed Bundle/APK

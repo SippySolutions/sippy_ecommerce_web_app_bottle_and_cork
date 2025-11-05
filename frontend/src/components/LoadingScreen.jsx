@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const LoadingScreen = ({ onLoadingComplete, serverHealthCheck = null, error = null }) => {
+const LoadingScreen = ({ onLoadingComplete, serverHealthCheck = null, error = null, cmsData = null }) => {
+  const storeName = cmsData?.storeInfo?.name || 'Store';
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState('Loading...');
   const [isVisible, setIsVisible] = useState(true);
@@ -153,7 +154,7 @@ const LoadingScreen = ({ onLoadingComplete, serverHealthCheck = null, error = nu
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              Universal Liquors
+              {storeName}
             </motion.h1>
 
             {/* Loading Text */}

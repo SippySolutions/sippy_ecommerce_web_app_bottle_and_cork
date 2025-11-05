@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { getNetworkStatus, warmupAPI } from '../services/mobileApi';
 import InlineLoader from './InlineLoader';
+import { useCMS } from '../Context/CMSContext';
 
 const NetworkStatus = ({ children }) => {
+  const { cmsData } = useCMS();
+  const storeName = cmsData?.storeInfo?.name || 'Store';
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [networkInfo, setNetworkInfo] = useState(null);
   const [isServerWarming, setIsServerWarming] = useState(false);
@@ -84,7 +87,7 @@ const NetworkStatus = ({ children }) => {
         <div className="max-w-md w-full text-center">
           <div className="bg-white rounded-lg shadow-lg p-8">
             <InlineLoader 
-              text="Getting Universal Liquors ready for you..." 
+              text={`Getting ${storeName} ready for you...`}
               size="lg"
               showProgress={true}
               progress={60}

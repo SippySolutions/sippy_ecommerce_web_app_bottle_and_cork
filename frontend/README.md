@@ -1,9 +1,9 @@
-# Universal Liquors Frontend
+# Sippy E-Commerce Web App - Frontend
 
-Modern React e-commerce frontend built with Vite, Tailwind CSS, and Framer Motion.
+Modern React e-commerce frontend built with Vite, Tailwind CSS, and Framer Motion. Multi-tenant architecture supporting dynamic store branding.
 
 ## 🚀 Live Demo
-[Universal Liquors](https://your-vercel-url.vercel.app)
+[Demo Store](https://your-vercel-url.vercel.app)
 
 ## 🛠️ Tech Stack
 - **React 19** - Modern React with latest features
@@ -102,4 +102,4 @@ src/
 - Edge (latest)
 
 ## 📄 License
-Private - Universal Liquors
+Private - Sippy Solutions LLC

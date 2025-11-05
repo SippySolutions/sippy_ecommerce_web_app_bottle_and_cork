@@ -1,8 +1,26 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowBack } from '@mui/icons-material';
+import { useCMS } from '../Context/CMSContext';
 
 const TermsAndConditions = () => {
+  const { cmsData } = useCMS();
+  const storeName = cmsData?.storeInfo?.name || 'Bottle and Cork';
+  const storeEmail = cmsData?.storeInfo?.email || 'info@sippysolutions.com';
+  
+  // Format address - handle both object and string formats
+  const formatAddress = (address) => {
+    if (!address) return '';
+    if (typeof address === 'string') return address;
+    if (typeof address === 'object') {
+      const { street, city, state, zipCode, country } = address;
+      return `${street || ''}, ${city || ''}, ${state || ''} ${zipCode || ''}${country ? ', ' + country : ''}`.replace(/,\s*,/g, ',').trim();
+    }
+    return '';
+  };
+  
+  const storeAddress = formatAddress(cmsData?.storeInfo?.address);
+  
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -15,7 +33,7 @@ const TermsAndConditions = () => {
             <ArrowBack className="w-5 h-5 mr-2" />
             Back to Home
           </Link>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Universal Liquors Terms and Conditions</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">{storeName} Terms and Conditions</h1>
           <p className="text-gray-600">Last Updated: June 23, 2025</p>
         </div>
       </div>
@@ -31,7 +49,7 @@ const TermsAndConditions = () => {
                 1. Acceptance of Terms
               </h2>
               <p className="text-gray-700 leading-relaxed">
-                These Terms and Conditions ("Terms") govern your access to and use of the Universal Liquors website and mobile application (the "Site"), including all features, services, and content provided by Universal Liquors. By accessing or using the Site, you agree to be bound by these Terms and our Privacy Policy. If you do not agree to these Terms, you may not use the Site.
+                These Terms and Conditions ("Terms") govern your access to and use of the {storeName} website and mobile application (the "Site"), including all features, services, and content provided by {storeName}. By accessing or using the Site, you agree to be bound by these Terms and our Privacy Policy. If you do not agree to these Terms, you may not use the Site.
               </p>
             </section>
 
@@ -129,7 +147,7 @@ const TermsAndConditions = () => {
                 7. Intellectual Property
               </h2>
               <p className="text-gray-700 leading-relaxed">
-                All content on the Site, including text, graphics, logos, and images, is the property of Universal Liquors or its licensors and is protected by intellectual property laws. You may not use, copy, or reproduce any content without our express written permission.
+                All content on the Site, including text, graphics, logos, and images, is the property of {storeName} or its licensors and is protected by intellectual property laws. You may not use, copy, or reproduce any content without our express written permission.
               </p>
             </section>
 
@@ -163,7 +181,7 @@ const TermsAndConditions = () => {
                 10. Limitation of Liability
               </h2>
               <p className="text-gray-700 leading-relaxed">
-                To the maximum extent permitted by law, Universal Liquors shall not be liable for any direct, indirect, incidental, or consequential damages arising from your use of the Site or any products purchased through the Site.
+                To the maximum extent permitted by law, {storeName} shall not be liable for any direct, indirect, incidental, or consequential damages arising from your use of the Site or any products purchased through the Site.
               </p>
             </section>
 
@@ -195,12 +213,17 @@ const TermsAndConditions = () => {
               <p className="text-gray-700 leading-relaxed">
                 If you have any questions about these Terms, please contact us at:{' '}
                 <a 
-                  href="mailto:info@sippysolutions.com" 
+                  href={`mailto:${storeEmail}`}
                   className="text-blue-600 hover:text-blue-800 underline"
                 >
-                  info@sippysolutions.com
+                  {storeEmail}
                 </a>
               </p>
+              {storeAddress && (
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  <strong>Store Location:</strong> {storeAddress}
+                </p>
+              )}
             </section>
 
           </div>

@@ -3,7 +3,7 @@ import { KeyboardResize, KeyboardStyle } from '@capacitor/keyboard';
 
 const config: CapacitorConfig = {
   appId: 'com.sippysolution.universalliquor',
-  appName: 'Universal Liquors',
+  appName: 'Bottle and Cork',
   webDir: 'dist',
   server: {
     url: 'https://www.universalliquorsnj.com',

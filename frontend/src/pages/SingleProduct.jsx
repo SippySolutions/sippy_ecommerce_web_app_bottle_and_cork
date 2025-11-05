@@ -247,7 +247,7 @@ function SingleProduct() {
             <div className="flex items-center gap-4">
               <button
                 onClick={handleAddToCart}
-                className="flex-1 bg-red-700 text-white py-4 px-6 rounded-md font-semibold text-lg hover:bg-red-800 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 bg-[var(--color-accent)] text-white py-4 px-6 rounded-md font-semibold text-lg hover:bg-red-800 transition-colors flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5-5M7 13l-2.5 5M17 17a2 2 0 11-4 0 2 2 0 014 0zM9 17a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -266,7 +266,7 @@ function SingleProduct() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
                   </svg>
                 </button>
-                <div className="px-4 py-2 font-bold text-lg bg-red-700 text-white min-w-[50px] text-center">
+                <div className="px-4 py-2 font-bold text-lg bg-[var(--color-accent)] text-white min-w-[50px] text-center">
                   {quantity}
                 </div>
                 <button
