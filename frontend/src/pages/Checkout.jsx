@@ -270,6 +270,12 @@ const Checkout = () => {
   const handleAuthorizationComplete = (authResult) => {
     console.log('Authorization completed:', authResult);
     
+    // Check if terms are agreed before processing
+    if (!agreedToTerms) {
+      toast.error('Please agree to the Terms & Conditions before placing your order');
+      return;
+    }
+    
     if (authResult.success) {
       toast.success('Order placed successfully! Payment is authorized and will be charged when ready for delivery.');
       clearCart();
@@ -826,7 +832,7 @@ const Checkout = () => {
                     billingInfo={billingAddress}
                     onPaymentSuccess={handleAuthorizationComplete}
                     onPaymentError={handlePaymentError}
-                    disabled={loading || !agreedToTerms}
+                    disabled={loading}
                     orderData={{
                       customerType: isAuthenticated ? 'user' : 'guest',
                       cartItems: cartItems.map(item => ({

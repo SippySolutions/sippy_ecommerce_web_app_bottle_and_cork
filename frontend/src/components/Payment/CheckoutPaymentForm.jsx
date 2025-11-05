@@ -107,16 +107,25 @@ const CheckoutPaymentForm = ({
         </div>
       </div>
 
-      {/* Base Payment Form */}
+      {/* Base Payment Form - Only disabled during payment processing */}
       <BasePaymentForm
         onSubmit={handleSubmit}
         onError={onPaymentError}
         billingAddress={billingAddress}
-        disabled={disabled || paymentLoading}
+        disabled={paymentLoading}
         buttonText={`Authorize $${amount?.toFixed(2)}`}
         showBillingFields={true}
         isAuthOnly={true}
-      />
+      >
+        {/* Custom submit button that respects terms agreement */}
+        {disabled && !paymentLoading && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
+            <p className="text-sm font-medium text-yellow-800">
+              ⚠️ Payment authorization disabled until you agree to Terms & Conditions below
+            </p>
+          </div>
+        )}
+      </BasePaymentForm>
 
       {/* Payment Error Display */}
       {paymentError && (
