@@ -8,7 +8,6 @@ export const storeConfig = {
   
   // API Configuration (REQUIRED - from environment)
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001',
-  apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:5001',
   
   // Payment Configuration (REQUIRED - from environment, store-specific)
   authorizeNet: {
