@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { toast } from 'react-toastify';
 import { AuthContext } from '../AuthContext';
 import { addPaymentMethod, deletePaymentMethod, validatePaymentMethods, syncPaymentMethods, fetchUserProfile } from '../../services/api';
-import AcceptJSForm from './AcceptJSForm';
+import SaveCardForm from './SaveCardForm';
 
 const PaymentMethodManager = ({ onPaymentMethodsUpdated }) => {
   const { user, updateUser } = useContext(AuthContext);
@@ -242,14 +242,13 @@ const PaymentMethodManager = ({ onPaymentMethodsUpdated }) => {
       {showAddForm && paymentMethods.length < 3 && (
         <div className="border rounded-lg p-4 bg-gray-50">
           <h4 className="text-md font-medium mb-4">Add New Payment Method</h4>
-          <AcceptJSForm
+          <SaveCardForm
             onTokenReceived={handleAddPaymentMethod}
-            onPaymentError={(error) => {
+            onError={(error) => {
               console.error('Payment form error:', error);
               toast.error(error.message || 'Payment form error');
             }}
             disabled={loading}
-            buttonText="Save Payment Method"
           />
         </div>
       )}

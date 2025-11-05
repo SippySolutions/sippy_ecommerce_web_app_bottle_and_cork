@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import AcceptJSForm from './AcceptJSForm';
+import CheckoutPaymentForm from './CheckoutPaymentForm';
 import { paymentService } from '../../services/paymentService';
 
 const EnhancedPaymentForm = ({ 
@@ -41,41 +41,6 @@ const EnhancedPaymentForm = ({
 
   const handleCardSelection = (card) => {
     setSelectedCard(card);
-  };
-
-  const handleTokenReceived = async (tokenData) => {
-    setProcessing(true);
-    
-    try {
-      const paymentData = {
-        token: tokenData.token,
-        amount: amount,
-        billingInfo: billingInfo,
-        userId: user._id,
-        cartItems: orderData.cartItems,
-        orderType: orderData.orderType,
-        shippingInfo: orderData.shippingInfo,
-        subtotal: orderData.subtotal,
-        taxAmount: orderData.taxAmount,
-        tip: orderData.tip,
-        bagFee: orderData.bagFee
-      };
-
-      const result = await paymentService.processTokenPayment(paymentData);
-      
-      if (result.success) {
-        toast.success('Payment processed successfully!');
-        onPaymentSuccess(result);
-      } else {
-        throw new Error(result.message || 'Payment failed');
-      }
-    } catch (error) {
-      console.error('Payment error:', error);
-      toast.error(error.message || 'Payment processing failed');
-      onPaymentError(error);
-    } finally {
-      setProcessing(false);
-    }
   };
 
   const handleSavedCardPayment = async () => {
@@ -249,13 +214,13 @@ const EnhancedPaymentForm = ({
       )}
 
       {paymentMethod === 'new' && showCardForm && (
-        <AcceptJSForm
-          onTokenReceived={handleTokenReceived}
+        <CheckoutPaymentForm
+          onAuthorizationComplete={onPaymentSuccess}
           onPaymentError={onPaymentError}
-          billingInfo={billingInfo}
+          billingAddress={billingInfo}
           disabled={processing || disabled}
-          buttonText="Pay Now"
           amount={amount}
+          orderData={orderData}
         />
       )}
 

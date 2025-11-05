@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}/api`;
+const STORE_DB_NAME = import.meta.env.VITE_STORE_DB_NAME;
 
 // Simplified payment service - authorization only
 // Capture, void, and refund operations are handled by the separate admin application
@@ -11,9 +12,13 @@ export class PaymentService {
       timeout: 30000,
     });
 
-    // Add auth token to requests (optional for guest checkout)
+    // Add auth token and database header to requests
     this.apiClient.interceptors.request.use(
       (config) => {
+        // Add store database header (REQUIRED)
+        config.headers['X-Store-DB'] = STORE_DB_NAME;
+        
+        // Add auth token (optional for guest checkout)
         const token = localStorage.getItem('token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;

@@ -6,8 +6,7 @@ import { CartContext } from '../Context/CartContext';
 import { AuthContext } from '../components/AuthContext';
 import { useCMS } from '../Context/CMSContext';
 import { useAgeVerification } from '../Context/AgeVerificationContext';
-import AcceptJSForm from '../components/Payment/AcceptJSForm';
-import AuthorizationOnlyPaymentForm from '../components/Payment/AuthorizationOnlyPaymentForm';
+import EnhancedPaymentForm from '../components/Payment/EnhancedPaymentForm';
 import axios from 'axios';
 import { processCheckout, processSavedCardCheckout, processGuestCheckout, processAuthorization } from '../services/api';
 
@@ -820,187 +819,39 @@ const Checkout = () => {
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-6"
                 >
-                  {/* Payment Method Selection */}
-                  <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h3 className="text-lg font-semibold mb-4">Payment Method</h3>
-                    
-                    {isAuthenticated && user?.billing?.length > 0 && (
-                      <div className="mb-6">                        <div className="flex space-x-4 mb-4">
-                          <button
-                            onClick={() => setPaymentMethod('saved')}
-                            className="px-4 py-2 rounded-md font-medium transition-all duration-200"
-                            style={{
-                              backgroundColor: paymentMethod === 'saved' ? theme.accent : theme.muted,
-                              color: paymentMethod === 'saved' ? 'white' : theme.bodyText
-                            }}
-                            onMouseEnter={(e) => {
-                              if (paymentMethod !== 'saved') {
-                                e.target.style.backgroundColor = `${theme.secondary}50`;
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (paymentMethod !== 'saved') {
-                                e.target.style.backgroundColor = theme.muted;
-                              }
-                            }}
-                          >
-                            Saved Cards
-                          </button>
-                          <button
-                            onClick={() => setPaymentMethod('new')}
-                            className="px-4 py-2 rounded-md font-medium transition-all duration-200"
-                            style={{
-                              backgroundColor: paymentMethod === 'new' ? theme.accent : theme.muted,
-                              color: paymentMethod === 'new' ? 'white' : theme.bodyText
-                            }}
-                            onMouseEnter={(e) => {
-                              if (paymentMethod !== 'new') {
-                                e.target.style.backgroundColor = `${theme.secondary}50`;
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (paymentMethod !== 'new') {
-                                e.target.style.backgroundColor = theme.muted;
-                              }
-                            }}
-                          >
-                            New Card
-                          </button>
-                        </div>{paymentMethod === 'saved' && (
-                          <div className="space-y-3">
-                            {user.billing && user.billing.length > 0 ? (
-                              user.billing.map((card) => (                                <div
-                                  key={card.id}
-                                  onClick={() => setSelectedCard(card)}
-                                  className="p-4 border rounded-lg cursor-pointer transition-all duration-200 hover:transform hover:scale-[1.02]"
-                                  style={{
-                                    borderColor: selectedCard?.id === card.id ? theme.accent : theme.secondary,
-                                    backgroundColor: selectedCard?.id === card.id ? `${theme.accent}10` : 'white'
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    if (selectedCard?.id !== card.id) {
-                                      e.target.style.borderColor = `${theme.accent}50`;
-                                    }
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    if (selectedCard?.id !== card.id) {
-                                      e.target.style.borderColor = theme.secondary;
-                                    }
-                                  }}
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-3">
-                                      <div className="w-12 h-8 rounded flex items-center justify-center text-xs font-medium text-white" 
-                                           style={{ background: `linear-gradient(135deg, ${theme.accent}, ${theme.primary})` }}>
-                                        {card.cardType?.substring(0, 4) || 'CARD'}
-                                      </div>
-                                      <div>
-                                        <div className="font-medium" style={{ color: theme.headingText }}>
-                                          {card.cardType || 'Card'} ending in {card.lastFour || '****'}
-                                        </div>
-                                        <div className="text-sm" style={{ color: theme.bodyText }}>
-                                          Expires {card.expiryMonth}/{card.expiryYear}
-                                        </div>
-                                        {card.billingAddress && (
-                                          <div className="text-xs" style={{ color: theme.bodyText }}>
-                                            {card.billingAddress.city}, {card.billingAddress.state}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                      {card.isDefault && (
-                                        <span className="text-xs px-2 py-1 rounded-full text-white" style={{ backgroundColor: '#10B981' }}>
-                                          Default
-                                        </span>
-                                      )}
-                                      {selectedCard?.id === card.id && (
-                                        <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.accent }}>
-                                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                          </svg>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="text-center py-8 text-gray-500">
-                                <p>No saved payment methods found</p>
-                                <button
-                                  onClick={() => setPaymentMethod('new')}
-                                  className="mt-2 text-blue-600 hover:text-blue-800 text-sm"
-                                >
-                                  Add a new payment method
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}                    {paymentMethod === 'new' && (
-                      <div>                        <AuthorizationOnlyPaymentForm
-                          amount={total}
-                          onAuthorizationComplete={handleAuthorizationComplete}
-                          onPaymentError={handlePaymentError}
-                          disabled={loading || !agreedToTerms}
-                          billingAddress={billingAddress}orderData={{
-                            customerType: isAuthenticated ? 'user' : 'guest',
-                            cartItems: cartItems.map(item => ({
-                              product: item._id,
-                              quantity: item.quantity
-                            })),
-                            shippingAddress: (orderType === 'delivery' || orderType === 'scheduled') ? shippingAddress : null,
-                            billingAddress: billingAddress,
-                            orderType: orderType,
-                            scheduledDelivery: orderType === 'scheduled' ? {
-                              date: scheduledDelivery.date,
-                              timeSlot: scheduledDelivery.timeSlot,
-                              instructions: scheduledDelivery.instructions,
-                              isScheduled: true
-                            } : null,
-                            tip: tip,
-                            bagFee: (orderType === 'delivery' || orderType === 'scheduled') ? bagFee : 0,
-                            deliveryFee: (orderType === 'delivery' || orderType === 'scheduled') ? deliveryFee : 0,
-                            saveCard: isAuthenticated ? saveCard && user?.billing?.length < 3 : false,
-                            guestInfo: !isAuthenticated ? guestInfo : null,
-                            ageVerified: Boolean(getAgeVerificationStatus()),
-                            ageVerifiedAt: getAgeVerificationStatus() ? new Date(getAgeVerificationStatus()) : null
-                          }}
-                        />
-
-                        {isAuthenticated && (
-                          <div className="mt-4">
-                            <label className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                checked={saveCard}
-                                onChange={(e) => setSaveCard(e.target.checked)}
-                                disabled={user?.billing?.length >= 3}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50"
-                              />
-                              <span className="text-sm text-gray-700">
-                                Save this card for future purchases
-                                {user?.billing?.length >= 3 && (
-                                  <span className="text-red-600 ml-1">
-                                    (Maximum 3 cards - delete one to save new)
-                                  </span>
-                                )}
-                              </span>
-                            </label>
-                            {user?.billing?.length >= 3 && (
-                              <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                                <p className="text-sm text-yellow-800">
-                                  <strong>Card limit reached:</strong> You have {user.billing.length}/3 saved cards. 
-                                  Go to your profile to manage saved payment methods.
-                                </p>
-                              </div>
-                            )}
-                          </div>                        )}
-                      </div>
-                    )}
-                  </div>
+                  {/* Enhanced Payment Form - Handles both saved cards and new cards */}
+                  <EnhancedPaymentForm
+                    user={user}
+                    amount={total}
+                    billingInfo={billingAddress}
+                    onPaymentSuccess={handleAuthorizationComplete}
+                    onPaymentError={handlePaymentError}
+                    disabled={loading || !agreedToTerms}
+                    orderData={{
+                      customerType: isAuthenticated ? 'user' : 'guest',
+                      cartItems: cartItems.map(item => ({
+                        product: item._id,
+                        quantity: item.quantity,
+                        price: item.price // REQUIRED for amount calculation
+                      })),
+                      shippingAddress: (orderType === 'delivery' || orderType === 'scheduled') ? shippingAddress : null,
+                      billingAddress: billingAddress,
+                      orderType: orderType,
+                      scheduledDelivery: orderType === 'scheduled' ? {
+                        date: scheduledDelivery.date,
+                        timeSlot: scheduledDelivery.timeSlot,
+                        instructions: scheduledDelivery.instructions,
+                        isScheduled: true
+                      } : null,
+                      tip: tip,
+                      bagFee: (orderType === 'delivery' || orderType === 'scheduled') ? bagFee : 0,
+                      deliveryFee: (orderType === 'delivery' || orderType === 'scheduled') ? deliveryFee : 0,
+                      saveCard: isAuthenticated ? saveCard && user?.billing?.length < 3 : false,
+                      guestInfo: !isAuthenticated ? guestInfo : null,
+                      ageVerified: Boolean(getAgeVerificationStatus()),
+                      ageVerifiedAt: getAgeVerificationStatus() ? new Date(getAgeVerificationStatus()) : null
+                    }}
+                  />
                 </motion.div>
               )}
 
