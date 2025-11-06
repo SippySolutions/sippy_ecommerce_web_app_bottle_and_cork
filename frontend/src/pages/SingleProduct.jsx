@@ -362,7 +362,7 @@ function SingleProduct() {
                   {/* CTA Buttons */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                     <a
-                      href={getOrderingPlatforms().uberEats}
+                      href={getOrderingPlatforms().ubereats}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-center gap-3 px-6 py-4 bg-[var(--color-accent)] text-white rounded-xl font-semibold shadow-md hover:shadow-lg hover:scale-105 transition-all"
@@ -374,8 +374,8 @@ function SingleProduct() {
                       href={getOrderingPlatforms().postmates}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-3 px-6 py-4 bg-white text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg hover:scale-105 transition-all border-2 border-gray-300 hover:border-gray-400"
-                    >
+                      className="flex items-center justify-center gap-3 px-6 py-4 bg-[var(--color-accent)] text-white rounded-xl font-semibold shadow-md hover:shadow-lg hover:scale-105 transition-all"
+                       >
                       <span>Order on Postmates</span>
                     </a>
                   </div>

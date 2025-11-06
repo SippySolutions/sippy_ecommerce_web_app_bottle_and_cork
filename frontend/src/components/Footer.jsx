@@ -144,7 +144,7 @@ function Footer() {
               Download the app and get the world at your fingertips.
             </p>
             <div className="flex justify-center lg:justify-start space-x-4">
-              <a href="#" className="transition-transform duration-200 hover:scale-105"
+              <a href="#" className="opacity-50 cursor-not-allowed"
               >
                 <img
                   src={Android}
