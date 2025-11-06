@@ -223,7 +223,7 @@ function ProductCard({ product }) {
                         ) : (
                           // Browse Mode: Show "View Details" button
                           <button 
-                              className="flex-1 h-7 sm:h-8 px-1 sm:px-2 py-1 bg-gradient-to-r from-indigo-600 to-purple-600 rounded flex justify-center items-center gap-1 hover:from-indigo-700 hover:to-purple-700 transition-all shadow-sm"
+                              className="flex-1 h-7 sm:h-8 px-1 sm:px-2 py-1 bg-[var(--color-accent)] rounded flex justify-center items-center gap-1 hover:from-indigo-700 hover:to-purple-700 transition-all shadow-sm"
                               onClick={handleCardClick}
                           >
                               <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
