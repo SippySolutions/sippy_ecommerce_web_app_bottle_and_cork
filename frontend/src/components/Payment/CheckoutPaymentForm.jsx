@@ -88,7 +88,7 @@ const CheckoutPaymentForm = ({
               Authorization Hold
             </h4>
             <p className="text-sm text-green-700">
-              We'll place a temporary hold of <strong>${amount?.toFixed(2)}</strong> on your card. 
+              We'll place a temporary hold on your card. 
               You'll only be charged when your order is prepared and ready for pickup/delivery.
             </p>
           </div>

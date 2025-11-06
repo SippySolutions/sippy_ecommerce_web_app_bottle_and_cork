@@ -858,6 +858,37 @@ const Checkout = () => {
                       ageVerifiedAt: getAgeVerificationStatus() ? new Date(getAgeVerificationStatus()) : null
                     }}
                   />
+
+                  {/* Terms and Conditions Agreement - Required before payment submission */}
+                  <div className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="flex items-start space-x-3">
+                      <input
+                        id="terms-agreement-step2"
+                        type="checkbox"
+                        checked={agreedToTerms}
+                        onChange={(e) => setAgreedToTerms(e.target.checked)}
+                        className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="terms-agreement-step2" className="text-sm text-gray-700">
+                        I agree to the{' '}
+                        <Link 
+                          to="/terms-and-conditions" 
+                          target="_blank"
+                          className="text-blue-600 hover:text-blue-800 underline"
+                        >
+                          Terms & Conditions
+                        </Link>
+                        {' '}and{' '}
+                        <Link 
+                          to="/privacy-policy" 
+                          target="_blank"
+                          className="text-blue-600 hover:text-blue-800 underline"
+                        >
+                          Privacy Policy
+                        </Link>
+                      </label>
+                    </div>
+                  </div>
                 </motion.div>
               )}
 
