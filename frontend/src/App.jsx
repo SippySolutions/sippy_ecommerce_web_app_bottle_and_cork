@@ -41,6 +41,8 @@ import BottomNavigation from './components/BottomNavigation.jsx';
 import InlineLoader from './components/InlineLoader.jsx';
 import LiveOrderNotifications from './components/LiveOrderNotifications.jsx';
 import UpdateDialog from './components/UpdateDialog.jsx';
+import ComingSoonBanner from './components/ComingSoonBanner.jsx';
+import BrowseModeFloatingCTA from './components/BrowseModeFloatingCTA.jsx';
 import useAppUpdate from './hooks/useAppUpdate.js';
 // import PullToRefresh from './components/PullToRefreshSimple.jsx'; // Removed pull-to-refresh
 
@@ -106,6 +108,7 @@ function AppContent() {
             <KeyboardManager />
             <div className="ios-status-bar-fill" />
             <NavbarHeightManager />
+            <ComingSoonBanner />
             <Navbar />
             <main className={`min-h-screen md:pb-0 ${
                 isCapacitor 
@@ -285,6 +288,9 @@ function AppContent() {
                     </Routes></AnimatePresence>
                 {/* Live Order Notifications */}
                 <LiveOrderNotifications />
+                
+                {/* Browse Mode Floating CTA */}
+                <BrowseModeFloatingCTA />
             </main>
             <BottomNavigation />
             <Footer />

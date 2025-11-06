@@ -4,6 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import { useCart } from '../Context/CartContext';
 import { useWishlist } from '../Context/WishlistContext';
 import { useCMS } from '../Context/CMSContext';
+import { isFeatureEnabled } from '../config/featureFlags';
 import HomeIcon from '@mui/icons-material/Home';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -30,35 +31,40 @@ const BottomNavigation = () => {
       id: 'home',
       path: '/',
       icon: HomeIcon,
-      label: 'Home'
+      label: 'Home',
+      enabled: true
     },
     {
       id: 'shop',
       path: '/products',
       icon: StorefrontIcon,
-      label: 'Shop'
+      label: 'Shop',
+      enabled: true
     },
     {
       id: 'cart',
       path: '/cart',
       icon: ShoppingCartIcon,
       label: 'Cart',
-      badge: cartCount
+      badge: cartCount,
+      enabled: isFeatureEnabled('ENABLE_CART')
     },
     {
       id: 'wishlist',
       path: '/wishlist',
       icon: FavoriteIcon,
       label: 'Wishlist',
-      badge: wishlistCount
+      badge: wishlistCount,
+      enabled: isFeatureEnabled('ENABLE_WISHLIST')
     },
     {
       id: 'account',
       path: '/account',
       icon: AccountCircleIcon,
-      label: 'Account'
+      label: 'Account',
+      enabled: isFeatureEnabled('ENABLE_ACCOUNT')
     }
-  ];
+  ].filter(item => item.enabled);
 
   const isActive = (path) => {
     if (path === '/') {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useCart } from '../Context/CartContext';
 import { useCMS } from '../Context/CMSContext';
+import { isFeatureEnabled } from '../config/featureFlags';
 import SimilarProducts from '../components/SimilarProducts';
 import PromoBanner from '../components/PromoBanner';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +14,13 @@ const Cart = () => {
   const theme = getTheme();
 
   const [taxRate, setTaxRate] = useState(0);
+
+  // Redirect to home if cart is disabled
+  useEffect(() => {
+    if (!isFeatureEnabled('ENABLE_CART')) {
+      navigate('/', { replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     async function getTax() {

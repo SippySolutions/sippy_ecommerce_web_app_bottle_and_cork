@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useWishlist } from '../Context/WishlistContext';
 import { useCMS } from '../Context/CMSContext';
+import { isFeatureEnabled } from '../config/featureFlags';
 import { AuthContext } from '../components/AuthContext';
 import { useContext } from 'react';
 import { toast } from 'react-toastify';
@@ -9,10 +11,19 @@ import ProductCard from '../components/ProductCard';
 import InlineLoader from '../components/InlineLoader'; // Import branded loader
 
 const Wishlist = () => {
+  const navigate = useNavigate();
   const { wishlistItems, loading, clearWishlist } = useWishlist();
   const { getTheme, cmsData } = useCMS();
   const { isAuthenticated } = useContext(AuthContext);
   const theme = getTheme();
+
+  // Redirect to home if wishlist is disabled
+  useEffect(() => {
+    if (!isFeatureEnabled('ENABLE_WISHLIST')) {
+      navigate('/', { replace: true });
+    }
+  }, [navigate]);
+
   useEffect(() => {
     if (!isAuthenticated) {
       // Redirect to login or show message

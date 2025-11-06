@@ -22,6 +22,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PhoneIcon from '@mui/icons-material/Phone';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { fetchDepartments, fetchProductGroups } from '../services/api.jsx';
+import { isFeatureEnabled } from '../config/featureFlags';
 
 function Navbar() {
   const { user, logout } = useContext(AuthContext);
@@ -227,25 +228,31 @@ function Navbar() {
 
               {/* Mobile Navigation Icons */}
               <div className="lg:hidden flex items-center space-x-3 ml-auto">
-                <Link to="/cart" className="relative flex flex-col items-center">
-                  <ShoppingCartIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
-                  {cartItems.length > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
-                      {cartItems.reduce((total, item) => total + item.quantity, 0)}
-                    </span>
-                  )}
-                </Link>
-                <Link to="/wishlist" className="relative flex flex-col items-center">
-                  <FavoriteIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
-                  {wishlistCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
-                      {wishlistCount}
-                    </span>
-                  )}
-                </Link>
-                <Link to="/account" className="flex flex-col items-center">
-                  <AccountCircleIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
-                </Link>
+                {isFeatureEnabled('ENABLE_CART') && (
+                  <Link to="/cart" className="relative flex flex-col items-center">
+                    <ShoppingCartIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
+                    {cartItems.length > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
+                        {cartItems.reduce((total, item) => total + item.quantity, 0)}
+                      </span>
+                    )}
+                  </Link>
+                )}
+                {isFeatureEnabled('ENABLE_WISHLIST') && (
+                  <Link to="/wishlist" className="relative flex flex-col items-center">
+                    <FavoriteIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
+                    {wishlistCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </Link>
+                )}
+                {isFeatureEnabled('ENABLE_ACCOUNT') && (
+                  <Link to="/account" className="flex flex-col items-center">
+                    <AccountCircleIcon fontSize="medium" className="text-gray-600 hover:text-[var(--color-accent)]" />
+                  </Link>
+                )}
                 
                 <button
                   className="text-gray-600 hover:text-[var(--color-accent)]"
@@ -257,100 +264,106 @@ function Navbar() {
 
               {/* Desktop Icons */}
               <div className="hidden lg:flex items-center space-x-6 relative">
-                {user ? (
-                  <div
-                    className="relative cursor-pointer flex flex-col items-center"
-                    onClick={() => setDropdownOpen(!dropdownOpen)}    
-                  >
-                    <AccountCircleIcon fontSize="large" className="text-[var(--color-background)] hover:text-[var(--color-accent)]" />
-                    <span className="text-xs text-[var(--color-background)] mt-1">Profile</span>
-                    {dropdownOpen && (
-                      <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-300 rounded-md shadow-lg z-50">
-                        <p className="px-4 py-2 text-gray-700 font-bold">{user.name}</p>
-                        <hr />
-                        <ul className="space-y-2 px-4 py-2">
-                          <li>
-                            <Link to="/account?tab=profile" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
-                              <AccountCircleIcon className="mr-2" />
-                              My Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link to="/account?tab=orders" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
-                              <ListIcon className="mr-2" />
-                              Order History
-                            </Link>
-                          </li>
-                          <li>
-                            <Link to="/account?tab=addresses" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
-                              <HomeIcon className="mr-2" />
-                              Addresses
-                            </Link>
-                          </li>
-                          <li>
-                            <Link to="/account?tab=billing" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
-                              <CreditCardIcon className="mr-2" />
-                              Billing
-                            </Link>
-                          </li>
-                        </ul>
-                        <hr />
-                        <ul className="space-y-2 px-4 py-2">
-                          <li>
-                            <Link to="/terms-and-conditions" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
-                              <ViewListIcon className="mr-2" />
-                              Terms & Conditions
-                            </Link>
-                          </li>
-                          <li>
-                            <Link to="/privacy-policy" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
-                              <ViewListIcon className="mr-2" />
-                              Privacy Policy
-                            </Link>
-                          </li>
-                        </ul>
-                        <hr />
-                        <button
-                          onClick={() => {
-                            logout();
-                            navigate('/account');
-                          }}
-                          className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center"
-                        >
-                          <PowerSettingsNewIcon className="mr-2" />
-                          Logout
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <Link to="/account" className="text-[var(--color-background)] hover:text-[var(--color-accent)] flex flex-col items-center">
-                    <AccountCircleIcon fontSize="large" />
-                    <span className="text-xs text-[var(--color-background)] mt-1">Login</span>
+                {isFeatureEnabled('ENABLE_LOGIN') && (
+                  user ? (
+                    <div
+                      className="relative cursor-pointer flex flex-col items-center"
+                      onClick={() => setDropdownOpen(!dropdownOpen)}    
+                    >
+                      <AccountCircleIcon fontSize="large" className="text-[var(--color-background)] hover:text-[var(--color-accent)]" />
+                      <span className="text-xs text-[var(--color-background)] mt-1">Profile</span>
+                      {dropdownOpen && (
+                        <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-300 rounded-md shadow-lg z-50">
+                          <p className="px-4 py-2 text-gray-700 font-bold">{user.name}</p>
+                          <hr />
+                          <ul className="space-y-2 px-4 py-2">
+                            <li>
+                              <Link to="/account?tab=profile" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
+                                <AccountCircleIcon className="mr-2" />
+                                My Details
+                              </Link>
+                            </li>
+                            <li>
+                              <Link to="/account?tab=orders" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
+                                <ListIcon className="mr-2" />
+                                Order History
+                              </Link>
+                            </li>
+                            <li>
+                              <Link to="/account?tab=addresses" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
+                                <HomeIcon className="mr-2" />
+                                Addresses
+                              </Link>
+                            </li>
+                            <li>
+                              <Link to="/account?tab=billing" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
+                                <CreditCardIcon className="mr-2" />
+                                Billing
+                              </Link>
+                            </li>
+                          </ul>
+                          <hr />
+                          <ul className="space-y-2 px-4 py-2">
+                            <li>
+                              <Link to="/terms-and-conditions" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
+                                <ViewListIcon className="mr-2" />
+                                Terms & Conditions
+                              </Link>
+                            </li>
+                            <li>
+                              <Link to="/privacy-policy" className="flex items-center text-gray-700 hover:text-[var(--color-accent)]">
+                                <ViewListIcon className="mr-2" />
+                                Privacy Policy
+                              </Link>
+                            </li>
+                          </ul>
+                          <hr />
+                          <button
+                            onClick={() => {
+                              logout();
+                              navigate('/account');
+                            }}
+                            className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center"
+                          >
+                            <PowerSettingsNewIcon className="mr-2" />
+                            Logout
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <Link to="/account" className="text-[var(--color-background)] hover:text-[var(--color-accent)] flex flex-col items-center">
+                      <AccountCircleIcon fontSize="large" />
+                      <span className="text-xs text-[var(--color-background)] mt-1">Login</span>
+                    </Link>
+                  )
+                )}
+                {isFeatureEnabled('ENABLE_WISHLIST') && (
+                  <Link to="/wishlist" className="relative text-[var(--color-background)] hover:text-[var(--color-accent)] flex flex-col items-center">
+                    <div className="relative">
+                      <FavoriteIcon fontSize="large" />
+                      {wishlistCount > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full px-1">
+                          {wishlistCount}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-[var(--color-background)] mt-1">Wishlist</span>
                   </Link>
                 )}
-                <Link to="/wishlist" className="relative text-[var(--color-background)] hover:text-[var(--color-accent)] flex flex-col items-center">
-                  <div className="relative">
-                    <FavoriteIcon fontSize="large" />
-                    {wishlistCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full px-1">
-                        {wishlistCount}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs text-[var(--color-background)] mt-1">Wishlist</span>
-                </Link>
-                <Link to="/cart" className="relative text-[var(--color-background)] hover:text-[var(--color-accent)] flex flex-col items-center">
-                  <div className="relative">
-                    <ShoppingCartIcon fontSize="large" />
-                    {cartItems.length > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full px-1">
-                        {cartItems.length}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs text-[var(--color-background)] mt-1">Cart</span>
-                </Link>
+                {isFeatureEnabled('ENABLE_CART') && (
+                  <Link to="/cart" className="relative text-[var(--color-background)] hover:text-[var(--color-accent)] flex flex-col items-center">
+                    <div className="relative">
+                      <ShoppingCartIcon fontSize="large" />
+                      {cartItems.length > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full px-1">
+                          {cartItems.length}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-[var(--color-background)] mt-1">Cart</span>
+                  </Link>
+                )}
               </div>
             </div>
 

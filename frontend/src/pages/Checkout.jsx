@@ -6,6 +6,7 @@ import { CartContext } from '../Context/CartContext';
 import { AuthContext } from '../components/AuthContext';
 import { useCMS } from '../Context/CMSContext';
 import { useAgeVerification } from '../Context/AgeVerificationContext';
+import { isFeatureEnabled } from '../config/featureFlags';
 import EnhancedPaymentForm from '../components/Payment/EnhancedPaymentForm';
 import axios from 'axios';
 import { processCheckout, processSavedCardCheckout, processGuestCheckout, processAuthorization } from '../services/api';
@@ -101,6 +102,14 @@ const Checkout = () => {
   const [orderType, setOrderType] = useState('delivery');
   const [step, setStep] = useState(1); // 1: Addresses, 2: Payment, 3: Review
   const [tip, setTip] = useState(0);
+
+  // Redirect to home if checkout is disabled
+  useEffect(() => {
+    if (!isFeatureEnabled('ENABLE_CHECKOUT')) {
+      navigate('/', { replace: true });
+      return;
+    }
+  }, [navigate]);
   
   // Scheduled delivery state
   const [scheduledDelivery, setScheduledDelivery] = useState({

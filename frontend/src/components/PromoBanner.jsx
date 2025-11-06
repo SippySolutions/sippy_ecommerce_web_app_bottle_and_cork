@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCMS } from '../Context/CMSContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isFeatureEnabled } from '../config/featureFlags';
 
 const PromoBanner = ({ 
   type = 'horizontal', 
@@ -17,6 +18,11 @@ const PromoBanner = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Don't show promo banners in browse-only mode
+  if (!isFeatureEnabled('ENABLE_CART')) {
+    return null;
+  }
 
   // Check if mobile view
   useEffect(() => {

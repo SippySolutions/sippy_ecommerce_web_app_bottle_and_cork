@@ -1,5 +1,7 @@
 import React, { useContext, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion'; // Import Framer Motion
+import { isFeatureEnabled } from '../config/featureFlags';
 import LoginForm from '../components/LoginForm';
 import SignupForm from '../components/SignupForm';
 import Profile from '../components/Profile'; // Import Profile component
@@ -7,7 +9,15 @@ import { AuthContext } from '../components/AuthContext'; // Import AuthContext a
 import InlineLoader from '../components/InlineLoader'; // Import branded loader
 
 const Account = () => {
+    const navigate = useNavigate();
     const context = useContext(AuthContext);
+    
+    // Redirect to home if account is disabled
+    React.useEffect(() => {
+        if (!isFeatureEnabled('ENABLE_ACCOUNT')) {
+            navigate('/', { replace: true });
+        }
+    }, [navigate]);
     
     // Check if AuthContext is available
     if (!context) {

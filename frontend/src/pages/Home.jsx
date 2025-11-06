@@ -5,6 +5,7 @@ import Categories from "../components/Categories";
 import HeroSection from "../components/HeroSection";
 import PromoBanner from "../components/PromoBanner";
 import AndroidDownloadLink from "../components/AndroidDownloadLink";
+import BrowseModeHeroCard from "../components/BrowseModeHeroCard";
 import { useCMS } from "../Context/CMSContext";
 
 function Home() {  const { 
@@ -22,7 +23,11 @@ function Home() {  const {
    
       
       <HeroSection data={getHeroSection()} />
-     
+      
+      {/* Browse Mode Hero Card */}
+      <div className="container mx-auto px-4 mt-6">
+        <BrowseModeHeroCard />
+      </div>
       
       <Categories categories={getCategories()} />
       
