@@ -145,7 +145,7 @@ function Footer() {
             </p>
             <div className="flex justify-center lg:justify-start space-x-4">
               <a 
-                href="https://play.google.com/store/apps/details?id=com.sippysolution.universalliquor&pcampaignid=web_share"
+                href="#"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="transition-transform duration-200 hover:scale-105"
