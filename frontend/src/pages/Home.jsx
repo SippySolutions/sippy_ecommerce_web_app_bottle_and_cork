@@ -31,31 +31,30 @@ function Home() {  const {
       
       <Categories categories={getCategories()} />
       
-      <FeaturedSection
+      {/* <FeaturedSection
         type="bestseller"
         title="Best Sellers"
         subtitle="The best selection of whiskey, vodka, and liquor"
         showSidebar={false}
         backgroundColor="bg-white"
-      />
+      /> */}
       
-      <PromoBanner type="carousel" />
       
-      <FeaturedSection
+      {/* <FeaturedSection
         type="exclusive"
         title={<>Our <span className="text-black">Exclusives</span></>}
         showSidebar={false}
         backgroundColor="bg-white"
-      />
+      /> */}
       
       <Banner data={getBanner()} />
       
-      <FeaturedSection
+      {/* <FeaturedSection
         type="staffpick"
         title={<>Our <span className="text-black">Staff Pick</span></>}
         showSidebar={false}
         backgroundColor="bg-white"
-      />
+      /> */}
       
       <div className="container mx-auto px-4">
         </div>

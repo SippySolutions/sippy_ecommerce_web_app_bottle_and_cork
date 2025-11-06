@@ -60,9 +60,12 @@ function Footer() {
             </p>
             <div className="mt-6 flex justify-center">
               <button className="bg-[var(--color-primary)] text-[var(--color-headingText)] px-6 py-2 rounded-md hover:bg-[var(--color-secondary)]">
-                SIGN UP
+                Coming Soon !
               </button>
             </div>
+             <p className="text-sm text-[var(--color-muted-foreground)] mt-2">
+              
+            </p>
           </div>
         )}
 
