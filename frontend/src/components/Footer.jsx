@@ -76,7 +76,17 @@ function Footer() {
             <img src={logo} alt="Store Logo" className="h-16 mx-auto lg:mx-0 mb-4" />
             <div className="text-sm text-[var(--color-muted-foreground)] font-bold">
               {storeInfo.address && (
-                <>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                    storeInfo.address.street && storeInfo.address.city 
+                      ? `${storeInfo.address.street || storeInfo.address.address || ''}, ${storeInfo.address.city}, ${storeInfo.address.state}${storeInfo.address.zipCode ? ` ${storeInfo.address.zipCode}` : ''}`
+                      : storeInfo.address
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[var(--color-accent)] transition-colors cursor-pointer inline-block"
+                  title="Click for directions"
+                >
                   <div>{storeInfo.address.street || storeInfo.address.address || ''}</div>
                   <div>
                     {storeInfo.address.city && storeInfo.address.state 
@@ -84,7 +94,7 @@ function Footer() {
                       : (storeInfo.address.city || '')
                     }
                   </div>
-                </>
+                </a>
               )}
             </div>
             <p className="text-sm text-[var(--color-muted-foreground)] mt-2">

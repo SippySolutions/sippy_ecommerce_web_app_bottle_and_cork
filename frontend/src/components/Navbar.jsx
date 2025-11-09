@@ -479,12 +479,18 @@ function Navbar() {
                           </a>
                         )}
                         {getStoreInfo().address && (
-                          <div className="flex items-center space-x-1">
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${getStoreInfo().address.street}, ${getStoreInfo().address.city}, ${getStoreInfo().address.state} ${getStoreInfo().address.zipCode}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center space-x-1 hover:text-[var(--color-accent)] transition-colors"
+                            title={`${getStoreInfo().address.street}, ${getStoreInfo().address.city}, ${getStoreInfo().address.state} ${getStoreInfo().address.zipCode} - Click for directions`}
+                          >
                             <LocationOnIcon fontSize="small" />
-                            <span className="truncate max-w-32" title={`${getStoreInfo().address.street}, ${getStoreInfo().address.city}, ${getStoreInfo().address.state} ${getStoreInfo().address.zipCode}`}>
+                            <span className="truncate max-w-32">
                               {getStoreInfo().address.street}
                             </span>
-                          </div>
+                          </a>
                         )}
                       </div>
                     )}

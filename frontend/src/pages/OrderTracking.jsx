@@ -459,12 +459,20 @@ const OrderTracking = () => {
               <div className="space-y-2">
                 <p className="font-medium text-gray-900">Store Pickup</p>
                 <p className="text-gray-600">{cmsData?.storeInfo?.name || 'Bottle and Cork'}</p>
-                <p className="text-gray-600">
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                    `${cmsData?.storeInfo?.address?.street || 'Store Address'}${cmsData?.storeInfo?.address?.city ? `, ${cmsData.storeInfo.address.city}` : ''}${cmsData?.storeInfo?.address?.state ? `, ${cmsData.storeInfo.address.state}` : ''}${cmsData?.storeInfo?.address?.zipCode ? ` ${cmsData.storeInfo.address.zipCode}` : ''}`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-600 hover:text-blue-600 transition-colors inline-block"
+                  title="Click for directions"
+                >
                   {cmsData?.storeInfo?.address?.street || 'Store Address'}
                   {cmsData?.storeInfo?.address?.city && `, ${cmsData.storeInfo.address.city}`}
                   {cmsData?.storeInfo?.address?.state && `, ${cmsData.storeInfo.address.state}`}
                   {cmsData?.storeInfo?.address?.zipCode && ` ${cmsData.storeInfo.address.zipCode}`}
-                </p>
+                </a>
                 <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-800">
                     <strong>Pickup Hours:</strong> {cmsData?.storeInfo?.pickupHours || 'Contact store for pickup hours'}

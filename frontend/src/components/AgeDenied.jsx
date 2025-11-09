@@ -84,9 +84,22 @@ const AgeDenied = () => {
             {cmsData?.storeInfo?.name || 'Store Information'}
           </h4>
           {cmsData?.storeInfo?.address && (
-            <p className="text-sm text-gray-600 mb-1">
-              {cmsData.storeInfo.address}
-            </p>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                typeof cmsData.storeInfo.address === 'string' 
+                  ? cmsData.storeInfo.address 
+                  : `${cmsData.storeInfo.address.street}, ${cmsData.storeInfo.address.city}, ${cmsData.storeInfo.address.state} ${cmsData.storeInfo.address.zipCode}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-gray-600 mb-1 hover:text-blue-600 transition-colors inline-block"
+              title="Click for directions"
+            >
+              {typeof cmsData.storeInfo.address === 'string' 
+                ? cmsData.storeInfo.address 
+                : `${cmsData.storeInfo.address.street}, ${cmsData.storeInfo.address.city}, ${cmsData.storeInfo.address.state} ${cmsData.storeInfo.address.zipCode}`
+              }
+            </a>
           )}
           {cmsData?.storeInfo?.phone && (
             <p className="text-sm text-gray-600">

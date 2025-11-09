@@ -407,14 +407,20 @@ function SingleProduct() {
                       </div>
                       
                       {getStoreInfo().address && (
-                        <div className="flex items-start gap-2 text-gray-700 text-sm pt-2 border-t border-gray-200">
-                          <svg className="w-4 h-4 text-indigo-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${getStoreInfo().address.street}, ${getStoreInfo().address.city}, ${getStoreInfo().address.state} ${getStoreInfo().address.zipCode}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-start gap-2 text-gray-700 text-sm pt-2 border-t border-gray-200 hover:text-indigo-600 transition-colors cursor-pointer group"
+                          title="Click for directions"
+                        >
+                          <svg className="w-4 h-4 text-indigo-600 mt-0.5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
                           </svg>
-                          <span>
+                          <span className="group-hover:underline">
                             {getStoreInfo().address.street}, {getStoreInfo().address.city}, {getStoreInfo().address.state} {getStoreInfo().address.zipCode}
                           </span>
-                        </div>
+                        </a>
                       )}
                     </div>
                   )}

@@ -221,7 +221,16 @@ const TermsAndConditions = () => {
               </p>
               {storeAddress && (
                 <p className="text-gray-700 leading-relaxed mt-4">
-                  <strong>Store Location:</strong> {storeAddress}
+                  <strong>Store Location:</strong>{' '}
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(storeAddress)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline"
+                    title="Click for directions"
+                  >
+                    {storeAddress}
+                  </a>
                 </p>
               )}
             </section>
