@@ -8,6 +8,7 @@ import { useWishlist } from '../Context/WishlistContext';
 import { useCMS } from '../Context/CMSContext';
 import SearchBar from './SearchBar';
 import InlineLoader from './InlineLoader';
+import { formatStoreHours } from '../utils/timeFormat';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -123,7 +124,7 @@ function Navbar() {
     const todayHours = storeInfo.storeHours[today];
     
     if (todayHours && todayHours.open && todayHours.close) {
-      return `${todayHours.open} - ${todayHours.close}`;
+      return formatStoreHours(todayHours.open, todayHours.close);
     }
     return null;
   };

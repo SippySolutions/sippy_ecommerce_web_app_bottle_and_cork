@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import defaultCmsData from '../Data/cmsData';
+import { convertTo12Hour } from '../utils/timeFormat';
 
 const CMSContext = createContext();
 
@@ -98,6 +99,8 @@ export const CMSProvider = ({ children }) => {
     return {
       open: hours.open,
       close: hours.close,
+      openFormatted: convertTo12Hour(hours.open),
+      closeFormatted: convertTo12Hour(hours.close),
       isOpen: isStoreOpen(day, hours)
     };
   };

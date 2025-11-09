@@ -10,6 +10,7 @@ import SimilarProducts from '../components/SimilarProducts';
 import PromoBanner from '../components/PromoBanner';
 import { toast } from 'react-toastify';
 import InlineLoader from '../components/InlineLoader'; // Import branded loader
+import { formatStoreHours } from '../utils/timeFormat';
 
 function SingleProduct() {
   const { id } = useParams();
@@ -45,7 +46,7 @@ function SingleProduct() {
     const todayHours = storeInfo.hours[today];
     
     if (!todayHours || !todayHours.open || !todayHours.close) return null;
-    return `${todayHours.open} - ${todayHours.close}`;
+    return formatStoreHours(todayHours.open, todayHours.close);
   };
 
   useEffect(() => {
