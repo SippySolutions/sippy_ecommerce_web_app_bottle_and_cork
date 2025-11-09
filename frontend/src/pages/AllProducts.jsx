@@ -1289,7 +1289,7 @@ const AllProducts = () => {
                                 {/* Products grid with enhanced styling and promotional banners */}
                                 <div className="space-y-8">
                                     {/* First promotional banner after 4 products */}
-                                    <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
                                         {
                                         products
                                             .slice(0, 8)
@@ -1309,7 +1309,7 @@ const AllProducts = () => {
                                     {/* Remaining products with promotional banners every 12 products */}
                                     {products.length > 8 && (
                                         <div
-                                            className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
+                                            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
                                             {
                                                 products
                                                     .slice(8, 20)
@@ -1330,7 +1330,7 @@ const AllProducts = () => {
                                     {/* Continue with remaining products */}
                                     {products.length > 20 && (
                                         <div
-                                            className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
+                                            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
                                             {
                                                 products
                                                     .slice(20)
