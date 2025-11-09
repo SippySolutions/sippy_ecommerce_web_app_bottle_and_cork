@@ -443,10 +443,17 @@ export const searchProducts = async (query, filters = {}, page = 1, limit = 20) 
       }
     });
 
-    const response = await axios.get(`${API_BASE_URL}/products/search?${params}`);
+    const url = `${API_BASE_URL}/products/search?${params}`;
+    console.log('🌐 API Request URL:', url);
+    
+    const response = await axios.get(url);
+    
+    console.log('✅ API Response Status:', response.status);
+    console.log('📦 API Response Data:', response.data);
+    
     return response.data;
   } catch (error) {
-    console.error('Error searching products:', error.response || error);
+    console.error('❌ API Error:', error.response || error);
     
     const errorMessage = error.response?.data?.message || 
                         error.response?.data?.error || 

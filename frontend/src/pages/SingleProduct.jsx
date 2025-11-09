@@ -63,6 +63,9 @@ function SingleProduct() {
       }
     }
     fetchData();
+    
+    // Scroll to top when product page loads
+    window.scrollTo(0, 0);
   }, [id]);
   const handleAddToCart = () => {
     if (product) {

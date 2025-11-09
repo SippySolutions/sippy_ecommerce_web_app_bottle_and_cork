@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {useSearchParams, useNavigate} from 'react-router-dom';
 import {searchProducts, fetchProducts, fetchCategories, fetchDepartments} from '../services/api';
 import ProductCard from '../components/ProductCard';
@@ -7,13 +7,22 @@ import {useCMS} from '../Context/CMSContext';
 import Categories from "../components/Categories";
 import {toast} from 'react-toastify';
 import {ProductGridSkeleton} from '../components/LazyLoadingUtils';
+import {runFullDiagnostic} from '../utils/skuDiagnostic';
 
 const AllProducts = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const {getTheme, getStoreInfo, loading: cmsLoading, getCategories} = useCMS();
-    const [products, setProducts] = useState([]);
-    const [initialLoading, setInitialLoading] = useState(true);
+    const [products, setProducts] = useState(() => {
+        // Try to restore products from sessionStorage
+        const savedProducts = sessionStorage.getItem('allProductsData');
+        return savedProducts ? JSON.parse(savedProducts) : [];
+    });
+    const [initialLoading, setInitialLoading] = useState(() => {
+        // Don't show loading if we have cached products
+        const savedProducts = sessionStorage.getItem('allProductsData');
+        return !savedProducts;
+    });
     const [backgroundLoading, setBackgroundLoading] = useState(false);
     const [pagination, setPagination] = useState(null);
     const [suggestions, setSuggestions] = useState(null);
@@ -23,6 +32,9 @@ const AllProducts = () => {
     const [categoriesData, setCategoriesData] = useState([]);
     const [departmentsData, setDepartmentsData] = useState([]);
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const hasInitiallyLoaded = useRef(false);
 
     // Advanced filter states
     const [priceRange, setPriceRange] = useState({min: '', max: ''});
@@ -95,24 +107,111 @@ const AllProducts = () => {
         loadCategories();
         loadDepartments();
     }, []);
+    
+    // Load more products function (defined before useEffect that uses it)
+    const loadMoreProducts = useCallback(() => {
+        // Prevent loading if already loading or no more products
+        if (isLoadingMore || !hasMore || initialLoading) {
+            console.log('⏸️ Skipping loadMore - already loading or no more products');
+            return;
+        }
+        
+        const nextPage = currentPage + 1;
+        console.log(`📄 Loading page ${nextPage}`);
+        setCurrentPage(nextPage);
+        
+        if (isSearchMode) {
+            performSearch(nextPage, true);
+        } else {
+            loadAllProducts(nextPage, true);
+        }
+    }, [currentPage, isSearchMode, isLoadingMore, hasMore, initialLoading]);
+    
+    // Save scroll position before navigating away
+    useEffect(() => {
+        const saveScrollPosition = () => {
+            sessionStorage.setItem('allProductsScrollPosition', window.pageYOffset.toString());
+        };
+        
+        // Save scroll position when user scrolls
+        window.addEventListener('scroll', saveScrollPosition);
+        
+        return () => {
+            window.removeEventListener('scroll', saveScrollPosition);
+        };
+    }, []);
+    
+    // Save products to sessionStorage whenever they change
+    useEffect(() => {
+        if (products.length > 0) {
+            sessionStorage.setItem('allProductsData', JSON.stringify(products));
+        }
+    }, [products]);
+    
+    // Restore scroll position when returning to page
+    useEffect(() => {
+        const savedPosition = sessionStorage.getItem('allProductsScrollPosition');
+        const savedProducts = sessionStorage.getItem('allProductsData');
+        
+        if (savedPosition && savedProducts && !initialLoading) {
+            // Restore scroll position after products load
+            setTimeout(() => {
+                window.scrollTo(0, parseInt(savedPosition, 10));
+            }, 100);
+        }
+    }, [initialLoading]);
+    
     useEffect(() => {
         // Determine if we're in search mode or showing all products
         const hasSearchParams = query || department || category || subcategory;
         setIsSearchMode(hasSearchParams);
 
-        // Only trigger new loads for actual search parameter changes
-        if (hasSearchParams) {
-            performSearch();
+        // Check if we have cached data and this is the first load
+        const hasCachedData = sessionStorage.getItem('allProductsData') !== null;
+        
+        // Only load data if we don't have cached data OR if search params changed
+        if (!hasCachedData || hasInitiallyLoaded.current) {
+            // Only trigger new loads for actual search parameter changes
+            if (hasSearchParams) {
+                performSearch();
+            } else {
+                loadAllProducts();
+            }
         } else {
-            loadAllProducts();
+            // We have cached data and haven't loaded yet, just mark as loaded
+            setInitialLoading(false);
         }
+        
+        // Mark that we've done the initial load check
+        hasInitiallyLoaded.current = true;
 
-        // Reset page when search parameters change
+        // Reset page and hasMore when search parameters change
         setCurrentPage(1);
+        setHasMore(true);
 
-        // Smooth scroll to top when filters change
-        window.scrollTo({top: 0, behavior: 'smooth'});
+        // Smooth scroll to top when filters change (but not on initial mount with cached data)
+        if (hasInitiallyLoaded.current) {
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
     }, [query, department, category, subcategory]);
+
+    // Infinite scroll effect
+    useEffect(() => {
+        const handleScroll = () => {
+            // Check if user scrolled near bottom (within 300px)
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight;
+            const clientHeight = document.documentElement.clientHeight;
+            
+            if (scrollHeight - scrollTop - clientHeight < 300 && hasMore && !isLoadingMore && !initialLoading) {
+                console.log('📜 Near bottom - triggering load more');
+                loadMoreProducts();
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [hasMore, isLoadingMore, initialLoading, loadMoreProducts]);
 
     // Separate effect for sort and filter changes to trigger server calls
     useEffect(() => {
@@ -123,23 +222,28 @@ const AllProducts = () => {
         if (products.length > 0 || hasActiveFilters || hasOtherFilters) {
             setBackgroundLoading(true);
 
+            // Reset to page 1 when filters change
+            setCurrentPage(1);
+            setHasMore(true);
+
             // Small delay to show the updating indicator
             setTimeout(() => {
                 if (isSearchMode) {
-                    performSearch(currentPage);
+                    performSearch(1, false);
                 } else {
-                    loadAllProducts(currentPage);
+                    loadAllProducts(1, false);
                 }
             }, 100);
         }
     }, [sortOption, priceRange, stockFilter, quickSearchQuery, selectedFilters]);
-    const loadAllProducts = async (page = 1) => {
+    const loadAllProducts = async (page = 1, appendProducts = false) => {
         try {
-            // Only show initial loading for first load, background loading for subsequent
-            if (page === 1 && products.length === 0) {
+            // Only show initial loading for first load
+            if (page === 1 && !appendProducts) {
                 setInitialLoading(true);
+                setProducts([]); // Clear products on new search
             } else {
-                setBackgroundLoading(true);
+                setIsLoadingMore(true);
             }
 
             // Check if we have any active multi-select filters
@@ -169,12 +273,16 @@ const AllProducts = () => {
                     let sortedProducts = [...response.products];
                     applySorting(sortedProducts);
 
-                    setProducts(sortedProducts);
+                    // Append or replace products based on mode
+                    setProducts(prev => appendProducts ? [...prev, ...sortedProducts] : sortedProducts);
                     setPagination({
                         ...response.pagination,
                         page
                     });
                     setSuggestions(response.suggestions);
+                    
+                    // Check if there are more pages
+                    setHasMore(page < response.pagination.totalPages);
                 }
             } else {
                 // Use regular fetch when no filters are active
@@ -189,7 +297,8 @@ const AllProducts = () => {
                 const endIndex = startIndex + limit;
                 const paginatedProducts = productList.slice(startIndex, endIndex);
 
-                setProducts(paginatedProducts);
+                // Append or replace products based on mode
+                setProducts(prev => appendProducts ? [...prev, ...paginatedProducts] : paginatedProducts);
                 setPagination({
                     page,
                     limit,
@@ -197,6 +306,9 @@ const AllProducts = () => {
                     totalPages: Math.ceil(productList.length / limit)
                 });
                 setSuggestions(null);
+                
+                // Check if there are more pages
+                setHasMore(endIndex < productList.length);
             }
         } catch (error) {
             console.error('Error loading products:', error);
@@ -204,16 +316,18 @@ const AllProducts = () => {
         } finally {
             setInitialLoading(false);
             setBackgroundLoading(false);
+            setIsLoadingMore(false);
         }
     };
 
-    const performSearch = async (page = 1) => {
+    const performSearch = async (page = 1, appendProducts = false) => {
         try {
-            // Only show initial loading for first search, background loading for pagination
-            if (page === 1) {
+            // Only show initial loading for first search
+            if (page === 1 && !appendProducts) {
                 setInitialLoading(true);
+                setProducts([]); // Clear products on new search
             } else {
-                setBackgroundLoading(true);
+                setIsLoadingMore(true);
             }
 
             const searchFilters = {};
@@ -238,29 +352,51 @@ const AllProducts = () => {
             if (selectedFilters.priceRanges.length > 0) 
                 searchFilters.priceRanges = selectedFilters.priceRanges;
             
+            // DEBUG: Log search parameters
+            console.log('🔍 SKU SEARCH DEBUG:');
+            console.log('Query:', query);
+            console.log('Search Filters:', searchFilters);
+            console.log('Page:', page);
+            
             const response = await searchProducts(query, searchFilters, page, 20);
+            
+            // DEBUG: Log response
+            console.log('Response:', response);
+            console.log('Success:', response.success);
+            console.log('Products count:', response.products?.length);
+            console.log('Products:', response.products);
+            console.log('Pagination:', response.pagination);
+            console.log('Suggestions:', response.suggestions);
+            console.log('Full Response JSON:', JSON.stringify(response, null, 2));
 
             if (response.success) {
                 let sortedProducts = [...response.products];
                 applySorting(sortedProducts);
 
-                setProducts(sortedProducts);
+                // Append or replace products based on mode
+                setProducts(prev => appendProducts ? [...prev, ...sortedProducts] : sortedProducts);
                 setPagination({
                     ...response.pagination,
                     page
                 });
                 setSuggestions(response.suggestions);
+                
+                // Check if there are more pages
+                setHasMore(page < response.pagination.totalPages);
             } else {
+                console.log('❌ Search failed - response.success is false');
                 toast.error('Search failed');
             }
         } catch (error) {
-            console.error('Search error:', error);
+            console.error('❌ Search error:', error);
             toast.error('Failed to search products');
         } finally {
             setInitialLoading(false);
             setBackgroundLoading(false);
+            setIsLoadingMore(false);
         }
     };
+    
     const applySorting = (productList) => {
         switch (sortOption) {
             case 'price-asc':
@@ -680,6 +816,14 @@ const AllProducts = () => {
                                     <option value="popularity">Most Popular</option>
                                     <option value="rating">Highest Rated</option>
                                 </select>
+                                
+                                {/* SKU Diagnostic Button (Dev Tool) */}
+                                <button
+                                    onClick={() => runFullDiagnostic()}
+                                    className="px-3 py-2 text-sm font-medium bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg shadow-sm transition-all duration-200"
+                                    title="Run SKU Search Diagnostic (Check Console)">
+                                    🔍 SKU Test
+                                </button>
                                 </div>
                             </div>
                         </div>
@@ -1347,166 +1491,26 @@ const AllProducts = () => {
                                 }
                                 </div>
 
-                                    {/* Modern Responsive Pagination with Loading State */}
-                                {pagination && pagination.totalPages > 1 && (
-                                        <div className="flex justify-center mt-8 sm:mt-12">
-                                            <div
-                                                className="flex items-center gap-1 sm:gap-2 bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-200 p-1 sm:p-2">
-                                                {/* Loading indicator for pagination */}
-                                                {
-                                                    backgroundLoading && (
-                                                        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
-                                                            <div className="bg-blue-500 text-white px-2 py-1 rounded text-xs">
-                                                                Loading...
-                                                            </div>
-                                                        </div>
-                                                    )
-                                                }
-
-                                                {/* Previous Button */}
-                                                <button
-                                                    onClick={() => handlePageChange(pagination.page - 1)}
-                                                    disabled={pagination.page <= 1 || backgroundLoading}
-                                                    className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-md sm:rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    style={{
-                                                        backgroundColor: (pagination.page <= 1 || backgroundLoading)
-                                                            ? 'transparent'
-                                                            : theme.primary + '10',
-                                                        color: (pagination.page <= 1 || backgroundLoading)
-                                                            ? theme.bodyText + '60'
-                                                            : theme.primary
-                                                    }}
-                                                    title="Previous page">
-                                                    <svg
-                                                        className="w-4 h-4 sm:w-5 sm:h-5"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M15 19l-7-7 7-7"/>
-                                                    </svg>
-                                                </button>
-
-                                                {/* Mobile: Show only current page info */}
-                                                <div
-                                                    className="sm:hidden flex items-center px-3 py-2 text-sm font-medium text-gray-600">
-                                                    <span
-                                                        style={{
-                                                            color: theme.primary
-                                                        }}>{pagination.page}</span>
-                                                    <span className="mx-1">/</span>
-                                                    <span>{pagination.totalPages}</span>
-                                                </div>
-
-                                                {/* Desktop: Show page numbers */}
-                                                <div className="hidden sm:flex items-center gap-1">
-                                                    {/* First page (if not in range) */}
-                                                    {pagination.page > 3 && (
-                                                        <>
-                                                            <button
-                                                                onClick={() => handlePageChange(1)}
-                                                                className="flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
-                                                                style={{
-                                                                    backgroundColor: theme.primary + '10',
-                                                                    color: theme.primary
-                                                                }}
-                                                            >
-                                                                1
-                                                            </button>
-                                                            {pagination.page > 4 && (
-                                                                <span className="flex items-center justify-center w-10 h-10 text-gray-400">...</span>
-                                                            )}
-                                                        </>
-                                                    )}
-
-                                                    {/* Page numbers around current page */}
-                                                    {
-                                                        Array.from({
-                                                            length: Math.min(5, pagination.totalPages)
-                                                        }, (_, i) => {
-                                                            const pageNumber = Math.max(1, pagination.page - 2) + i;
-                                                            if (pageNumber > pagination.totalPages) 
-                                                                return null;
-                                                            
-                                                            const isActive = pageNumber === pagination.page;
-
-                                                            return (
-                                                                <button
-                                                                    key={pageNumber}
-                                                                    onClick={() => handlePageChange(pageNumber)}
-                                                                    disabled={backgroundLoading}
-                                                                    className="flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50"
-                                                                    style={{
-                                                                        backgroundColor: isActive
-                                                                            ? theme.accent
-                                                                            : 'transparent',
-                                                                        color: isActive
-                                                                            ? 'white'
-                                                                            : theme.bodyText
-                                                                    }}>
-                                                                    {pageNumber}
-                                                                </button>
-                                                            );
-                                                        })
-                                                    }
-
-                                                    {/* Last page (if not in range) */}
-                                                    {
-                                                        pagination.page < pagination.totalPages - 2 && (<> {
-                                                            pagination.page < pagination.totalPages - 3 && (
-                                                                <span className="flex items-center justify-center w-10 h-10 text-gray-400">...</span>
-                                                            )
-                                                        }
-                                                        <button
-                                                            onClick={() => handlePageChange(pagination.totalPages)}
-                                                            disabled={backgroundLoading}
-                                                            className="flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50"
-                                                            style={{
-                                                                backgroundColor: theme.primary + '10',
-                                                                color: theme.primary
-                                                            }}
-                                                        >
-                                                            {pagination.totalPages}
-                                                        </button>
-                                                        </>
-                                                    )}
-                                                </div>
-
-                                                {/* Next Button */}
-                                                <button
-                                                    onClick={() => handlePageChange(pagination.page + 1)}
-                                                    disabled={pagination.page >= pagination.totalPages || backgroundLoading}
-                                                    className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-md sm:rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    style={{
-                                                        backgroundColor: (
-                                                            pagination.page >= pagination.totalPages || backgroundLoading
-                                                        )
-                                                            ? 'transparent'
-                                                            : theme.primary + '10',
-                                                        color: (pagination.page >= pagination.totalPages || backgroundLoading)
-                                                            ? theme.bodyText + '60'
-                                                            : theme.primary
-                                                    }}
-                                                    title="Next page">
-                                                    <svg
-                                                        className="w-4 h-4 sm:w-5 sm:h-5"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M9 5l7 7-7 7"/>
-                                                    </svg>
-                                                </button>
-                                            </div>
+                                {/* Infinite Scroll Loading Indicator */}
+                                {isLoadingMore && (
+                                    <div className="flex justify-center items-center py-8">
+                                        <div className="flex flex-col items-center space-y-3">
+                                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--color-accent)]"></div>
+                                            <p className="text-sm text-gray-500">Loading more products...</p>
                                         </div>
-                                    )
-                                }
+                                    </div>
+                                )}
+                                
+                                {/* End of Products Indicator */}
+                                {!hasMore && products.length > 0 && !initialLoading && (
+                                    <div className="flex justify-center items-center py-8">
+                                        <div className="text-center">
+                                            <div className="w-16 h-1 bg-[var(--color-accent)] mx-auto mb-3 rounded"></div>
+                                            <p className="text-sm text-gray-500 font-medium">You've reached the end</p>
+                                            <p className="text-xs text-gray-400 mt-1">No more products to load</p>
+                                        </div>
+                                    </div>
+                                )}
                                 </>
                             ): (
                             // Enhanced No results section with CMS theme
