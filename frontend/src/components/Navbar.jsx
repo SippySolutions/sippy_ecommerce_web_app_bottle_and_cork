@@ -46,6 +46,7 @@ function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hoveredDepartment, setHoveredDepartment] = useState(null);
+  const [showWeeklyHours, setShowWeeklyHours] = useState(false);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -129,6 +130,32 @@ function Navbar() {
     return null;
   };
 
+  const getWeeklySchedule = () => {
+    const storeInfo = getStoreInfo();
+    if (!storeInfo?.storeHours) return [];
+    
+    const daysOrder = [
+      { key: 'monday', label: 'Monday' },
+      { key: 'tuesday', label: 'Tuesday' },
+      { key: 'wednesday', label: 'Wednesday' },
+      { key: 'thursday', label: 'Thursday' },
+      { key: 'friday', label: 'Friday' },
+      { key: 'saturday', label: 'Saturday' },
+      { key: 'sunday', label: 'Sunday' }
+    ];
+    
+    const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][new Date().getDay()];
+    
+    return daysOrder.map(day => {
+      const hours = storeInfo.storeHours[day.key];
+      return {
+        day: day.label,
+        hours: hours?.open && hours?.close ? formatStoreHours(hours.open, hours.close) : 'Closed',
+        isToday: day.key === currentDay
+      };
+    });
+  };
+
   const formatPhone = (phone) => {
     if (!phone) return null;
     const cleaned = phone.replace(/\D/g, '');
@@ -160,10 +187,40 @@ function Navbar() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
               <div className="flex items-center space-x-4 lg:space-x-6">
                 {getTodaysHours() && (
-                  <div className="flex items-center space-x-1">
+                  <div 
+                    className="relative flex items-center space-x-1 cursor-pointer hover:text-yellow-400 transition-colors"
+                    onMouseEnter={() => setShowWeeklyHours(true)}
+                    onMouseLeave={() => setShowWeeklyHours(false)}
+                  >
                     <AccessTimeIcon fontSize="small" />
                     <span className="hidden lg:inline">Today: </span>
                     <span>{getTodaysHours()}</span>
+                    
+                    {/* Weekly Schedule Tooltip */}
+                    {showWeeklyHours && (
+                      <div className="absolute top-full left-0 mt-2 bg-white text-gray-800 rounded-lg shadow-2xl p-4 min-w-[280px] z-50 border border-gray-200">
+                        <div className="text-sm font-bold text-[var(--color-accent)] mb-3 border-b border-gray-200 pb-2">
+                          Weekly Hours
+                        </div>
+                        <div className="space-y-2">
+                          {getWeeklySchedule().map((item, index) => (
+                            <div 
+                              key={index}
+                              className={`flex justify-between items-center ${
+                                item.isToday ? 'bg-[var(--color-accent)] bg-opacity-10 -mx-2 px-2 py-1 rounded font-semibold' : ''
+                              }`}
+                            >
+                              <span className={item.isToday ? 'text-[var(--color-accent)]' : 'text-gray-600'}>
+                                {item.day}:
+                              </span>
+                              <span className={item.isToday ? 'text-[var(--color-accent)]' : 'text-gray-800'}>
+                                {item.hours}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 
