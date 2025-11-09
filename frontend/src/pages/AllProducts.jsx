@@ -7,7 +7,6 @@ import {useCMS} from '../Context/CMSContext';
 import Categories from "../components/Categories";
 import {toast} from 'react-toastify';
 import {ProductGridSkeleton} from '../components/LazyLoadingUtils';
-import {runFullDiagnostic} from '../utils/skuDiagnostic';
 
 const AllProducts = () => {
     const [searchParams] = useSearchParams();
@@ -112,12 +111,10 @@ const AllProducts = () => {
     const loadMoreProducts = useCallback(() => {
         // Prevent loading if already loading or no more products
         if (isLoadingMore || !hasMore || initialLoading) {
-            console.log('⏸️ Skipping loadMore - already loading or no more products');
             return;
         }
         
         const nextPage = currentPage + 1;
-        console.log(`📄 Loading page ${nextPage}`);
         setCurrentPage(nextPage);
         
         if (isSearchMode) {
@@ -204,7 +201,6 @@ const AllProducts = () => {
             const clientHeight = document.documentElement.clientHeight;
             
             if (scrollHeight - scrollTop - clientHeight < 300 && hasMore && !isLoadingMore && !initialLoading) {
-                console.log('📜 Near bottom - triggering load more');
                 loadMoreProducts();
             }
         };
@@ -352,22 +348,7 @@ const AllProducts = () => {
             if (selectedFilters.priceRanges.length > 0) 
                 searchFilters.priceRanges = selectedFilters.priceRanges;
             
-            // DEBUG: Log search parameters
-            console.log('🔍 SKU SEARCH DEBUG:');
-            console.log('Query:', query);
-            console.log('Search Filters:', searchFilters);
-            console.log('Page:', page);
-            
             const response = await searchProducts(query, searchFilters, page, 20);
-            
-            // DEBUG: Log response
-            console.log('Response:', response);
-            console.log('Success:', response.success);
-            console.log('Products count:', response.products?.length);
-            console.log('Products:', response.products);
-            console.log('Pagination:', response.pagination);
-            console.log('Suggestions:', response.suggestions);
-            console.log('Full Response JSON:', JSON.stringify(response, null, 2));
 
             if (response.success) {
                 let sortedProducts = [...response.products];
@@ -384,11 +365,10 @@ const AllProducts = () => {
                 // Check if there are more pages
                 setHasMore(page < response.pagination.totalPages);
             } else {
-                console.log('❌ Search failed - response.success is false');
                 toast.error('Search failed');
             }
         } catch (error) {
-            console.error('❌ Search error:', error);
+            console.error('Search error:', error);
             toast.error('Failed to search products');
         } finally {
             setInitialLoading(false);
@@ -816,14 +796,6 @@ const AllProducts = () => {
                                     <option value="popularity">Most Popular</option>
                                     <option value="rating">Highest Rated</option>
                                 </select>
-                                
-                                {/* SKU Diagnostic Button (Dev Tool) */}
-                                <button
-                                    onClick={() => runFullDiagnostic()}
-                                    className="px-3 py-2 text-sm font-medium bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg shadow-sm transition-all duration-200"
-                                    title="Run SKU Search Diagnostic (Check Console)">
-                                    🔍 SKU Test
-                                </button>
                                 </div>
                             </div>
                         </div>
