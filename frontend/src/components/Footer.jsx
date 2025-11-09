@@ -157,21 +157,33 @@ function Footer() {
               Download the app and get the world at your fingertips.
             </p>
             <div className="flex justify-center lg:justify-start space-x-4">
-              <a href="#" className="opacity-50 cursor-not-allowed"
-              >
-                <img
-                  src={Android}
-                  alt="Get it on Google Play"
-                  className="h-10"
-                />
-              </a>
-              <a href="#" className="opacity-50 cursor-not-allowed">
-                <img
-                  src={Apple}
-                  alt="Download on App Store (Coming Soon)"
-                  className="h-10"
-                />
-              </a>
+              {/* Android App - Coming Soon */}
+              <div className="relative">
+                <a href="#" className="opacity-50 cursor-not-allowed pointer-events-none">
+                  <img
+                    src={Android}
+                    alt="Get it on Google Play"
+                    className="h-10"
+                  />
+                </a>
+                <span className="absolute -top-2 -right-2 bg-[var(--color-accent)] text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                  Coming Soon
+                </span>
+              </div>
+              
+              {/* iOS App - Coming Soon */}
+              <div className="relative">
+                <a href="#" className="opacity-50 cursor-not-allowed pointer-events-none">
+                  <img
+                    src={Apple}
+                    alt="Download on App Store"
+                    className="h-10"
+                  />
+                </a>
+                <span className="absolute -top-2 -right-2 bg-[var(--color-accent)] text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                  Coming Soon
+                </span>
+              </div>
             </div>
           </div>
         </div>
