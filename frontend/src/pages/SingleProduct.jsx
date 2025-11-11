@@ -441,6 +441,7 @@ function SingleProduct() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-700">Brand:</span>
+                  <span className="text-gray-900">{product.brand || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-700">Category:</span>
