@@ -455,7 +455,7 @@ function SingleProduct() {
                   <span className="font-medium text-gray-700">Department:</span>
                   <span className="text-gray-900">{product.department || '00000'}</span>
                 </div>
-                {product.abv && (
+                {product.abv !== "NAN" && (
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-700">ABV:</span>
                     <span className="text-gray-900">{product.abv}%</span>
